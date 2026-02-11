@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { Gamepad2, LogOut, User, Shield } from 'lucide-react';
+import { LogOut, User, Shield } from 'lucide-react';
 import { apiPost } from '@/lib/api';
 
 export function AppLayout() {
@@ -23,9 +23,8 @@ export function AppLayout() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-            <Gamepad2 className="h-6 w-6 text-primary" />
-            StratHub
+          <Link to="/" className="flex items-center">
+            <img src="/strathub_logo.png" alt="StratHub" className="h-8" />
           </Link>
 
           <div className="flex items-center gap-2">
@@ -66,9 +65,18 @@ export function AppLayout() {
         </div>
       </header>
 
-      <main>
+      <main className="min-h-[calc(100vh-3.5rem-3rem)]">
         <Outlet />
       </main>
+
+      <footer className="border-t py-4">
+        <div className="container flex items-center justify-between px-4 text-xs text-muted-foreground">
+          <span>StratHub &mdash; by Niklas Kronig</span>
+          <Link to="/impressum" className="hover:text-foreground transition-colors">
+            Impressum
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }

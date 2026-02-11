@@ -3,37 +3,40 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-background: oklch(0.145 0 0);
-  --color-foreground: oklch(0.985 0 0);
-  --color-card: oklch(0.17 0 0);
-  --color-card-foreground: oklch(0.985 0 0);
-  --color-popover: oklch(0.17 0 0);
-  --color-popover-foreground: oklch(0.985 0 0);
-  --color-primary: oklch(0.7 0.15 250);
-  --color-primary-foreground: oklch(0.985 0 0);
-  --color-secondary: oklch(0.25 0 0);
-  --color-secondary-foreground: oklch(0.985 0 0);
-  --color-muted: oklch(0.25 0 0);
-  --color-muted-foreground: oklch(0.65 0 0);
-  --color-accent: oklch(0.25 0 0);
-  --color-accent-foreground: oklch(0.985 0 0);
-  --color-destructive: oklch(0.55 0.2 25);
-  --color-destructive-foreground: oklch(0.985 0 0);
-  --color-border: oklch(0.3 0 0);
-  --color-input: oklch(0.3 0 0);
-  --color-ring: oklch(0.7 0.15 250);
-  --color-chart-1: oklch(0.65 0.2 250);
-  --color-chart-2: oklch(0.65 0.15 160);
-  --color-chart-3: oklch(0.65 0.15 60);
-  --color-chart-4: oklch(0.65 0.15 310);
-  --color-chart-5: oklch(0.65 0.2 25);
-  --color-sidebar-background: oklch(0.16 0 0);
-  --color-sidebar-foreground: oklch(0.985 0 0);
-  --color-sidebar-primary: oklch(0.7 0.15 250);
-  --color-sidebar-primary-foreground: oklch(0.985 0 0);
-  --color-sidebar-accent: oklch(0.25 0 0);
-  --color-sidebar-accent-foreground: oklch(0.985 0 0);
-  --color-sidebar-border: oklch(0.3 0 0);
-  --color-sidebar-ring: oklch(0.7 0.15 250);
+  /* Dark theme with orange/red primary matching StratHub logo */
+  /* Logo colors: #fd7100 -> #da2c00 (orange/red), #c3c9cc -> #3c4653 (grays) */
+
+  --color-background: oklch(0.185 0.01 250);       /* ~#2a2f38 dark blue-gray */
+  --color-foreground: oklch(0.88 0.005 250);        /* ~#c3c9cc light gray */
+  --color-card: oklch(0.22 0.012 250);              /* ~#323842 */
+  --color-card-foreground: oklch(0.88 0.005 250);   /* ~#c3c9cc */
+  --color-popover: oklch(0.22 0.012 250);
+  --color-popover-foreground: oklch(0.88 0.005 250);
+  --color-primary: oklch(0.68 0.19 45);             /* ~#fd7100 orange */
+  --color-primary-foreground: oklch(0.98 0 0);      /* white */
+  --color-secondary: oklch(0.28 0.015 250);         /* ~#3c4653 dark gray */
+  --color-secondary-foreground: oklch(0.88 0.005 250);
+  --color-muted: oklch(0.28 0.015 250);
+  --color-muted-foreground: oklch(0.65 0.01 250);   /* mid gray */
+  --color-accent: oklch(0.30 0.018 250);
+  --color-accent-foreground: oklch(0.88 0.005 250);
+  --color-destructive: oklch(0.55 0.22 25);         /* ~#da2c00 deep red-orange */
+  --color-destructive-foreground: oklch(0.98 0 0);
+  --color-border: oklch(0.32 0.015 250);
+  --color-input: oklch(0.32 0.015 250);
+  --color-ring: oklch(0.68 0.19 45);                /* orange ring to match primary */
+  --color-chart-1: oklch(0.68 0.19 45);             /* orange */
+  --color-chart-2: oklch(0.55 0.22 25);             /* red-orange */
+  --color-chart-3: oklch(0.65 0.15 60);             /* amber */
+  --color-chart-4: oklch(0.65 0.15 160);            /* teal */
+  --color-chart-5: oklch(0.65 0.15 310);            /* purple */
+  --color-sidebar-background: oklch(0.20 0.012 250);
+  --color-sidebar-foreground: oklch(0.88 0.005 250);
+  --color-sidebar-primary: oklch(0.68 0.19 45);
+  --color-sidebar-primary-foreground: oklch(0.98 0 0);
+  --color-sidebar-accent: oklch(0.28 0.015 250);
+  --color-sidebar-accent-foreground: oklch(0.88 0.005 250);
+  --color-sidebar-border: oklch(0.32 0.015 250);
+  --color-sidebar-ring: oklch(0.68 0.19 45);
   --radius: 0.625rem;
 }

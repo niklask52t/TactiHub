@@ -4,7 +4,7 @@ import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gamepad2, ArrowRight, Users } from 'lucide-react';
+import { ArrowRight, Users, Gamepad2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 
 interface Game {
@@ -22,9 +22,8 @@ export default function HomePage() {
     <div className="container mx-auto px-4 py-12">
       {/* Hero */}
       <div className="text-center mb-16">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Gamepad2 className="h-12 w-12 text-primary" />
-          <h1 className="text-5xl font-bold">StratHub</h1>
+        <div className="flex items-center justify-center mb-4">
+          <img src="/strathub_logo.png" alt="StratHub" className="h-16" />
         </div>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
           Collaborative strategy planning for competitive games. Draw tactics, share plans, and coordinate with your team in real-time.

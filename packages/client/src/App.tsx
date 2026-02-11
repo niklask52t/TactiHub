@@ -29,6 +29,7 @@ const AdminGameGadgets = lazy(() => import('@/features/admin/gadgets/GadgetsPage
 const AdminUsers = lazy(() => import('@/features/admin/users/UsersPage'));
 const AdminTokens = lazy(() => import('@/features/admin/tokens/TokensPage'));
 const AdminSettings = lazy(() => import('@/features/admin/settings/SettingsPage'));
+const ImpressumPage = lazy(() => import('@/features/legal/ImpressumPage'));
 
 function PageLoader() {
   return (
@@ -69,6 +70,7 @@ export function App() {
         {/* Main app */}
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/impressum" element={<ImpressumPage />} />
           <Route path="/:gameSlug" element={<GameDashboard />} />
           <Route path="/:gameSlug/plans/public" element={<PublicPlansPage />} />
 
