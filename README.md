@@ -145,6 +145,8 @@ git clone https://github.com/niklask52t/StratHub.git
 cd StratHub
 ```
 
+The default branch is `main`. For the latest development features, use `git checkout dev`.
+
 ### 2. Set up environment variables
 
 ```bash
