@@ -1,0 +1,28 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Uploads
+packages/server/uploads/games/*
+packages/server/uploads/maps/*
+packages/server/uploads/operators/*
+packages/server/uploads/gadgets/*
+!packages/server/uploads/**/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+
+# Claude Code
+.claude/
+
+# Build
+*.tsbuildinfo

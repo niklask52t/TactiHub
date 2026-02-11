@@ -1,0 +1,71 @@
+import type { FastifyInstance } from 'fastify';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { db } from '../db/connection.js';
+import { draws, battleplanFloors } from '../db/schema/index.js';
+import { requireAuth } from '../middleware/auth.js';
+
+export default async function drawsRoutes(fastify: FastifyInstance) {
+  // POST /api/battleplan-floors/:id/draws
+  fastify.post('/battleplan-floors/:id/draws', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+
+    const [floor] = await db.select().from(battleplanFloors).where(eq(battleplanFloors.id, id));
+    if (!floor) return reply.status(404).send({ error: 'Not Found', message: 'Floor not found', statusCode: 404 });
+
+    const { items } = z.object({
+      items: z.array(z.object({
+        type: z.enum(['path', 'line', 'rectangle', 'text', 'icon']),
+        originX: z.number(),
+        originY: z.number(),
+        destinationX: z.number().optional(),
+        destinationY: z.number().optional(),
+        data: z.record(z.unknown()),
+      })),
+    }).parse(request.body);
+
+    const created = [];
+    for (const item of items) {
+      const [draw] = await db.insert(draws).values({
+        battleplanFloorId: id,
+        userId: request.user!.userId,
+        type: item.type,
+        originX: item.originX,
+        originY: item.originY,
+        destinationX: item.destinationX,
+        destinationY: item.destinationY,
+        data: item.data,
+      }).returning();
+      created.push(draw);
+    }
+
+    return reply.status(201).send({ data: created });
+  });
+
+  // PUT /api/draws/:id
+  fastify.put('/draws/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const body = z.object({
+      originX: z.number().optional(),
+      originY: z.number().optional(),
+      destinationX: z.number().optional(),
+      destinationY: z.number().optional(),
+      data: z.record(z.unknown()).optional(),
+    }).parse(request.body);
+
+    const [draw] = await db.update(draws).set({ ...body, updatedAt: new Date() }).where(eq(draws.id, id)).returning();
+    if (!draw) return reply.status(404).send({ error: 'Not Found', message: 'Draw not found', statusCode: 404 });
+
+    return { data: draw };
+  });
+
+  // DELETE /api/draws/:id
+  fastify.delete('/draws/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+
+    const [draw] = await db.update(draws).set({ isDeleted: true, updatedAt: new Date() }).where(eq(draws.id, id)).returning();
+    if (!draw) return reply.status(404).send({ error: 'Not Found', message: 'Draw not found', statusCode: 404 });
+
+    return { data: draw };
+  });
+}

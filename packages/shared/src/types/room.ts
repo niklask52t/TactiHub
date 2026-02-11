@@ -1,0 +1,54 @@
+export interface Room {
+  id: string;
+  ownerId: string;
+  battleplanId: string | null;
+  connectionString: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoomUser {
+  userId: string;
+  username: string;
+  color: string;
+}
+
+export interface CursorPosition {
+  userId: string;
+  x: number;
+  y: number;
+  floorId: string;
+  color: string;
+}
+
+export interface SocketEvents {
+  // Client -> Server
+  'room:join': { connectionString: string };
+  'room:leave': { connectionString: string };
+  'cursor:move': { x: number; y: number; floorId: string };
+  'draw:create': { battleplanFloorId: string; draws: CreateDrawPayload[] };
+  'draw:delete': { drawIds: string[] };
+  'draw:update': { drawId: string; data: Record<string, unknown> };
+  'operator-slot:update': { slotId: string; operatorId: string | null };
+  'battleplan:change': { battleplanId: string };
+
+  // Server -> Client
+  'room:joined': { userId: string; color: string; users: RoomUser[] };
+  'room:user-joined': { userId: string; username: string; color: string };
+  'room:user-left': { userId: string };
+  'cursor:moved': CursorPosition;
+  'draw:created': { userId: string; draws: unknown[] };
+  'draw:deleted': { userId: string; drawIds: string[] };
+  'draw:updated': { userId: string; drawId: string; data: Record<string, unknown> };
+  'operator-slot:updated': { slotId: string; operatorId: string | null; operator: unknown };
+  'battleplan:changed': { battleplan: unknown };
+}
+
+export interface CreateDrawPayload {
+  type: string;
+  originX: number;
+  originY: number;
+  destinationX?: number;
+  destinationY?: number;
+  data: Record<string, unknown>;
+}
