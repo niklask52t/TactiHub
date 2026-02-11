@@ -124,8 +124,7 @@ StratHub/
 
 ## Requirements
 
-Before you begin, make sure you have the following installed:
-
+- **OS**: Debian 13 (Trixie) recommended — also works on Ubuntu 22.04+, Debian 12, or any Linux with Docker support
 - **Node.js** >= 20.0 (LTS recommended)
 - **pnpm** >= 9.0 (`npm install -g pnpm`)
 - **Docker** + **Docker Compose** (for PostgreSQL and Redis)
@@ -134,11 +133,44 @@ Before you begin, make sure you have the following installed:
 Optional (for email features in production):
 - An SMTP server or email service (e.g., Gmail, SendGrid, Mailgun)
 
+> **Proxmox LXC**: If you're running this inside a Proxmox LXC container, make sure **Nesting** is enabled in the container features (Options > Features > Nesting). For unprivileged containers, also enable **keyctl**. A privileged Debian 13 LXC with Nesting works out of the box.
+
 ---
 
-## Installation
+## Installation (Debian 13)
 
-### 1. Clone the repository
+The following steps assume a fresh **Debian 13 (Trixie)** installation or LXC container. Adjust package manager commands if you're using a different distribution.
+
+### 1. Install system dependencies
+
+```bash
+# Update packages
+apt update && apt upgrade -y
+
+# Install essentials
+apt install -y curl git ca-certificates gnupg
+
+# Install Node.js 22 LTS (via NodeSource)
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+
+# Install pnpm
+npm install -g pnpm
+
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+systemctl enable --now docker
+```
+
+Verify everything is installed:
+
+```bash
+node -v    # v22.x
+pnpm -v    # 10.x
+docker -v  # 27.x
+```
+
+### 2. Clone the repository
 
 ```bash
 git clone https://github.com/niklask52t/StratHub.git
@@ -147,20 +179,20 @@ cd StratHub
 
 The default branch is `main`. For the latest development features, use `git checkout dev`.
 
-### 2. Set up environment variables
+### 3. Set up environment variables
 
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` and configure at minimum:
-- `JWT_SECRET` — A long random string for access tokens
-- `JWT_REFRESH_SECRET` — A different long random string for refresh tokens
+- `JWT_SECRET` — A long random string for access tokens (`openssl rand -base64 48`)
+- `JWT_REFRESH_SECRET` — A different long random string for refresh tokens (`openssl rand -base64 48`)
 - `SMTP_*` — Your email server credentials (optional for development, required for registration emails)
 
 The default database and Redis URLs work with the included Docker Compose setup.
 
-### 3. Start infrastructure
+### 4. Start infrastructure
 
 ```bash
 docker compose up -d
@@ -170,13 +202,13 @@ This starts:
 - **PostgreSQL 16** on port `5432` (user: `strathub`, password: `strathub`, db: `strathub`)
 - **Redis 7** on port `6379`
 
-### 4. Install dependencies
+### 5. Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### 5. Set up the database
+### 6. Set up the database
 
 ```bash
 # Generate migration files from schema
@@ -194,7 +226,7 @@ The seed creates:
 - **Rainbow Six Siege**: 19 maps (4 floors each), 42 operators, 55 gadgets
 - **Valorant**: 4 maps (2 floors each), 11 agents, 40 abilities
 
-### 6. Start development servers
+### 7. Start development servers
 
 ```bash
 pnpm dev
@@ -206,7 +238,7 @@ This starts both:
 
 The Vite dev server proxies API requests (`/api/*`) and Socket.IO to the Fastify server automatically.
 
-### 7. Open the app
+### 8. Open the app
 
 Navigate to `http://localhost:5173` in your browser.
 
