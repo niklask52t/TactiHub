@@ -16,6 +16,7 @@ const RegisterPage = lazy(() => import('@/features/auth/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('@/features/auth/VerifyEmailPage'));
+const ConfirmDeletionPage = lazy(() => import('@/features/auth/ConfirmDeletionPage'));
 const GameDashboard = lazy(() => import('@/features/game/GameDashboard'));
 const MyPlansPage = lazy(() => import('@/features/battleplan/MyPlansPage'));
 const PublicPlansPage = lazy(() => import('@/features/battleplan/PublicPlansPage'));
@@ -32,6 +33,7 @@ const AdminGameGadgets = lazy(() => import('@/features/admin/gadgets/GadgetsPage
 const AdminUsers = lazy(() => import('@/features/admin/users/UsersPage'));
 const AdminTokens = lazy(() => import('@/features/admin/tokens/TokensPage'));
 const AdminSettings = lazy(() => import('@/features/admin/settings/SettingsPage'));
+const AccountSettingsPage = lazy(() => import('@/features/account/AccountSettingsPage'));
 const ImpressumPage = lazy(() => import('@/features/legal/ImpressumPage'));
 const HelpPage = lazy(() => import('@/features/legal/HelpPage'));
 const FAQPage = lazy(() => import('@/features/legal/FAQPage'));
@@ -75,6 +77,7 @@ export function App() {
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/auth/verify-email/:token" element={<VerifyEmailPage />} />
+          <Route path="/auth/confirm-deletion/:token" element={<ConfirmDeletionPage />} />
         </Route>
 
         {/* Main app */}
@@ -92,6 +95,7 @@ export function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/:gameSlug/plans" element={<MyPlansPage />} />
             <Route path="/room/create" element={<CreateRoomPage />} />
+            <Route path="/account" element={<AccountSettingsPage />} />
           </Route>
 
           {/* Admin routes */}

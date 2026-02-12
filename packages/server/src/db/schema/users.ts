@@ -9,6 +9,8 @@ export const users = pgTable('users', {
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   emailVerifiedAt: timestamp('email_verified_at'),
   role: userRoleEnum('role').notNull().default('user'),
+  deactivatedAt: timestamp('deactivated_at'),
+  deletionScheduledAt: timestamp('deletion_scheduled_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

@@ -20,8 +20,12 @@ import {
   getEmailVerificationUserId,
   storePasswordResetToken,
   getPasswordResetEmail,
+  storeDeletionToken,
+  getDeletionTokenUserId,
+  verifyRecaptcha,
 } from '../services/auth.service.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendDeletionConfirmationEmail, sendAccountDeactivatedEmail } from '../services/email.service.js';
+import { DELETION_GRACE_PERIOD_DAYS } from '@tactihub/shared';
 import jwt from 'jsonwebtoken';
 import type { TokenPayload } from '@tactihub/shared';
 import { REFRESH_TOKEN_EXPIRY_SECONDS } from '@tactihub/shared';
@@ -31,6 +35,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   token: z.string().optional(),
+  captchaToken: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -45,9 +50,25 @@ export default async function authRoutes(fastify: FastifyInstance) {
     return { data: { registrationEnabled: enabled } };
   });
 
+  // GET /api/auth/recaptcha-key (public)
+  fastify.get('/recaptcha-key', async () => {
+    return { data: { siteKey: process.env.RECAPTCHA_SITE_KEY || null } };
+  });
+
   // POST /api/auth/register
   fastify.post('/register', async (request, reply) => {
     const body = registerSchema.parse(request.body);
+
+    // Verify reCAPTCHA (skip if not configured)
+    if (process.env.RECAPTCHA_SECRET_KEY) {
+      if (!body.captchaToken) {
+        return reply.status(400).send({ error: 'Bad Request', message: 'CAPTCHA verification required', statusCode: 400 });
+      }
+      const captchaValid = await verifyRecaptcha(body.captchaToken);
+      if (!captchaValid) {
+        return reply.status(400).send({ error: 'Bad Request', message: 'CAPTCHA verification failed', statusCode: 400 });
+      }
+    }
 
     // Check if registration is enabled
     const regEnabled = await isRegistrationEnabled();
@@ -117,6 +138,10 @@ export default async function authRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid credentials', statusCode: 401 });
     }
 
+    if (user.deactivatedAt) {
+      return reply.status(403).send({ error: 'Forbidden', message: 'This account has been deactivated. Contact an administrator to reactivate it.', statusCode: 403 });
+    }
+
     const validPassword = await verifyPassword(body.password, user.passwordHash);
     if (!validPassword) {
       return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid credentials', statusCode: 401 });
@@ -146,6 +171,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
           email: user.email,
           emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
           role: user.role,
+          deactivatedAt: null,
+          deletionScheduledAt: null,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
         },
@@ -186,6 +213,12 @@ export default async function authRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ error: 'Unauthorized', message: 'User not found', statusCode: 401 });
     }
 
+    if (user.deactivatedAt) {
+      await revokeRefreshToken(fastify.redis, user.id);
+      reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      return reply.status(403).send({ error: 'Forbidden', message: 'Account deactivated', statusCode: 403 });
+    }
+
     const accessToken = generateAccessToken(user.id, user.role);
     const newRefreshToken = generateRefreshToken(user.id, user.role);
     await storeRefreshToken(fastify.redis, user.id, newRefreshToken);
@@ -206,6 +239,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
           email: user.email,
           emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
           role: user.role,
+          deactivatedAt: null,
+          deletionScheduledAt: null,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
         },
@@ -305,6 +340,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
         email: updated.email,
         emailVerifiedAt: updated.emailVerifiedAt?.toISOString() ?? null,
         role: updated.role,
+        deactivatedAt: updated.deactivatedAt?.toISOString() ?? null,
+        deletionScheduledAt: updated.deletionScheduledAt?.toISOString() ?? null,
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       },
@@ -325,9 +362,76 @@ export default async function authRoutes(fastify: FastifyInstance) {
         email: user.email,
         emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
         role: user.role,
+        deactivatedAt: user.deactivatedAt?.toISOString() ?? null,
+        deletionScheduledAt: user.deletionScheduledAt?.toISOString() ?? null,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       },
     };
+  });
+
+  // POST /api/auth/request-deletion
+  fastify.post('/request-deletion', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { username } = z.object({ username: z.string() }).parse(request.body);
+
+    const [user] = await db.select().from(users).where(eq(users.id, request.user!.userId));
+    if (!user) {
+      return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+    }
+
+    if (username !== user.username) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Username does not match', statusCode: 400 });
+    }
+
+    if (user.deactivatedAt) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Account is already deactivated', statusCode: 400 });
+    }
+
+    const token = generateEmailToken();
+    await storeDeletionToken(fastify.redis, user.id, token);
+    await sendDeletionConfirmationEmail(user.email, user.username, token);
+
+    return { message: 'A confirmation email has been sent. Please check your inbox.' };
+  });
+
+  // GET /api/auth/confirm-deletion
+  fastify.get('/confirm-deletion', async (request, reply) => {
+    const { token } = z.object({ token: z.string() }).parse(request.query);
+
+    const userId = await getDeletionTokenUserId(fastify.redis, token);
+    if (!userId) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired deletion token', statusCode: 400 });
+    }
+
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+    }
+
+    if (user.deactivatedAt) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Account is already deactivated', statusCode: 400 });
+    }
+
+    const now = new Date();
+    const deletionDate = new Date(now.getTime() + DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+
+    await db.update(users).set({
+      deactivatedAt: now,
+      deletionScheduledAt: deletionDate,
+      updatedAt: now,
+    }).where(eq(users.id, userId));
+
+    // Revoke refresh token to force logout
+    await revokeRefreshToken(fastify.redis, userId);
+
+    // Consume the deletion token
+    await fastify.redis.del(`deletion:${token}`);
+
+    // Send deactivation notification
+    try {
+      await sendAccountDeactivatedEmail(user.email, user.username);
+    } catch { /* best-effort */ }
+
+    return { message: 'Your account has been deactivated. It will be permanently deleted after 30 days.' };
   });
 }

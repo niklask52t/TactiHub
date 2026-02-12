@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiGet, apiPost } from '@/lib/api';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, KeyRound, Loader2 } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const registerSchema = z.object({
   username: z.string().min(3, 'At least 3 characters').max(50),
@@ -25,6 +26,9 @@ export default function RegisterPage() {
   const [publicRegEnabled, setPublicRegEnabled] = useState(true);
   const [token, setToken] = useState('');
   const [tokenVerified, setTokenVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
@@ -43,6 +47,10 @@ export default function RegisterPage() {
         setTokenVerified(true);
       })
       .finally(() => setCheckingStatus(false));
+
+    apiGet<{ data: { siteKey: string | null } }>('/auth/recaptcha-key')
+      .then((res) => { if (res.data.siteKey) setRecaptchaSiteKey(res.data.siteKey); })
+      .catch(() => {});
   }, []);
 
   const onSubmit = async (data: RegisterData) => {
@@ -51,11 +59,14 @@ export default function RegisterPage() {
       await apiPost('/auth/register', {
         ...data,
         token: publicRegEnabled ? undefined : token,
+        captchaToken: captchaToken || undefined,
       });
       toast.success('Registration successful! Please check your email to verify your account.');
       navigate('/auth/login');
     } catch (err: any) {
       toast.error(err.message || 'Registration failed');
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -148,7 +159,18 @@ export default function RegisterPage() {
             <Input id="password" type="password" className="gaming-input bg-background/50 border-primary/20 focus:border-primary/50 transition-all" {...register('password')} />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
-          <button type="submit" disabled={loading} className="gaming-btn w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold tracking-wide uppercase text-sm hover:brightness-110 disabled:opacity-50 transition-all">
+          {recaptchaSiteKey && (
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={recaptchaSiteKey}
+                theme="dark"
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
+          <button type="submit" disabled={loading || (!!recaptchaSiteKey && !captchaToken)} className="gaming-btn w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold tracking-wide uppercase text-sm hover:brightness-110 disabled:opacity-50 transition-all">
             {loading ? 'Creating account...' : 'Register'}
           </button>
           <p className="text-center text-sm">

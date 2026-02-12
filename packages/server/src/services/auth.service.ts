@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
-import { eq, and, isNull, lt } from 'drizzle-orm';
+import { eq, and, isNull, isNotNull, lt } from 'drizzle-orm';
 import { db } from '../db/connection.js';
 import { users, registrationTokens, settings } from '../db/schema/index.js';
 import type { TokenPayload, UserRole } from '@tactihub/shared';
-import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY_SECONDS } from '@tactihub/shared';
+import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY_SECONDS, DELETION_GRACE_PERIOD_DAYS } from '@tactihub/shared';
 import type Redis from 'ioredis';
 
 export function generateAccessToken(userId: string, role: UserRole): string {
@@ -101,4 +101,45 @@ export async function cleanupUnverifiedUsers() {
       lt(users.createdAt, oneMonthAgo),
     )
   );
+}
+
+export async function storeDeletionToken(redis: Redis, userId: string, token: string) {
+  await redis.set(`deletion:${token}`, userId, 'EX', 86400); // 24 hours
+}
+
+export async function getDeletionTokenUserId(redis: Redis, token: string): Promise<string | null> {
+  return redis.get(`deletion:${token}`);
+}
+
+export async function cleanupDeactivatedUsers(): Promise<{ id: string; email: string }[]> {
+  const now = new Date();
+
+  const deactivatedUsers = await db.select({ id: users.id, email: users.email })
+    .from(users)
+    .where(
+      and(
+        isNotNull(users.deactivatedAt),
+        isNotNull(users.deletionScheduledAt),
+        lt(users.deletionScheduledAt, now),
+      )
+    );
+
+  for (const user of deactivatedUsers) {
+    await db.delete(users).where(eq(users.id, user.id));
+  }
+
+  return deactivatedUsers;
+}
+
+export async function verifyRecaptcha(token: string): Promise<boolean> {
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) return true; // Skip if not configured
+
+  const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`,
+  });
+  const data = await res.json() as { success: boolean };
+  return data.success === true;
 }

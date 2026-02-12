@@ -4,6 +4,8 @@ export interface User {
   email: string;
   emailVerifiedAt: string | null;
   role: UserRole;
+  deactivatedAt: string | null;
+  deletionScheduledAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

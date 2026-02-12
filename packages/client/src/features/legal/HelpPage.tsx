@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -188,6 +188,20 @@ export default function HelpPage() {
               Want to try TactiHub without creating an account? Use the <strong>Sandbox</strong> to draw on any map locally.
               Sandbox drawings are not saved — log in and create a room or battle plan to persist your work.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Account Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Account Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Access your account settings from the user menu in the top-right corner of the navbar.</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li><strong>Account Info</strong> — View your username, email, role, and registration date</li>
+              <li><strong>Delete Account</strong> — Request account deletion with a two-step confirmation process and email verification. After confirming via email, your account is deactivated for 30 days. During this grace period, an administrator can reactivate your account. After 30 days, your account and all associated data (battle plans, drawings, rooms) are permanently deleted.</li>
+            </ul>
           </CardContent>
         </Card>
 

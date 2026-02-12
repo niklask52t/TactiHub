@@ -138,8 +138,25 @@ export default function ImpressumPage() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="default">v1.5.0</Badge>
+                <Badge variant="default">v1.5.1</Badge>
                 <span className="text-xs text-muted-foreground">Current</span>
+              </div>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
+                <li>Account self-deletion with double confirmation, email verification, and 30-day grace period</li>
+                <li>Google reCAPTCHA v2 on registration (optional, works without configuration)</li>
+                <li>Account Settings page with account info and danger zone</li>
+                <li>Admin: reactivate deactivated users, self-delete protection</li>
+                <li>Admin: deactivated user status and days-left countdown in user table</li>
+                <li>Fixed DELETE request Content-Type bug (Fastify empty body error)</li>
+                <li>Removed redundant admin username bar in admin panel</li>
+                <li>User menu moved to far right in navbar</li>
+                <li>Complete production deployment guide in README (Nginx, SSL, systemd, ufw)</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline">v1.5.0</Badge>
               </div>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
                 <li>Drawings now stay permanent after releasing the mouse button</li>

@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.5.0
+**Version**: 1.5.1
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -95,12 +95,24 @@ packages/
 ### Auth Flow
 1. Register → email verification sent → **must verify before login** (without SMTP, admin must manually verify each user)
 2. Registration flow adapts: if public reg is ON, no token needed; if OFF, user must enter a single-use registration token first
-3. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + Redis)
-4. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
-5. Token refresh → POST /api/auth/refresh returns new access token
-6. Admin can toggle public registration and create invite tokens
-7. **Admin manual verification**: PUT /api/admin/users/:id/verify — verifies a user without email, sends notification email
-8. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side
+3. Optional Google reCAPTCHA v2 on registration (if `RECAPTCHA_SITE_KEY` + `RECAPTCHA_SECRET_KEY` set in `.env`)
+4. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + Redis)
+5. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
+6. Token refresh → POST /api/auth/refresh returns new access token
+7. Admin can toggle public registration and create invite tokens
+8. **Admin manual verification**: PUT /api/admin/users/:id/verify — verifies a user without email, sends notification email
+9. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side
+
+### Account Deletion Flow
+1. User → Account Settings → Delete Account → two confirmation dialogs (type username)
+2. Server sends deletion confirmation email with token link (24h TTL in Redis)
+3. User clicks email link → `GET /api/auth/confirm-deletion?token=...`
+4. Account is **deactivated** (`deactivatedAt` set, `deletionScheduledAt` = now + 30 days)
+5. Refresh token revoked → user logged out
+6. Deactivated users cannot log in (checked in login + refresh routes)
+7. Admin can **reactivate** via `PUT /api/admin/users/:id/reactivate` (clears deactivatedAt + deletionScheduledAt)
+8. Daily cleanup job permanently deletes users where `deletionScheduledAt < now()` and sends final email
+9. DB fields: `users.deactivated_at` (nullable timestamp), `users.deletion_scheduled_at` (nullable timestamp)
 
 ### Laser Pointer (non-persistent, multiplayer)
 - **Laser Dot**: Tool.LaserDot — sends cursor position via `cursor:move` with `isLaser: true`, rendered as glowing dot on peers' active canvas
@@ -274,11 +286,11 @@ The Vite dev client proxies all `/api/*` and `/socket.io` requests to `localhost
 ## API Endpoints Overview
 
 ### Auth: `/api/auth/`
-POST register, login, logout, refresh, forgot-password, reset-password, change-credentials
-GET verify-email/:token, me, registration-status (public)
+POST register, login, logout, refresh, forgot-password, reset-password, change-credentials, request-deletion
+GET verify-email, confirm-deletion, me, registration-status (public), recaptcha-key (public)
 
 ### Admin Users: `/api/admin/users/`
-GET (paginated), PUT/:id/role, PUT/:id/verify (manual email verification + notification), DELETE/:id
+GET (paginated), PUT/:id/role, PUT/:id/verify (manual email verification + notification), PUT/:id/reactivate, DELETE/:id
 
 ### Public: `/api/`
 GET games, games/:slug, games/:slug/maps/:mapSlug, games/:slug/operators, games/:slug/gadgets
@@ -312,5 +324,7 @@ Full CRUD for games, maps, map-floors, operators, gadgets, operator-gadgets, use
 | `/:gameSlug/plans` | MyPlansPage | Protected |
 | `/room/create` | CreateRoomPage | Protected |
 | `/room/:connectionString` | RoomPage | Public (guests read-only) |
+| `/account` | AccountSettingsPage | Protected |
+| `/auth/confirm-deletion/:token` | ConfirmDeletionPage | Public |
 | `/admin/maps/:mapId/floors` | FloorsPage | Admin only |
 | `/admin/*` | Admin pages | Admin only |

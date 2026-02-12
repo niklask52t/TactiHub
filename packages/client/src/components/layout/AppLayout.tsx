@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Shield } from 'lucide-react';
+import { LogOut, User, Shield, Settings } from 'lucide-react';
 import { APP_VERSION } from '@tactihub/shared';
 import { apiPost } from '@/lib/api';
 
@@ -26,7 +26,7 @@ export function AppLayout() {
       <div className="gaming-glow-line top-0 left-0 z-50" />
 
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between px-4">
+        <div className="flex h-14 items-center justify-between px-4 w-full">
           <Link to="/" className="flex items-center transition-transform hover:scale-105">
             <img src="/tactihub_logo.png" alt="TactiHub" className="h-10 drop-shadow-[0_0_8px_oklch(0.68_0.19_45/0.3)]" />
           </Link>
@@ -49,6 +49,10 @@ export function AppLayout() {
                       Admin Panel
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem onClick={() => navigate('/account')}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Account
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout

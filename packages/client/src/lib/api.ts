@@ -29,7 +29,7 @@ export async function apiFetch<T>(
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  if (!(options.body instanceof FormData)) {
+  if (options.body && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 

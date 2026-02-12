@@ -82,6 +82,14 @@ const faqs = [
     a: 'In the admin panel, go to Games > Maps > select a map > Floors. You can upload, reorder, rename, and delete floor layout images for each map.',
   },
   {
+    q: 'How do I delete my account?',
+    a: 'Go to Account Settings (click your username in the top-right menu). In the Danger Zone section, click "Delete Account". You\'ll need to confirm twice and then click a confirmation link sent to your email. After confirming, your account is deactivated for 30 days. During this period, an admin can reactivate it. After 30 days, your account and all associated data are permanently deleted.',
+  },
+  {
+    q: 'What is reCAPTCHA?',
+    a: 'reCAPTCHA is a Google service that helps protect the registration form from bots and spam. If the server admin has configured it, you\'ll see an "I\'m not a robot" checkbox during registration. Simply check the box to verify you\'re human. If reCAPTCHA is not configured, registration works without it.',
+  },
+  {
     q: 'How do I report a bug or suggest a feature?',
     a: 'Open an issue on the GitHub repository at github.com/niklask52t/TactiHub.',
   },

@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.5.0-orange)
+![Version](https://img.shields.io/badge/version-1.5.1-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -22,6 +22,11 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - [Database Management](#database-management)
 - [Troubleshooting](#troubleshooting)
 - [Production Deployment](#production-deployment)
+  - [Nginx Reverse Proxy](#5-nginx-reverse-proxy)
+  - [SSL with Let's Encrypt](#6-ssl-with-lets-encrypt)
+  - [systemd Service](#7-systemd-service)
+  - [Firewall](#8-firewall-ufw)
+  - [reCAPTCHA Setup](#9-recaptcha-setup-optional)
 - [Map Images](#map-images)
 - [Credits & Acknowledgments](#credits--acknowledgments)
 - [Disclaimer](#disclaimer)
@@ -48,6 +53,8 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Admin Panel** — Full CRUD management for games, maps, floors, operators, gadgets, users, and registration tokens.
 - **Token-Based Registration** — Admin can toggle public registration on/off and create invite tokens for controlled access.
 - **Email Verification** — New accounts must verify their email. Admins can also manually verify users from the admin panel.
+- **reCAPTCHA v2** — Optional Google reCAPTCHA v2 checkbox on registration to prevent spam. Works without configuration (no CAPTCHA shown).
+- **Account Self-Deletion** — Users can delete their own account with double confirmation + email verification. Account is deactivated for 30 days before permanent deletion, allowing admins to reactivate.
 - **Floor Layout Management** — Upload and manage floor layout images (blueprint, darkprint, whiteprint) per map through the admin panel with reordering support.
 - **Pre-Seeded Map Images** — 165 R6 map floor images (Blueprint/Darkprint/Whiteprint) + 23 gadget icons included in the repo as WebP. Works out of the box after seeding.
 - **Dark Theme** — Built with a dark color scheme matching the TactiHub brand (see color palette below).
@@ -490,14 +497,260 @@ curl --url "smtp://SMTP_HOST:SMTP_PORT" --ssl-reqd \
 
 ## Production Deployment
 
-For production, you need to:
+This guide assumes a fresh **Debian/Ubuntu** server with at least **2 GB RAM**.
 
-1. Set `NODE_ENV=production` in `.env`
-2. Set real `JWT_SECRET` and `JWT_REFRESH_SECRET` values (use `openssl rand -base64 48`)
-3. Configure proper SMTP credentials for email verification
-4. Build all packages: `pnpm build`
-5. Run the server: `node packages/server/dist/index.js`
-6. Serve the client build (`packages/client/dist/`) with a reverse proxy (nginx, Caddy, etc.)
+### 1. System Requirements
+
+```bash
+# Node.js 22 (via NodeSource)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+sudo apt-get install -y nodejs
+
+# pnpm
+corepack enable
+corepack prepare pnpm@latest --activate
+
+# PostgreSQL + Redis (Docker recommended)
+sudo apt-get install -y docker.io docker-compose-plugin
+```
+
+If you already installed PostgreSQL and Redis during the [Installation (Debian 13)](#installation-debian-13) section, you can skip the Docker step and use those directly.
+
+### 2. Build the Project
+
+```bash
+cd /opt/tactihub          # or wherever you cloned the repo
+cp .env.example .env      # then edit .env (see step 3)
+pnpm install
+pnpm build
+```
+
+### 3. Production Environment Variables
+
+Edit `.env` with production values:
+
+```env
+# Database + Redis (adjust if not using Docker defaults)
+DATABASE_URL=postgresql://tactihub:STRONG_PASSWORD@localhost:5432/tactihub
+REDIS_URL=redis://localhost:6379
+
+# Server
+PORT=3001
+NODE_ENV=production
+
+# Public URL — MUST match your domain (used in emails and links)
+APP_URL=https://yourdomain.com
+
+# JWT secrets — generate with: openssl rand -base64 48
+JWT_SECRET=<random-string-1>
+JWT_REFRESH_SECRET=<random-string-2>
+
+# SMTP (required for email verification + password reset)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@example.com
+SMTP_PASS=your-password
+SMTP_FROM=noreply@yourdomain.com
+
+# Uploads
+UPLOAD_DIR=uploads
+MAX_FILE_SIZE=5242880
+
+# reCAPTCHA v2 (optional — see "reCAPTCHA Setup" below)
+RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
+
+# Client API URL — must match your public domain
+VITE_API_URL=https://yourdomain.com
+VITE_SOCKET_URL=https://yourdomain.com
+```
+
+> **Important:** `VITE_*` variables are baked into the client at build time. After changing them, you must re-run `pnpm build`.
+
+### 4. Database Setup
+
+```bash
+# Start PostgreSQL + Redis (Docker)
+docker compose up -d
+
+# Run migrations and seed data
+pnpm db:migrate
+pnpm db:seed
+```
+
+### 5. Nginx Reverse Proxy
+
+Install Nginx:
+
+```bash
+sudo apt-get install -y nginx
+```
+
+Create `/etc/nginx/sites-available/tactihub`:
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    # Redirect HTTP to HTTPS (after certbot setup)
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com;
+
+    # SSL certificates (managed by certbot — see step 6)
+    ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    # Security headers
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-Content-Type-Options nosniff;
+
+    # Client SPA (static files)
+    root /opt/tactihub/packages/client/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API proxy
+    location /api/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Uploaded files (maps, avatars, etc.)
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+    }
+
+    # Socket.IO — requires WebSocket upgrade headers
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Increase body size for file uploads
+    client_max_body_size 10M;
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/tactihub /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 6. SSL with Let's Encrypt
+
+```bash
+sudo apt-get install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com
+```
+
+Certbot will automatically configure SSL in your Nginx config and set up auto-renewal.
+
+> **Note:** For the initial setup, temporarily comment out the `listen 443` server block and the `return 301` redirect, so Nginx serves on port 80 for certbot's HTTP challenge. After certbot completes, restore the full config.
+
+### 7. systemd Service
+
+Create `/etc/systemd/system/tactihub.service`:
+
+```ini
+[Unit]
+Description=TactiHub Server
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=tactihub
+WorkingDirectory=/opt/tactihub
+ExecStart=/usr/bin/node packages/server/dist/index.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/tactihub/.env
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable tactihub
+sudo systemctl start tactihub
+sudo systemctl status tactihub    # check it's running
+```
+
+View logs:
+
+```bash
+sudo journalctl -u tactihub -f
+```
+
+### 8. Firewall (ufw)
+
+```bash
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP (redirect to HTTPS)
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw enable
+sudo ufw status
+```
+
+### 9. reCAPTCHA Setup (Optional)
+
+TactiHub supports Google reCAPTCHA v2 ("I'm not a robot" checkbox) on the registration form. If not configured, registration works without CAPTCHA.
+
+1. Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin)
+2. Click **+** to create a new site
+3. Choose **reCAPTCHA v2** → **"I'm not a robot" Checkbox**
+4. Add your domain(s) (e.g. `yourdomain.com`)
+5. Copy the **Site Key** and **Secret Key**
+6. Add to your `.env`:
+   ```env
+   RECAPTCHA_SITE_KEY=6Lc...your-site-key...
+   RECAPTCHA_SECRET_KEY=6Lc...your-secret-key...
+   ```
+7. Rebuild the client (the site key is fetched from the server at runtime, no rebuild needed for key changes):
+   ```bash
+   pnpm build
+   ```
+
+The reCAPTCHA widget will automatically appear on the registration form when the keys are configured. No code changes needed.
+
+### 10. Post-Deployment Checklist
+
+- [ ] `APP_URL` matches your actual domain (with `https://`)
+- [ ] `VITE_API_URL` and `VITE_SOCKET_URL` match your domain
+- [ ] JWT secrets are random and unique (not the defaults!)
+- [ ] SMTP credentials are configured and working
+- [ ] Database is migrated and seeded (`pnpm db:migrate && pnpm db:seed`)
+- [ ] Nginx config passes `sudo nginx -t`
+- [ ] SSL certificate is active (`https://` works in browser)
+- [ ] Socket.IO connects (check browser DevTools → Network → WS)
+- [ ] File uploads work (test in admin panel → Maps → Floors)
+- [ ] First user registered and promoted to admin (via DB or by being the first user)
 
 ---
 

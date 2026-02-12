@@ -22,6 +22,8 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
       email: users.email,
       emailVerifiedAt: users.emailVerifiedAt,
       role: users.role,
+      deactivatedAt: users.deactivatedAt,
+      deletionScheduledAt: users.deletionScheduledAt,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
     }).from(users)
@@ -78,6 +80,26 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     }
 
     return { data: { id: updated.id, username: updated.username, email: updated.email, emailVerifiedAt: updated.emailVerifiedAt } };
+  });
+
+  // PUT /api/admin/users/:id/reactivate
+  fastify.put('/:id/reactivate', async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    if (!user) return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+
+    if (!user.deactivatedAt) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'User is not deactivated', statusCode: 400 });
+    }
+
+    const [updated] = await db.update(users).set({
+      deactivatedAt: null,
+      deletionScheduledAt: null,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id)).returning();
+
+    return { data: { id: updated.id, username: updated.username, email: updated.email }, message: 'User reactivated' };
   });
 
   // DELETE /api/admin/users/:id

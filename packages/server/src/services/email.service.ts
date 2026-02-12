@@ -139,3 +139,65 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     `),
   });
 }
+
+export async function sendDeletionConfirmationEmail(email: string, username: string, token: string) {
+  const confirmUrl = `${APP_URL}/auth/confirm-deletion/${token}`;
+
+  await getTransporter().sendMail({
+    from: FROM,
+    to: email,
+    subject: 'Confirm your TactiHub account deletion',
+    html: emailTemplate(`
+      <h1 style="color:#c3c9cc;font-size:22px;margin:0 0 16px 0;">Account Deletion Request</h1>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        Hi <strong style="color:#c3c9cc;">${username}</strong>,
+      </p>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        You requested to delete your TactiHub account. Click the button below to confirm:
+      </p>
+      ${buttonHtml('Confirm Deletion', confirmUrl)}
+      <p style="color:#6b7280;font-size:12px;line-height:1.6;margin:0;">
+        Or copy this link: <a href="${confirmUrl}" style="color:#fd7100;word-break:break-all;">${confirmUrl}</a>
+      </p>
+      <p style="color:#6b7280;font-size:12px;margin:16px 0 0 0;">This link expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
+    `),
+  });
+}
+
+export async function sendAccountDeactivatedEmail(email: string, username: string) {
+  await getTransporter().sendMail({
+    from: FROM,
+    to: email,
+    subject: 'Your TactiHub account has been deactivated',
+    html: emailTemplate(`
+      <h1 style="color:#c3c9cc;font-size:22px;margin:0 0 16px 0;">Account Deactivated</h1>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        Hi <strong style="color:#c3c9cc;">${username}</strong>,
+      </p>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        Your TactiHub account has been deactivated. You can reactivate it by contacting an administrator within the next 30 days.
+      </p>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        After 30 days, your account and all associated data (battle plans, drawings, rooms) will be permanently deleted.
+      </p>
+      <p style="color:#6b7280;font-size:12px;margin:16px 0 0 0;">If you did not request this, please contact an administrator immediately.</p>
+    `),
+  });
+}
+
+export async function sendAccountDeletedEmail(email: string) {
+  await getTransporter().sendMail({
+    from: FROM,
+    to: email,
+    subject: 'Your TactiHub account has been permanently deleted',
+    html: emailTemplate(`
+      <h1 style="color:#c3c9cc;font-size:22px;margin:0 0 16px 0;">Account Deleted</h1>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        Your TactiHub account has been permanently deleted along with all associated data.
+      </p>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        If you wish to use TactiHub again, you can create a new account.
+      </p>
+    `),
+  });
+}

@@ -24,6 +24,8 @@ export const CURSOR_TIMEOUT_MS = 30000;
 export const ACCESS_TOKEN_EXPIRY = '15m';
 export const REFRESH_TOKEN_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
+export const DELETION_GRACE_PERIOD_DAYS = 30;
+
 export const DRAW_TYPES = ['path', 'line', 'rectangle', 'text', 'icon'] as const;
 
 export const GADGET_CATEGORIES = ['unique', 'secondary', 'general'] as const;
@@ -39,4 +41,4 @@ export const ZOOM_STEP = 0.1;
 
 export const DEFAULT_ADMIN_EMAIL = 'admin@tactihub.local';
 
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.5.1';
