@@ -266,6 +266,45 @@ export default async function authRoutes(fastify: FastifyInstance) {
     return { message: 'Email verified successfully. You can now log in.' };
   });
 
+  // POST /api/auth/change-credentials
+  fastify.post('/change-credentials', { preHandler: [requireAuth] }, async (request, reply) => {
+    const body = z.object({
+      currentPassword: z.string().min(1),
+      email: z.string().email(),
+      password: z.string().min(8),
+    }).parse(request.body);
+
+    const [user] = await db.select().from(users).where(eq(users.id, request.user!.userId));
+    if (!user) {
+      return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+    }
+
+    const validPassword = await verifyPassword(body.currentPassword, user.passwordHash);
+    if (!validPassword) {
+      return reply.status(401).send({ error: 'Unauthorized', message: 'Current password is incorrect', statusCode: 401 });
+    }
+
+    const passwordHash = await hashPassword(body.password);
+    const [updated] = await db.update(users).set({
+      email: body.email,
+      passwordHash,
+      emailVerifiedAt: new Date(), // Skip verification for admin credential change
+      updatedAt: new Date(),
+    }).where(eq(users.id, user.id)).returning();
+
+    return {
+      data: {
+        id: updated.id,
+        username: updated.username,
+        email: updated.email,
+        emailVerifiedAt: updated.emailVerifiedAt?.toISOString() ?? null,
+        role: updated.role,
+        createdAt: updated.createdAt.toISOString(),
+        updatedAt: updated.updatedAt.toISOString(),
+      },
+    };
+  });
+
   // GET /api/auth/me
   fastify.get('/me', { preHandler: [requireAuth] }, async (request) => {
     const [user] = await db.select().from(users).where(eq(users.id, request.user!.userId));

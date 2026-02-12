@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import { apiGet } from '@/lib/api';
@@ -7,6 +7,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ProtectedRoute, AdminRoute } from '@/components/auth/ProtectedRoute';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DEFAULT_ADMIN_EMAIL } from '@tactihub/shared';
 
 // Lazy loaded pages
 const HomePage = lazy(() => import('@/features/home/HomePage'));
@@ -44,6 +45,7 @@ function PageLoader() {
 
 export function App() {
   const { setAuth } = useAuthStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Try to restore session on load
@@ -51,6 +53,10 @@ export function App() {
       .then((res) => {
         if (res.data) {
           setAuth(res.data.user, res.data.accessToken);
+          // Force credential change if using default admin email
+          if (res.data.user.email === DEFAULT_ADMIN_EMAIL) {
+            navigate('/auth/login');
+          }
         }
       })
       .catch(() => {

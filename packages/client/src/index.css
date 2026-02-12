@@ -2,6 +2,74 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Gaming-style animations */
+@keyframes border-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px oklch(0.68 0.19 45 / 0.3); }
+  50% { box-shadow: 0 0 20px oklch(0.68 0.19 45 / 0.6); }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(16px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-border-glow {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.68 0.19 45 / 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.gaming-input:focus {
+  box-shadow: 0 0 0 1px oklch(0.68 0.19 45 / 0.5), 0 0 12px oklch(0.68 0.19 45 / 0.2);
+}
+
+.gaming-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.gaming-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, oklch(1 0 0 / 0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+  pointer-events: none;
+}
+
 @theme {
   /* Dark theme with orange/red primary matching TactiHub logo */
   /* Logo colors: #fd7100 -> #da2c00 (orange/red), #c3c9cc -> #3c4653 (grays) */
