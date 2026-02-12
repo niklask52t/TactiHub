@@ -9,6 +9,8 @@ export enum Tool {
   Eraser = 'eraser',
   Select = 'select',
   Pan = 'pan',
+  LaserDot = 'laser-dot',
+  LaserLine = 'laser-line',
 }
 
 export interface CanvasState {

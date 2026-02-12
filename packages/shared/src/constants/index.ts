@@ -39,4 +39,4 @@ export const ZOOM_STEP = 0.1;
 
 export const DEFAULT_ADMIN_EMAIL = 'admin@tactihub.local';
 
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.5.0';

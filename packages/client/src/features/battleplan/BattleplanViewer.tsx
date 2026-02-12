@@ -109,10 +109,12 @@ export default function BattleplanViewer() {
         </Card>
       )}
 
-      <CanvasView
-        floors={plan.floors || []}
-        readOnly
-      />
+      <div className="h-[calc(100vh-14rem)]">
+        <CanvasView
+          floors={plan.floors || []}
+          readOnly
+        />
+      </div>
     </div>
   );
 }

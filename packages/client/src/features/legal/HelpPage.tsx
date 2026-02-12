@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -52,10 +52,37 @@ export default function HelpPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
+                <Sticker className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium">Icon</p>
+                  <p className="text-sm text-muted-foreground">Place operator or gadget icons on the map. Select an icon from the picker, then click to place.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
                 <Move className="h-5 w-5 mt-0.5 text-primary shrink-0" />
                 <div>
                   <p className="font-medium">Pan</p>
                   <p className="text-sm text-muted-foreground">Click and drag to move around the map. Also works with middle mouse button.</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <p className="font-medium">Laser Pointer Tools</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-start gap-3">
+                <Crosshair className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium">Laser Dot</p>
+                  <p className="text-sm text-muted-foreground">Shows a glowing dot at your cursor position, visible to all room members. Useful for pointing at specific spots.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Presentation className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium">Laser Line</p>
+                  <p className="text-sm text-muted-foreground">Click and drag to draw a temporary line visible to all room members. The line fades out over 3 seconds after releasing.</p>
                 </div>
               </div>
             </div>

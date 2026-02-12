@@ -2,7 +2,7 @@ import type { Server, Socket } from 'socket.io';
 import { roomStates } from '../index.js';
 
 export function setupCursorHandlers(io: Server, socket: Socket, userId: string) {
-  socket.on('cursor:move', ({ x, y, floorId }) => {
+  socket.on('cursor:move', ({ x, y, floorId, isLaser }) => {
     // Find room and broadcast cursor to others
     for (const [connString, state] of roomStates) {
       const user = state.users.get(socket.id);
@@ -13,6 +13,7 @@ export function setupCursorHandlers(io: Server, socket: Socket, userId: string) 
           y,
           floorId,
           color: user.color,
+          isLaser: isLaser || false,
         });
         break;
       }

@@ -138,8 +138,25 @@ export default function ImpressumPage() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="default">v1.4.0</Badge>
+                <Badge variant="default">v1.5.0</Badge>
                 <span className="text-xs text-muted-foreground">Current</span>
+              </div>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
+                <li>Drawings now stay permanent after releasing the mouse button</li>
+                <li>Laser Pointer tools: Laser Dot (pulsating point) and Laser Line (fading trail, 3s)</li>
+                <li>Operator and gadget icon placement on canvas via Icon tool</li>
+                <li>Map cover images for all 21 R6 maps (from Ubisoft)</li>
+                <li>Fixed Settings link in Tokens page causing logout</li>
+                <li>Removed grey loading bar at bottom of page</li>
+                <li>Fixed infinite horizontal scroll bug</li>
+                <li>Fixed black canvas on initial plan load</li>
+                <li>README table of contents with anchor links</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline">v1.4.0</Badge>
               </div>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
                 <li>Floor image variants: Blueprint, Darkprint, and Whiteprint per floor</li>

@@ -19,13 +19,14 @@ export interface CursorPosition {
   y: number;
   floorId: string;
   color: string;
+  isLaser?: boolean;
 }
 
 export interface SocketEvents {
   // Client -> Server
   'room:join': { connectionString: string };
   'room:leave': { connectionString: string };
-  'cursor:move': { x: number; y: number; floorId: string };
+  'cursor:move': { x: number; y: number; floorId: string; isLaser?: boolean };
   'draw:create': { battleplanFloorId: string; draws: CreateDrawPayload[] };
   'draw:delete': { drawIds: string[] };
   'draw:update': { drawId: string; data: Record<string, unknown> };

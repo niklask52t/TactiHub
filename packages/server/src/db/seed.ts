@@ -69,6 +69,7 @@ async function seed() {
         name: map.name,
         slug: map.slug,
         isCompetitive: map.isCompetitive,
+        thumbnail: `/maps/${map.slug}-cover.webp`,
       }).returning();
 
       for (let i = 0; i < map.floors.length; i++) {

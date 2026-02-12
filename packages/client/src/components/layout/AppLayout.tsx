@@ -21,10 +21,9 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background gaming-bg relative">
-      {/* Glow lines */}
+    <div className="min-h-screen bg-background gaming-bg relative overflow-x-hidden">
+      {/* Glow line */}
       <div className="gaming-glow-line top-0 left-0 z-50" />
-      <div className="gaming-glow-line bottom-0 right-0 z-50" style={{ animationDelay: '2s' }} />
 
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between px-4">

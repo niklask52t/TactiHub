@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { toast } from 'sonner';
 import { Plus, Trash2, Copy, Info } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface Token {
   id: string; token: string; createdBy: string; usedBy: string | null;
@@ -85,7 +86,7 @@ export default function TokensPage() {
       {publicRegEnabled && (
         <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
           <Info className="h-4 w-4 text-primary shrink-0" />
-          <p>Public registration is enabled. Tokens are not required. Disable public registration in <a href="/admin/settings" className="text-primary underline">Settings</a> to use token-based registration.</p>
+          <p>Public registration is enabled. Tokens are not required. Disable public registration in <Link to="/admin/settings" className="text-primary underline">Settings</Link> to use token-based registration.</p>
         </div>
       )}
 

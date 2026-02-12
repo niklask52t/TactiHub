@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.4.0
+**Version**: 1.5.0
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -102,9 +102,22 @@ packages/
 7. **Admin manual verification**: PUT /api/admin/users/:id/verify — verifies a user without email, sends notification email
 8. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side
 
+### Laser Pointer (non-persistent, multiplayer)
+- **Laser Dot**: Tool.LaserDot — sends cursor position via `cursor:move` with `isLaser: true`, rendered as glowing dot on peers' active canvas
+- **Laser Line**: Tool.LaserLine — collects points on drag, sends via `laser:line` socket event, fades over 3 seconds after release
+- Both are **not persisted** to database — purely ephemeral broadcast
+
+### Icon Tool (Operator/Gadget placement)
+- Tool.Icon in toolbar shows IconPicker popover with operators (by side) and gadgets (with icons)
+- IconPicker fetches from `/api/games/:slug/operators` and `/api/games/:slug/gadgets`
+- Game slug comes from battleplan response (now includes `game: { id, slug, name }`)
+- Click places `type: 'icon'` draw with `{ iconUrl, size: 40 }` — persisted like other draws
+
 ### Socket.IO Events
-- Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`
-- Server emits: `room:joined`, `room:user-joined`, `room:user-left`, `cursor:moved`, `draw:created`, `draw:deleted`, `draw:updated`, `operator-slot:updated`, `battleplan:changed`
+- Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`, `laser:line`
+- Server emits: `room:joined`, `room:user-joined`, `room:user-left`, `cursor:moved`, `draw:created`, `draw:deleted`, `draw:updated`, `operator-slot:updated`, `battleplan:changed`, `laser:line`
+- `cursor:move` now includes optional `isLaser` flag for laser dot rendering
+- `laser:line` broadcasts `{ userId, points, color }` — no DB persistence
 - 10 colors in pool, assigned to users on room join
 - Guest connections are allowed but cannot emit draw/update events
 
@@ -134,7 +147,7 @@ packages/
 ### Shared
 - Types in `src/types/` (auth, game, battleplan, room, admin, api, canvas)
 - Constants in `src/constants/index.ts` (includes `APP_VERSION`)
-- `Tool` enum is in `src/types/canvas.ts`
+- `Tool` enum is in `src/types/canvas.ts` (Pen, Line, Rectangle, Text, Icon, Eraser, Select, Pan, LaserDot, LaserLine)
 - Barrel export from `src/index.ts` (uses `export type *` for type-only re-exports)
 
 ---
@@ -188,10 +201,10 @@ docker compose down -v      # Stop + delete ALL data (pgdata + redisdata volumes
 - The client uses `tsc -b` (project references) for build — `shared` must have `composite: true`
 - `tsconfig.node.json` in client is for vite.config.ts only
 - `noUnusedLocals` and `noUnusedParameters` are enabled in client — remove unused imports
-- Seed data includes: 1 admin user, 2 games (R6 + Valorant), 21 R6 maps with correct floor counts, operators/agents, gadgets/abilities
+- Seed data includes: 1 admin user, 2 games (R6 + Valorant), 21 R6 maps with correct floor counts + cover thumbnails, operators/agents, gadgets/abilities
 - Admin login after seed: `admin` / `admin@tactihub.local` / `changeme` (forced credential change on first login)
 - Upload directory structure: `uploads/{games,maps,operators,gadgets}/` — maps/ and gadgets/ are tracked in git (pre-seeded), games/ and operators/ are gitignored
-- Pre-seeded images: 165 map floor WebP + 23 gadget icon WebP committed to repo, referenced by seed via deterministic names (`{slug}-{num}-{variant}.webp`)
+- Pre-seeded images: 165 map floor WebP + 23 gadget icon WebP + 21 map cover WebP committed to repo, referenced by seed via deterministic names (`{slug}-{num}-{variant}.webp`, `{slug}-cover.webp`)
 - Images uploaded via admin panel are processed by Sharp (resized, converted to WebP) and override the seed paths in the DB
 - `processUpload()` returns `null` for empty file buffers (e.g. form submits without selecting a file) — callers skip processing
 - Radix UI Switch sends "on" in FormData, not "true" — client normalizes to "true"/"false" before sending

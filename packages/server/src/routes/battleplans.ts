@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, sql, count } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../db/connection.js';
-import { battleplans, battleplanFloors, draws, operatorSlots, mapFloors, votes, users, operators } from '../db/schema/index.js';
+import { battleplans, battleplanFloors, draws, operatorSlots, mapFloors, votes, users, operators, games } from '../db/schema/index.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { MAX_OPERATOR_SLOTS } from '@tactihub/shared';
 
@@ -14,6 +14,9 @@ async function getBattleplanWithDetails(id: string, userId?: string) {
     id: users.id,
     username: users.username,
   }).from(users).where(eq(users.id, plan.ownerId));
+
+  const [game] = await db.select({ id: games.id, slug: games.slug, name: games.name })
+    .from(games).where(eq(games.id, plan.gameId));
 
   const floors = await db.select().from(battleplanFloors).where(eq(battleplanFloors.battleplanId, id));
 
@@ -54,6 +57,7 @@ async function getBattleplanWithDetails(id: string, userId?: string) {
   return {
     ...plan,
     owner,
+    game,
     floors: floorsWithDraws,
     operatorSlots: slotsWithOperators,
     voteCount,

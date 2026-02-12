@@ -10,17 +10,27 @@ interface Floor {
   draws?: any[];
 }
 
+export interface LaserLineData {
+  userId: string;
+  points: Array<{ x: number; y: number }>;
+  color: string;
+  fadeStart?: number;
+}
+
 interface CanvasLayerProps {
   floor: Floor;
   readOnly?: boolean;
   onDrawCreate?: (floorId: string, draws: any[]) => void;
   onDrawDelete?: (drawIds: string[]) => void;
+  onLaserLine?: (points: Array<{ x: number; y: number }>, color: string) => void;
+  onCursorMove?: (x: number, y: number, isLaser: boolean) => void;
   peerDraws?: any[];
-  cursors?: Map<string, { x: number; y: number; color: string; userId: string }>;
+  peerLaserLines?: LaserLineData[];
+  cursors?: Map<string, { x: number; y: number; color: string; userId: string; isLaser?: boolean }>;
   activeImagePath?: string;
 }
 
-export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, peerDraws, cursors, activeImagePath }: CanvasLayerProps) {
+export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerDraws, peerLaserLines, cursors, activeImagePath }: CanvasLayerProps) {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,6 +44,11 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
   const [currentPath, setCurrentPath] = useState<Array<{ x: number; y: number }>>([]);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 });
+
+  // Laser pointer state
+  const laserPointsRef = useRef<Array<{ x: number; y: number }>>([]);
+  const [laserFadeLines, setLaserFadeLines] = useState<Array<{ points: Array<{ x: number; y: number }>; color: string; fadeStart: number }>>([]);
+  const laserThrottleRef = useRef(0);
 
   // Resolve the image path: prefer activeImagePath prop, fall back to floor.mapFloor.imagePath
   const resolvedImagePath = activeImagePath ?? floor.mapFloor?.imagePath;
@@ -144,7 +159,22 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     ctx.restore();
   }
 
-  // Render cursors + active drawing preview
+  // Laser fade animation loop
+  useEffect(() => {
+    const allFading = [...laserFadeLines, ...(peerLaserLines?.filter((l) => l.fadeStart) || [])];
+    if (allFading.length === 0) return;
+
+    let animId: number;
+    const animate = () => {
+      const now = Date.now();
+      setLaserFadeLines((prev) => prev.filter((l) => now - l.fadeStart < 3000));
+      animId = requestAnimationFrame(animate);
+    };
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, [laserFadeLines.length, peerLaserLines]);
+
+  // Render cursors + active drawing preview + laser effects
   useEffect(() => {
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
@@ -167,16 +197,74 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       ctx.stroke();
     }
 
-    // Draw peer cursors
+    // Draw peer cursors (with laser dot glow for laser-dot users)
     if (cursors) {
       for (const [, cursor] of cursors) {
-        ctx.beginPath();
-        ctx.fillStyle = cursor.color;
-        ctx.arc(cursor.x, cursor.y, 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.save();
+        if (cursor.isLaser) {
+          // Pulsating laser dot
+          ctx.beginPath();
+          ctx.fillStyle = cursor.color;
+          ctx.shadowColor = cursor.color;
+          ctx.shadowBlur = 15;
+          ctx.arc(cursor.x, cursor.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.fillStyle = cursor.color;
+          ctx.arc(cursor.x, cursor.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
       }
     }
-  }, [cursors, isDrawing, currentPath, color, lineWidth]);
+
+    // Draw fading laser lines (local)
+    const now = Date.now();
+    for (const line of laserFadeLines) {
+      const elapsed = now - line.fadeStart;
+      const alpha = Math.max(0, 1 - elapsed / 3000);
+      if (alpha <= 0 || line.points.length < 2) continue;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = line.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = line.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(line.points[0]!.x, line.points[0]!.y);
+      for (let i = 1; i < line.points.length; i++) {
+        ctx.lineTo(line.points[i]!.x, line.points[i]!.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw fading peer laser lines
+    for (const line of (peerLaserLines || [])) {
+      const fadeStart = line.fadeStart || now;
+      const elapsed = now - fadeStart;
+      const alpha = line.fadeStart ? Math.max(0, 1 - elapsed / 3000) : 1;
+      if (alpha <= 0 || line.points.length < 2) continue;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = line.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = line.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(line.points[0]!.x, line.points[0]!.y);
+      for (let i = 1; i < line.points.length; i++) {
+        ctx.lineTo(line.points[i]!.x, line.points[i]!.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  }, [cursors, isDrawing, currentPath, color, lineWidth, laserFadeLines, peerLaserLines]);
 
   // Convert screen coordinates to canvas coordinates accounting for viewport transform
   const getCanvasCoords = (e: React.MouseEvent): { x: number; y: number } => {
@@ -232,6 +320,39 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       return;
     }
 
+    // LaserDot: no drawing, just cursor broadcast (handled by RoomPage cursor logic)
+    if (tool === Tool.LaserDot) {
+      return;
+    }
+
+    // Icon tool: place icon at click position
+    if (tool === Tool.Icon) {
+      const { selectedIcon } = useCanvasStore.getState();
+      if (selectedIcon) {
+        const pos = getCanvasCoords(e);
+        const iconUrl = selectedIcon.url ? `/uploads${selectedIcon.url}` : '';
+        const draw = {
+          type: 'icon',
+          originX: pos.x,
+          originY: pos.y,
+          data: { iconUrl, size: 40 },
+        };
+        // Optimistic render
+        const drawCtx = drawCanvasRef.current?.getContext('2d');
+        if (drawCtx) renderDraw(drawCtx, draw);
+        onDrawCreate?.(floor.id, [draw]);
+      }
+      return;
+    }
+
+    // LaserLine: start collecting points
+    if (tool === Tool.LaserLine) {
+      const pos = getCanvasCoords(e);
+      laserPointsRef.current = [pos];
+      setIsDrawing(true);
+      return;
+    }
+
     const pos = getCanvasCoords(e);
     setIsDrawing(true);
     setStartPoint(pos);
@@ -251,8 +372,48 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       return;
     }
 
+    // Emit cursor position for all tools (with laser flag for LaserDot)
+    {
+      const pos = getCanvasCoords(e);
+      onCursorMove?.(pos.x, pos.y, tool === Tool.LaserDot);
+    }
+
     if (!isDrawing || readOnly) return;
     const pos = getCanvasCoords(e);
+
+    // LaserLine: collect points and broadcast periodically
+    if (tool === Tool.LaserLine) {
+      laserPointsRef.current.push(pos);
+      // Throttle laser line broadcasts (~50ms)
+      const now = Date.now();
+      if (now - laserThrottleRef.current > 50) {
+        laserThrottleRef.current = now;
+        onLaserLine?.(laserPointsRef.current, color);
+      }
+      // Draw laser line preview on active canvas
+      const canvas = activeCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx && laserPointsRef.current.length > 1) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.moveTo(laserPointsRef.current[0]!.x, laserPointsRef.current[0]!.y);
+          for (let i = 1; i < laserPointsRef.current.length; i++) {
+            ctx.lineTo(laserPointsRef.current[i]!.x, laserPointsRef.current[i]!.y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      return;
+    }
 
     if (tool === Tool.Pen) {
       setCurrentPath((prev) => [...prev, pos]);
@@ -303,11 +464,22 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     const pos = getCanvasCoords(e);
     setIsDrawing(false);
 
-    // Clear active canvas
-    const canvas = activeCanvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    // LaserLine: send final points and start fade
+    if (tool === Tool.LaserLine) {
+      const points = [...laserPointsRef.current, pos];
+      onLaserLine?.(points, color);
+      // Add to local fade lines
+      if (points.length > 1) {
+        setLaserFadeLines((prev) => [...prev, { points, color, fadeStart: Date.now() }]);
+      }
+      laserPointsRef.current = [];
+      // Clear active canvas
+      const canvas = activeCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      return;
     }
 
     let draw: any = null;
@@ -356,6 +528,19 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       }
     }
 
+    // Optimistically render the draw on the persistent draw canvas before clearing preview
+    if (draw) {
+      const drawCtx = drawCanvasRef.current?.getContext('2d');
+      if (drawCtx) renderDraw(drawCtx, draw);
+    }
+
+    // Clear active canvas (preview)
+    const canvas = activeCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
     if (draw && onDrawCreate) {
       onDrawCreate(floor.id, [draw]);
     }
@@ -369,13 +554,14 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     if (isPanning) return 'grabbing';
     if (tool === Tool.Pan) return 'grab';
     if (tool === Tool.Eraser) return 'pointer';
+    if (tool === Tool.LaserDot || tool === Tool.LaserLine) return 'crosshair';
     return 'crosshair';
   };
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden border rounded-lg bg-black/50"
+      className="relative w-full h-full overflow-hidden border rounded-lg bg-black/50"
       onContextMenu={(e) => e.preventDefault()}
     >
       <div

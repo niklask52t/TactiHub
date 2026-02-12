@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { CanvasLayer } from './CanvasLayer';
+import { useState, useMemo, useEffect } from 'react';
+import { CanvasLayer, type LaserLineData } from './CanvasLayer';
 import { Compass } from './Compass';
 import { Button } from '@/components/ui/button';
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
@@ -28,6 +28,10 @@ interface CanvasViewProps {
   readOnly?: boolean;
   onDrawCreate?: (floorId: string, draws: any[]) => void;
   onDrawDelete?: (drawIds: string[]) => void;
+  onLaserLine?: (points: Array<{ x: number; y: number }>, color: string) => void;
+  onCursorMove?: (x: number, y: number, isLaser: boolean) => void;
+  peerLaserLines?: LaserLineData[];
+  cursors?: Map<string, { x: number; y: number; color: string; userId: string; isLaser?: boolean }>;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -36,7 +40,7 @@ const VIEW_MODE_LABELS: Record<ViewMode, string> = {
   white: 'Whiteprint',
 };
 
-export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete }: CanvasViewProps) {
+export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerLaserLines, cursors }: CanvasViewProps) {
   const { scale, zoomTo, resetViewport, offsetX, offsetY } = useCanvasStore();
 
   const sortedFloors = useMemo(() =>
@@ -67,6 +71,9 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
     return mf.imagePath;
   }, [currentFloor?.mapFloor, viewMode]);
 
+  // Reset viewport when switching floors
+  useEffect(() => { resetViewport(); }, [currentFloorIndex]);
+
   const goUp = () => setCurrentFloorIndex((i) => Math.min(i + 1, sortedFloors.length - 1));
   const goDown = () => setCurrentFloorIndex((i) => Math.max(i - 1, 0));
 
@@ -92,7 +99,7 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
   }
 
   return (
-    <div className="relative" tabIndex={0} onKeyDown={handleKeyDown}>
+    <div className="relative h-full" tabIndex={0} onKeyDown={handleKeyDown}>
       {/* Floor switcher — top right */}
       <div className="absolute top-4 right-4 z-10 flex flex-col items-center gap-1 bg-background/90 rounded-lg border p-2">
         <Button variant="ghost" size="sm" onClick={goUp} disabled={currentFloorIndex >= sortedFloors.length - 1}>
@@ -146,6 +153,10 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
         readOnly={readOnly}
         onDrawCreate={onDrawCreate}
         onDrawDelete={onDrawDelete}
+        onLaserLine={onLaserLine}
+        onCursorMove={onCursorMove}
+        peerLaserLines={peerLaserLines}
+        cursors={cursors}
         activeImagePath={activeImagePath}
       />
     </div>

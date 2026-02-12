@@ -34,6 +34,14 @@ const faqs = [
     a: 'Yes. Press Ctrl+Z to undo and Ctrl+Y (or Ctrl+Shift+Z) to redo. You can also use the undo/redo buttons in the toolbar.',
   },
   {
+    q: 'How do I use the laser pointer?',
+    a: 'Select the Laser Dot tool (crosshair icon) to show a glowing pointer at your cursor position, visible to all room members. Select the Laser Line tool (presentation icon) to draw temporary lines that fade out over 3 seconds after you release the mouse button. Laser pointer tools are not saved — they are purely for live communication.',
+  },
+  {
+    q: 'How do I place operators or gadgets on the map?',
+    a: 'Select the Icon tool (sticker icon) in the toolbar. A picker will appear showing available operators and gadgets for the current game. Select an icon, then click anywhere on the canvas to place it. Placed icons are saved like regular drawings and can be removed with the eraser.',
+  },
+  {
     q: 'How do rooms work?',
     a: 'Create a room by selecting a game and map. Share the room link or code with teammates. Everyone in the room can draw together in real-time and see each other\'s cursors.',
   },

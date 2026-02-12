@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet, apiPost, apiDelete } from '@/lib/api';
@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { ArrowLeft, Copy, Users, AlertTriangle } from 'lucide-react';
 import type { CursorPosition } from '@tactihub/shared';
+import { CURSOR_THROTTLE_MS } from '@tactihub/shared';
+import type { LaserLineData } from '@/features/canvas/CanvasLayer';
 
 export default function RoomPage() {
   const { connectionString } = useParams<{ connectionString: string }>();
@@ -24,6 +26,11 @@ export default function RoomPage() {
   } = useRoomStore();
 
   const { pushMyDraw, popUndo, popRedo, clearHistory } = useCanvasStore();
+  const cursors = useRoomStore((s) => s.cursors);
+
+  // Peer laser lines state
+  const [peerLaserLines, setPeerLaserLines] = useState<LaserLineData[]>([]);
+  const cursorThrottleRef = useRef(0);
 
   useEffect(() => {
     if (!connectionString) return;
@@ -65,6 +72,14 @@ export default function RoomPage() {
       setBattleplan(bp);
     });
 
+    socket.on('laser:line', ({ userId, points, color }: { userId: string; points: Array<{ x: number; y: number }>; color: string }) => {
+      setPeerLaserLines((prev) => {
+        // Replace existing line from same user, or add new
+        const filtered = prev.filter((l) => l.userId !== userId);
+        return [...filtered, { userId, points, color, fadeStart: undefined }];
+      });
+    });
+
     return () => {
       socket.emit('room:leave', { connectionString });
       socket.off('room:joined');
@@ -74,6 +89,7 @@ export default function RoomPage() {
       socket.off('draw:created');
       socket.off('draw:deleted');
       socket.off('battleplan:changed');
+      socket.off('laser:line');
       disconnectSocket();
       clearHistory();
       reset();
@@ -94,6 +110,8 @@ export default function RoomPage() {
     enabled: !!roomData?.data?.battleplanId,
   });
 
+  const gameSlug = planData?.data?.game?.slug as string | undefined;
+
   useEffect(() => {
     if (planData?.data) {
       setBattleplan(planData.data);
@@ -110,6 +128,7 @@ export default function RoomPage() {
       for (const created of res.data) {
         pushMyDraw({ id: created.id, floorId, payload: drawItems[0] });
       }
+      refetchPlan();
     } catch {
       // Persistence failed silently
     }
@@ -156,6 +175,41 @@ export default function RoomPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleUndo, handleRedo, isAuthenticated]);
 
+  const handleLaserLine = useCallback((points: Array<{ x: number; y: number }>, color: string) => {
+    const socket = getSocket();
+    socket.emit('laser:line', { points, color });
+  }, []);
+
+  const handleCursorMove = useCallback((x: number, y: number, isLaser: boolean) => {
+    const now = Date.now();
+    if (now - cursorThrottleRef.current < CURSOR_THROTTLE_MS) return;
+    cursorThrottleRef.current = now;
+    const socket = getSocket();
+    const floorId = battleplan?.floors?.[0]?.id || '';
+    socket.emit('cursor:move', { x, y, floorId, isLaser });
+  }, [battleplan]);
+
+  // When a peer laser line hasn't been updated for 100ms, start its fade
+  useEffect(() => {
+    if (peerLaserLines.length === 0) return;
+    const timer = setTimeout(() => {
+      setPeerLaserLines((prev) =>
+        prev.map((l) => l.fadeStart ? l : { ...l, fadeStart: Date.now() })
+      );
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [peerLaserLines]);
+
+  // Clean up fully faded peer laser lines
+  useEffect(() => {
+    if (peerLaserLines.length === 0) return;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      setPeerLaserLines((prev) => prev.filter((l) => !l.fadeStart || now - l.fadeStart < 3000));
+    }, 500);
+    return () => clearInterval(timer);
+  }, [peerLaserLines.length]);
+
   const copyInviteLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/room/${connectionString}`);
     toast.success('Invite link copied!');
@@ -198,7 +252,7 @@ export default function RoomPage() {
       {/* Toolbar */}
       {isAuthenticated && (
         <div className="flex justify-center py-2 border-b">
-          <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
+          <Toolbar onUndo={handleUndo} onRedo={handleRedo} gameSlug={gameSlug} />
         </div>
       )}
 
@@ -210,6 +264,10 @@ export default function RoomPage() {
             readOnly={!isAuthenticated}
             onDrawCreate={handleDrawCreate}
             onDrawDelete={handleDrawDelete}
+            onLaserLine={handleLaserLine}
+            onCursorMove={handleCursorMove}
+            peerLaserLines={peerLaserLines}
+            cursors={cursors}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">

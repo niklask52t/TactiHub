@@ -26,6 +26,14 @@ export function setupDrawingHandlers(io: Server, socket: Socket, userId: string)
 
     socket.to(connString).emit('draw:updated', { userId, drawId, data });
   });
+
+  // Laser pointer — broadcast only, not persisted
+  socket.on('laser:line', ({ points, color }) => {
+    const connString = getSocketRoom(socket);
+    if (!connString) return;
+
+    socket.to(connString).emit('laser:line', { userId, points, color });
+  });
 }
 
 function getSocketRoom(socket: Socket): string | null {
