@@ -147,7 +147,8 @@ pnpm db:migrate             # Apply database migrations
 pnpm db:seed                # Seed admin user + game data
 pnpm db:studio              # Open Drizzle Studio
 docker compose up -d        # Start PostgreSQL + Redis
-docker compose down -v      # Stop + delete all data
+docker compose down         # Stop containers (data stays in volumes)
+docker compose down -v      # Stop + delete ALL data (pgdata + redisdata volumes)
 ```
 
 ---
@@ -159,9 +160,47 @@ docker compose down -v      # Stop + delete all data
 - `tsconfig.node.json` in client is for vite.config.ts only
 - `noUnusedLocals` and `noUnusedParameters` are enabled in client — remove unused imports
 - Seed data includes: 1 admin user, 2 games (R6 + Valorant), maps with floors, operators/agents, gadgets/abilities
-- Admin login after seed: `admin` / `admin@tactihub.local` / `changeme`
+- Admin login after seed: `admin` / `admin@tactihub.local` / `changeme` (accepts username OR email)
 - Upload directory structure: `uploads/{games,maps,operators,gadgets}/`
 - Images uploaded via admin panel are processed by Sharp (resized, converted to WebP)
+
+---
+
+## Known Gotchas / Deployment Notes
+
+### Vite dev server only listens on localhost
+Even with `host: true` in `vite.config.ts`, Vite may ignore it. To expose to the network:
+```bash
+pnpm --filter @tactihub/client exec vite --host
+```
+Or start server and client in separate terminals:
+```bash
+# Terminal 1 — Backend
+pnpm --filter @tactihub/server dev
+# Terminal 2 — Frontend (network-accessible)
+pnpm --filter @tactihub/client exec vite --host
+```
+
+### drizzle-kit cannot resolve .js extensions
+drizzle-kit uses CJS `require()` internally which cannot resolve `.js` → `.ts` imports. All `db:generate`, `db:migrate`, `db:seed`, and `db:studio` scripts run through `tsx` to handle this. Do NOT remove the `tsx` prefix from these scripts in `packages/server/package.json`.
+
+### dotenv path resolution
+When `pnpm --filter` runs scripts, cwd is `packages/server/`, not project root. The `.env` file lives in the project root. All server entry points (`index.ts`, `connection.ts`, `seed.ts`, `drizzle.config.ts`) must use:
+```typescript
+import { config } from 'dotenv';
+config({ path: '../../.env' });
+```
+Do NOT use `import 'dotenv/config'` — it loads `.env` from cwd which is wrong.
+
+### docker compose down -v deletes everything
+`-v` removes named volumes. This deletes:
+- `pgdata` — the entire PostgreSQL database (users, games, maps, battleplans, everything)
+- `redisdata` — Redis persistence (sessions, refresh tokens)
+
+Code, `.env`, and upload files on disk are NOT affected. After `down -v` you must re-run `db:generate`, `db:migrate`, `db:seed`.
+
+### Server must be running for client to work
+The Vite dev client proxies all `/api/*` and `/socket.io` requests to `localhost:3001`. If the server is not running, you get `ECONNREFUSED` errors and no data loads. Always start the server before/alongside the client.
 
 ---
 

@@ -228,21 +228,35 @@ The seed creates:
 
 ### 7. Start development servers
 
+**Option A — Localhost only (single command):**
+
 ```bash
 pnpm dev
 ```
 
-This starts both:
-- **Server** at `http://localhost:3001`
-- **Client** at `http://localhost:5173`
+This starts both the server (port 3001) and client (port 5173) on `localhost`.
 
-The Vite dev server proxies API requests (`/api/*`) and Socket.IO to the Fastify server automatically.
+**Option B — Network accessible (for remote servers / LXC containers):**
+
+Open two terminals:
+
+```bash
+# Terminal 1 — Backend API
+pnpm --filter @tactihub/server dev
+
+# Terminal 2 — Frontend (exposed to network)
+pnpm --filter @tactihub/client exec vite --host
+```
+
+The `--host` flag makes the Vite dev server listen on `0.0.0.0` so you can access it from other machines on your network.
+
+The Vite dev server proxies API requests (`/api/*`) and Socket.IO to the Fastify server on port 3001 automatically.
 
 ### 8. Open the app
 
-Navigate to `http://localhost:5173` in your browser.
+Navigate to `http://localhost:5173` (or `http://<server-ip>:5173` for remote access) in your browser.
 
-Log in with the default admin credentials to access the admin panel and manage games, maps, operators, etc.
+Log in with the default admin credentials to access the admin panel and manage games, maps, operators, etc. The login accepts both username and email.
 
 | Field | Value |
 |-------|-------|
@@ -266,7 +280,7 @@ Log in with the default admin credentials to access the admin panel and manage g
 | `pnpm db:studio` | Open Drizzle Studio (visual DB browser) |
 | `docker compose up -d` | Start PostgreSQL + Redis containers |
 | `docker compose down` | Stop containers (data persists in volumes) |
-| `docker compose down -v` | Stop containers and **delete all data** |
+| `docker compose down -v` | Stop containers and **delete all data** (DB + Redis) |
 
 ---
 
@@ -305,7 +319,7 @@ pnpm build
 
 ### Reset the database
 
-If you need to start fresh:
+If you need to start fresh (this **deletes all data** — users, battleplans, everything):
 
 ```bash
 # Stop containers and delete volumes
@@ -313,6 +327,9 @@ docker compose down -v
 
 # Restart containers
 docker compose up -d
+
+# Wait for PostgreSQL to be ready
+sleep 3
 
 # Re-run migrations and seed
 pnpm db:generate
@@ -327,6 +344,57 @@ pnpm db:studio
 ```
 
 This opens Drizzle Studio at `https://local.drizzle.studio` where you can browse and edit tables visually.
+
+---
+
+## Troubleshooting
+
+### "ECONNREFUSED" errors in Vite console / No data loads
+
+The backend server is not running. The Vite client proxies all API requests to `localhost:3001`. Start the server first:
+
+```bash
+pnpm --filter @tactihub/server dev
+```
+
+### Site not accessible from other machines on the network
+
+Vite defaults to `localhost` only. Start with `--host`:
+
+```bash
+pnpm --filter @tactihub/client exec vite --host
+```
+
+### `docker compose down -v` — What gets deleted?
+
+| Volume | Contents | Lost? |
+|--------|----------|-------|
+| `pgdata` | PostgreSQL database (users, games, maps, battleplans, everything) | **Yes** |
+| `redisdata` | Redis data (sessions, refresh tokens) | **Yes** |
+| Code / `.env` / uploads on disk | Source code, config, uploaded images | No |
+
+After `down -v`, re-run: `docker compose up -d && pnpm db:generate && pnpm db:migrate && pnpm db:seed`
+
+### `db:generate` fails with "Cannot find module './users.js'"
+
+The drizzle-kit scripts must run through `tsx`. Check that `packages/server/package.json` has:
+```json
+"db:generate": "tsx ./node_modules/drizzle-kit/bin.cjs generate"
+```
+
+### `db:migrate` fails with `url: undefined`
+
+The `.env` file is in the project root, but scripts run from `packages/server/`. Make sure `drizzle.config.ts` and `connection.ts` use:
+```typescript
+import { config } from 'dotenv';
+config({ path: '../../.env' });
+```
+
+### Login doesn't work
+
+- The login field accepts both **username** (`admin`) and **email** (`admin@tactihub.local`)
+- Default password is `changeme`
+- The seed user has email already verified. If you registered a new user, you must verify the email first (check SMTP config)
 
 ---
 
