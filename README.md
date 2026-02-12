@@ -31,8 +31,33 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Token-Based Registration** — Admin can toggle public registration on/off and create invite tokens for controlled access.
 - **Email Verification** — New accounts must verify their email. Admins can also manually verify users from the admin panel.
 - **Floor Layout Management** — Upload and manage floor layout images per map through the admin panel with reordering support.
-- **Dark Theme** — Built with a dark color scheme matching the TactiHub brand (orange/red + dark grays).
+- **Dark Theme** — Built with a dark color scheme matching the TactiHub brand (see color palette below).
 - **Help & FAQ** — Built-in help page with tool descriptions, keyboard shortcuts, and frequently asked questions.
+
+---
+
+## Color Palette
+
+The color scheme is derived from the TactiHub logo gradient and uses the [OKLCH](https://oklch.com/) color space in CSS. All colors are defined in `packages/client/src/index.css` via Tailwind v4 `@theme` variables.
+
+| Role | Hex | OKLCH | Usage |
+|------|-----|-------|-------|
+| **Primary** | `#fd7100` | `oklch(0.68 0.19 45)` | Buttons, links, accents, focus rings, glow effects |
+| **Primary Foreground** | `#ffffff` | `oklch(0.98 0 0)` | Text on primary-colored backgrounds |
+| **Destructive** | `#da2c00` | `oklch(0.55 0.22 25)` | Error states, delete actions, warnings |
+| **Background** | `#2a2f38` | `oklch(0.185 0.01 250)` | Page background |
+| **Foreground** | `#c3c9cc` | `oklch(0.88 0.005 250)` | Primary text color |
+| **Card** | `#323842` | `oklch(0.22 0.012 250)` | Card / dialog backgrounds |
+| **Secondary / Muted** | `#3c4653` | `oklch(0.28 0.015 250)` | Secondary backgrounds, inactive badges |
+| **Muted Foreground** | — | `oklch(0.65 0.01 250)` | Secondary text, labels, placeholders |
+| **Border / Input** | — | `oklch(0.32 0.015 250)` | Borders, input field outlines |
+| **Chart 1** | — | `oklch(0.68 0.19 45)` | Orange (matches primary) |
+| **Chart 2** | — | `oklch(0.55 0.22 25)` | Red-orange (matches destructive) |
+| **Chart 3** | — | `oklch(0.65 0.15 60)` | Amber |
+| **Chart 4** | — | `oklch(0.65 0.15 160)` | Teal |
+| **Chart 5** | — | `oklch(0.65 0.15 310)` | Purple |
+
+> **Logo colors**: The logo uses a gradient from `#fd7100` (orange) to `#da2c00` (red-orange), with gray tones from `#c3c9cc` to `#3c4653`.
 
 ---
 

@@ -134,9 +134,25 @@ packages/
 ## Theme / Design
 
 - **Dark mode only** (class="dark" on html element)
-- **Brand colors**: Orange/Red primary (#fd7100 → #da2c00), Dark blue-grays (#c3c9cc → #3c4653)
 - **CSS**: Tailwind v4 with CSS theme variables in `src/index.css` using oklch color space
 - **Logo**: `public/tactihub_logo.png` (icon + text), `public/tactihub_icon.png` (icon only, used as favicon)
+
+### Color Palette
+
+Derived from the TactiHub logo gradient (`#fd7100` → `#da2c00`) and dark grays (`#c3c9cc` → `#3c4653`).
+
+| Role | Hex | OKLCH | Usage |
+|------|-----|-------|-------|
+| **Primary** | `#fd7100` | `oklch(0.68 0.19 45)` | Buttons, links, accents, ring, glow effects |
+| **Primary Foreground** | `#ffffff` | `oklch(0.98 0 0)` | Text on primary backgrounds |
+| **Destructive** | `#da2c00` | `oklch(0.55 0.22 25)` | Errors, delete actions, warnings |
+| **Background** | `#2a2f38` | `oklch(0.185 0.01 250)` | Page background |
+| **Foreground** | `#c3c9cc` | `oklch(0.88 0.005 250)` | Primary text |
+| **Card** | `#323842` | `oklch(0.22 0.012 250)` | Card backgrounds |
+| **Secondary** | `#3c4653` | `oklch(0.28 0.015 250)` | Secondary backgrounds, muted areas |
+| **Muted Foreground** | — | `oklch(0.65 0.01 250)` | Secondary text, labels |
+| **Border / Input** | — | `oklch(0.32 0.015 250)` | Borders, input outlines |
+| **Chart 1–5** | — | orange, red-orange, amber, teal, purple | Data visualization |
 
 ---
 
