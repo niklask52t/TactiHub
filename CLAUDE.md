@@ -204,6 +204,7 @@ pnpm db:studio              # Open Drizzle Studio
 docker compose up -d        # Start PostgreSQL + Redis
 docker compose down         # Stop containers (data stays in volumes)
 docker compose down -v      # Stop + delete ALL data (pgdata + redisdata volumes)
+bash dev-reset.sh           # Full dev reset: pull dev, nuke DB, rebuild from scratch
 ```
 
 ---
