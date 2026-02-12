@@ -111,6 +111,16 @@ export async function getDeletionTokenUserId(redis: Redis, token: string): Promi
   return redis.get(`deletion:${token}`);
 }
 
+const MAGIC_LINK_EXPIRY_SECONDS = 900; // 15 minutes
+
+export async function storeMagicLinkToken(redis: Redis, userId: string, token: string) {
+  await redis.set(`magic-link:${token}`, userId, 'EX', MAGIC_LINK_EXPIRY_SECONDS);
+}
+
+export async function getMagicLinkUserId(redis: Redis, token: string): Promise<string | null> {
+  return redis.get(`magic-link:${token}`);
+}
+
 export async function cleanupDeactivatedUsers(): Promise<{ id: string; email: string }[]> {
   const now = new Date();
 

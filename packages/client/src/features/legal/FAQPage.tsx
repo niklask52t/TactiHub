@@ -82,6 +82,10 @@ const faqs = [
     a: 'In the admin panel, go to Games > Maps > select a map > Floors. You can upload, reorder, rename, and delete floor layout images for each map.',
   },
   {
+    q: 'What is Magic Link Login?',
+    a: 'Magic Link is a passwordless login option. On the login page, click "Login with Magic Link", enter your email or username, and you\'ll receive an email with a login link. Click the link to log in instantly — no password needed. The link expires after 15 minutes and can only be used once.',
+  },
+  {
     q: 'How do I delete my account?',
     a: 'Go to Account Settings (click your username in the top-right menu). In the Danger Zone section, click "Delete Account". You\'ll need to confirm twice and then click a confirmation link sent to your email. After confirming, your account is deactivated for 30 days. During this period, an admin can reactivate it. After 30 days, your account and all associated data are permanently deleted.',
   },

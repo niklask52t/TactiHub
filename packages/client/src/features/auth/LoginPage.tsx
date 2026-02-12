@@ -86,6 +86,11 @@ export default function LoginPage() {
                 Create account
               </Link>
             </div>
+            <div className="text-center text-sm">
+              <Link to="/auth/magic-link" className="text-primary hover:underline">
+                Login with Magic Link
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

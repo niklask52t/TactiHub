@@ -22,9 +22,11 @@ import {
   getPasswordResetEmail,
   storeDeletionToken,
   getDeletionTokenUserId,
+  storeMagicLinkToken,
+  getMagicLinkUserId,
   verifyRecaptcha,
 } from '../services/auth.service.js';
-import { sendVerificationEmail, sendPasswordResetEmail, sendDeletionConfirmationEmail, sendAccountDeactivatedEmail } from '../services/email.service.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendDeletionConfirmationEmail, sendAccountDeactivatedEmail, sendMagicLinkEmail } from '../services/email.service.js';
 import { DELETION_GRACE_PERIOD_DAYS } from '@tactihub/shared';
 import jwt from 'jsonwebtoken';
 import type { TokenPayload } from '@tactihub/shared';
@@ -264,6 +266,84 @@ export default async function authRoutes(fastify: FastifyInstance) {
     await sendPasswordResetEmail(email, token);
 
     return { message: 'If an account with that email exists, a password reset link has been sent.' };
+  });
+
+  // POST /api/auth/request-magic-link
+  fastify.post('/request-magic-link', async (request, reply) => {
+    const { identifier } = z.object({ identifier: z.string().min(1) }).parse(request.body);
+
+    // Always return success to prevent email/username enumeration
+    const successMessage = 'If an account with that identifier exists, a magic login link has been sent.';
+
+    const isEmail = identifier.includes('@');
+    const [user] = await db.select().from(users).where(
+      isEmail ? eq(users.email, identifier) : eq(users.username, identifier)
+    );
+
+    if (!user || user.deactivatedAt || !user.emailVerifiedAt) {
+      return { message: successMessage };
+    }
+
+    const token = generateEmailToken();
+    await storeMagicLinkToken(fastify.redis, user.id, token);
+    await sendMagicLinkEmail(user.email, token);
+
+    return { message: successMessage };
+  });
+
+  // GET /api/auth/magic-login
+  fastify.get('/magic-login', async (request, reply) => {
+    const { token } = z.object({ token: z.string() }).parse(request.query);
+
+    const userId = await getMagicLinkUserId(fastify.redis, token);
+    if (!userId) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired magic link', statusCode: 400 });
+    }
+
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'User not found', statusCode: 400 });
+    }
+
+    if (user.deactivatedAt) {
+      return reply.status(403).send({ error: 'Forbidden', message: 'This account has been deactivated. Contact an administrator to reactivate it.', statusCode: 403 });
+    }
+
+    if (!user.emailVerifiedAt) {
+      return reply.status(403).send({ error: 'Forbidden', message: 'Please verify your email before logging in', statusCode: 403 });
+    }
+
+    // Consume the token (single-use)
+    await fastify.redis.del(`magic-link:${token}`);
+
+    const accessToken = generateAccessToken(user.id, user.role);
+    const refreshToken = generateRefreshToken(user.id, user.role);
+    await storeRefreshToken(fastify.redis, user.id, refreshToken);
+
+    reply.setCookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/auth/refresh',
+      maxAge: REFRESH_TOKEN_EXPIRY_SECONDS,
+    });
+
+    return {
+      data: {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+          role: user.role,
+          deactivatedAt: null,
+          deletionScheduledAt: null,
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: user.updatedAt.toISOString(),
+        },
+        accessToken,
+      },
+    };
   });
 
   // POST /api/auth/reset-password

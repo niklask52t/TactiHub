@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.5.1
+**Version**: 1.5.2
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -96,7 +96,8 @@ packages/
 1. Register → email verification sent → **must verify before login** (without SMTP, admin must manually verify each user)
 2. Registration flow adapts: if public reg is ON, no token needed; if OFF, user must enter a single-use registration token first
 3. Optional Google reCAPTCHA v2 on registration (if `RECAPTCHA_SITE_KEY` + `RECAPTCHA_SECRET_KEY` set in `.env`)
-4. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + Redis)
+4. **Magic Link Login**: POST /request-magic-link sends email with login link (15min TTL), GET /magic-login consumes token and returns access+refresh tokens (same as login)
+5. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + Redis)
 5. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
 6. Token refresh → POST /api/auth/refresh returns new access token
 7. Admin can toggle public registration and create invite tokens
@@ -286,8 +287,8 @@ The Vite dev client proxies all `/api/*` and `/socket.io` requests to `localhost
 ## API Endpoints Overview
 
 ### Auth: `/api/auth/`
-POST register, login, logout, refresh, forgot-password, reset-password, change-credentials, request-deletion
-GET verify-email, confirm-deletion, me, registration-status (public), recaptcha-key (public)
+POST register, login, logout, refresh, forgot-password, reset-password, change-credentials, request-deletion, request-magic-link
+GET verify-email, confirm-deletion, magic-login, me, registration-status (public), recaptcha-key (public)
 
 ### Admin Users: `/api/admin/users/`
 GET (paginated), PUT/:id/role, PUT/:id/verify (manual email verification + notification), PUT/:id/reactivate, DELETE/:id
@@ -326,5 +327,7 @@ Full CRUD for games, maps, map-floors, operators, gadgets, operator-gadgets, use
 | `/room/:connectionString` | RoomPage | Public (guests read-only) |
 | `/account` | AccountSettingsPage | Protected |
 | `/auth/confirm-deletion/:token` | ConfirmDeletionPage | Public |
+| `/auth/magic-link` | MagicLinkRequestPage | Public |
+| `/auth/magic-login/:token` | MagicLinkLoginPage | Public |
 | `/admin/maps/:mapId/floors` | FloorsPage | Admin only |
 | `/admin/*` | Admin pages | Admin only |

@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.5.1-orange)
+![Version](https://img.shields.io/badge/version-1.5.2-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -55,6 +55,7 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Email Verification** — New accounts must verify their email. Admins can also manually verify users from the admin panel.
 - **reCAPTCHA v2** — Optional Google reCAPTCHA v2 checkbox on registration to prevent spam. Works without configuration (no CAPTCHA shown).
 - **Account Self-Deletion** — Users can delete their own account with double confirmation + email verification. Account is deactivated for 30 days before permanent deletion, allowing admins to reactivate.
+- **Magic Link Login** — Passwordless login via email link. Enter your email or username, receive a login link, click to log in instantly.
 - **Floor Layout Management** — Upload and manage floor layout images (blueprint, darkprint, whiteprint) per map through the admin panel with reordering support.
 - **Pre-Seeded Map Images** — 165 R6 map floor images (Blueprint/Darkprint/Whiteprint) + 23 gadget icons included in the repo as WebP. Works out of the box after seeding.
 - **Dark Theme** — Built with a dark color scheme matching the TactiHub brand (see color palette below).

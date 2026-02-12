@@ -185,6 +185,27 @@ export async function sendAccountDeactivatedEmail(email: string, username: strin
   });
 }
 
+export async function sendMagicLinkEmail(email: string, token: string) {
+  const loginUrl = `${APP_URL}/auth/magic-login/${token}`;
+
+  await getTransporter().sendMail({
+    from: FROM,
+    to: email,
+    subject: 'Your TactiHub login link',
+    html: emailTemplate(`
+      <h1 style="color:#c3c9cc;font-size:22px;margin:0 0 16px 0;">Magic Login Link</h1>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        You requested a passwordless login link for your TactiHub account. Click the button below to log in:
+      </p>
+      ${buttonHtml('Log In to TactiHub', loginUrl)}
+      <p style="color:#6b7280;font-size:12px;line-height:1.6;margin:0;">
+        Or copy this link: <a href="${loginUrl}" style="color:#fd7100;word-break:break-all;">${loginUrl}</a>
+      </p>
+      <p style="color:#6b7280;font-size:12px;margin:16px 0 0 0;">This link expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>
+    `),
+  });
+}
+
 export async function sendAccountDeletedEmail(email: string) {
   await getTransporter().sendMail({
     from: FROM,

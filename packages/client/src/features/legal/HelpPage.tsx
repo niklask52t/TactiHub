@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2 } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -188,6 +188,23 @@ export default function HelpPage() {
               Want to try TactiHub without creating an account? Use the <strong>Sandbox</strong> to draw on any map locally.
               Sandbox drawings are not saved — log in and create a room or battle plan to persist your work.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Magic Link Login */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5" /> Magic Link Login</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Magic Link is a passwordless login option. Instead of entering a password, you receive a one-time login link via email.</p>
+            <ol className="list-decimal list-inside space-y-1 ml-2">
+              <li>On the login page, click <strong>Login with Magic Link</strong></li>
+              <li>Enter your email address or username</li>
+              <li>Check your email and click the login link</li>
+              <li>You'll be logged in automatically</li>
+            </ol>
+            <p>The link expires after 15 minutes and can only be used once. If the link expires, simply request a new one.</p>
           </CardContent>
         </Card>
 

@@ -138,8 +138,17 @@ export default function ImpressumPage() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="default">v1.5.1</Badge>
+                <Badge variant="default">v1.5.2</Badge>
                 <span className="text-xs text-muted-foreground">Current</span>
+              </div>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
+                <li>Magic Link (passwordless) login via email — enter email or username, receive a login link, click to log in</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline">v1.5.1</Badge>
               </div>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
                 <li>Account self-deletion with double confirmation, email verification, and 30-day grace period</li>
