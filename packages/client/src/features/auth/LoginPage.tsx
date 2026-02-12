@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
+  identifier: z.string().min(1, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -50,9 +50,9 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register('email')} />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            <Label htmlFor="identifier">Email or Username</Label>
+            <Input id="identifier" type="text" {...register('identifier')} />
+            {errors.identifier && <p className="text-sm text-destructive">{errors.identifier.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>

@@ -34,7 +34,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(1),
   password: z.string(),
 });
 
@@ -102,14 +102,18 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/login', async (request, reply) => {
     const body = loginSchema.parse(request.body);
 
-    const [user] = await db.select().from(users).where(eq(users.email, body.email));
+    // Support login by email or username
+    const isEmail = body.identifier.includes('@');
+    const [user] = await db.select().from(users).where(
+      isEmail ? eq(users.email, body.identifier) : eq(users.username, body.identifier)
+    );
     if (!user) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid email or password', statusCode: 401 });
+      return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid credentials', statusCode: 401 });
     }
 
     const validPassword = await verifyPassword(body.password, user.passwordHash);
     if (!validPassword) {
-      return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid email or password', statusCode: 401 });
+      return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid credentials', statusCode: 401 });
     }
 
     if (!user.emailVerifiedAt) {
