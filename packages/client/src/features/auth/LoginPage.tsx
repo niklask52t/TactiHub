@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/auth.store';
@@ -59,26 +58,26 @@ export default function LoginPage() {
 
   return (
     <>
-      <Card>
+      <Card className="border-primary/10">
         <CardHeader>
-          <CardTitle>Login</CardTitle>
+          <CardTitle className="tracking-wide">Login</CardTitle>
           <CardDescription>Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="identifier">Email or Username</Label>
-              <Input id="identifier" type="text" {...register('identifier')} />
+              <Label htmlFor="identifier" className="text-xs uppercase tracking-wider text-muted-foreground">Email or Username</Label>
+              <Input id="identifier" type="text" className="gaming-input bg-background/50 border-primary/20 focus:border-primary/50 transition-all" {...register('identifier')} />
               {errors.identifier && <p className="text-sm text-destructive">{errors.identifier.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register('password')} />
+              <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
+              <Input id="password" type="password" className="gaming-input bg-background/50 border-primary/20 focus:border-primary/50 transition-all" {...register('password')} />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <button type="submit" disabled={loading} className="gaming-btn w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold tracking-wide uppercase text-sm hover:brightness-110 disabled:opacity-50 transition-all">
               {loading ? 'Logging in...' : 'Login'}
-            </Button>
+            </button>
             <div className="flex justify-between text-sm">
               <Link to="/auth/forgot-password" className="text-primary hover:underline">
                 Forgot password?

@@ -4,7 +4,7 @@
 
 /* Gaming-style animations */
 @keyframes border-glow {
-  0%, 100% { opacity: 0.5; }
+  0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
 
@@ -26,6 +26,23 @@
 @keyframes fade-in-up {
   0% { opacity: 0; transform: translateY(16px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes hud-corner-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+}
+
+@keyframes glow-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
 }
 
 .animate-border-glow {
@@ -51,10 +68,12 @@
   animation: fade-in-up 0.4s ease-out forwards;
 }
 
+/* Gaming input focus glow */
 .gaming-input:focus {
   box-shadow: 0 0 0 1px oklch(0.68 0.19 45 / 0.5), 0 0 12px oklch(0.68 0.19 45 / 0.2);
 }
 
+/* Gaming button shimmer */
 .gaming-btn {
   position: relative;
   overflow: hidden;
@@ -68,6 +87,89 @@
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
   pointer-events: none;
+}
+
+/* Gaming card wrapper — HUD-style frame */
+.gaming-card {
+  position: relative;
+}
+
+/* Corner brackets (HUD style) */
+.gaming-card::before,
+.gaming-card::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  animation: hud-corner-pulse 3s ease-in-out infinite;
+}
+
+.gaming-card::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid oklch(0.68 0.19 45 / 0.6);
+  border-left: 2px solid oklch(0.68 0.19 45 / 0.6);
+}
+
+.gaming-card::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid oklch(0.68 0.19 45 / 0.6);
+  border-right: 2px solid oklch(0.68 0.19 45 / 0.6);
+}
+
+/* Top-right and bottom-left corners via child spans */
+.gaming-card-corners::before,
+.gaming-card-corners::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  animation: hud-corner-pulse 3s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+.gaming-card-corners::before {
+  top: -1px;
+  right: -1px;
+  border-top: 2px solid oklch(0.68 0.19 45 / 0.6);
+  border-right: 2px solid oklch(0.68 0.19 45 / 0.6);
+}
+
+.gaming-card-corners::after {
+  bottom: -1px;
+  left: -1px;
+  border-bottom: 2px solid oklch(0.68 0.19 45 / 0.6);
+  border-left: 2px solid oklch(0.68 0.19 45 / 0.6);
+}
+
+/* Floating particle */
+.gaming-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: oklch(0.68 0.19 45 / 0.6);
+  animation: float-particle 6s ease-in-out infinite;
+}
+
+/* Animated top/bottom glow line */
+.gaming-glow-line {
+  position: absolute;
+  height: 1px;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, oklch(0.68 0.19 45 / 0.4), transparent);
+  animation: glow-line 4s ease-in-out infinite;
+}
+
+/* Subtle grid background for auth pages */
+.gaming-bg {
+  background-image:
+    linear-gradient(oklch(0.68 0.19 45 / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.68 0.19 45 / 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 @theme {
