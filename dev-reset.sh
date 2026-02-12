@@ -39,6 +39,10 @@ echo "--- Building shared package ---"
 pnpm --filter @tactihub/shared build
 
 echo ""
+echo "--- Cleaning old migration files ---"
+rm -rf packages/server/drizzle/*
+
+echo ""
 echo "--- Generating migrations ---"
 pnpm db:generate
 
