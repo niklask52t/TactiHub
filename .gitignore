@@ -3,12 +3,11 @@ dist/
 .env
 *.log
 
-# Uploads
+# Uploads (user-uploaded content via admin panel)
 packages/server/uploads/games/*
-packages/server/uploads/maps/*
 packages/server/uploads/operators/*
-packages/server/uploads/gadgets/*
 !packages/server/uploads/**/.gitkeep
+# maps/ and gadgets/ are tracked (pre-seeded images committed to repo)
 
 # IDE
 .vscode/

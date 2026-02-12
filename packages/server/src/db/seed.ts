@@ -34,31 +34,33 @@ async function seed() {
   if (r6Game) {
     console.log('Seeding R6 Siege...');
 
-    // R6 Maps — each with correct floor layout
-    const r6Maps: Array<{ name: string; slug: string; isCompetitive: boolean; floors: string[] }> = [
+    // R6 Maps — each with correct floor layout and image variants
+    // Variants: 'bdw' = blueprint+dark+white, 'bd' = blueprint+dark, 'b' = blueprint only
+    type FloorDef = { name: string; variants: 'bdw' | 'bd' | 'b' };
+    const r6Maps: Array<{ name: string; slug: string; isCompetitive: boolean; floors: FloorDef[] }> = [
       // Competitive
-      { name: 'Bank', slug: 'bank', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
-      { name: 'Border', slug: 'border', isCompetitive: true, floors: ['Ground Floor', 'Top Floor'] },
-      { name: 'Coastline', slug: 'coastline', isCompetitive: true, floors: ['Ground Floor', 'Top Floor'] },
-      { name: 'Consulate', slug: 'consulate', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
-      { name: 'Chalet', slug: 'chalet', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
-      { name: 'Clubhouse', slug: 'clubhouse', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
-      { name: 'Hereford', slug: 'hereford', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'First Floor', 'Top Floor'] },
-      { name: 'Kafe', slug: 'kafe', isCompetitive: true, floors: ['Ground Floor', 'Middle Floor', 'Top Floor'] },
-      { name: 'Oregon', slug: 'oregon', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'Tier 3', 'Top Floor'] },
-      { name: 'Skyscraper', slug: 'skyscraper', isCompetitive: true, floors: ['Ground Floor', 'Top Floor'] },
-      { name: 'Theme Park', slug: 'theme-park', isCompetitive: true, floors: ['Ground Floor', 'Top Floor'] },
-      { name: 'Villa', slug: 'villa', isCompetitive: true, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
+      { name: 'Bank', slug: 'bank', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Border', slug: 'border', isCompetitive: true, floors: [{ name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Coastline', slug: 'coastline', isCompetitive: true, floors: [{ name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Consulate', slug: 'consulate', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Chalet', slug: 'chalet', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Clubhouse', slug: 'clubhouse', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Hereford', slug: 'hereford', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bd' }, { name: 'Ground Floor', variants: 'bd' }, { name: 'First Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
+      { name: 'Kafe', slug: 'kafe', isCompetitive: true, floors: [{ name: 'Ground Floor', variants: 'bdw' }, { name: 'Middle Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Oregon', slug: 'oregon', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Tier 3', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Skyscraper', slug: 'skyscraper', isCompetitive: true, floors: [{ name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Theme Park', slug: 'theme-park', isCompetitive: true, floors: [{ name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Villa', slug: 'villa', isCompetitive: true, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
       // Non-competitive
-      { name: 'Favela', slug: 'favela', isCompetitive: false, floors: ['Basement', 'First Floor', 'Second Floor', 'Top Floor'] },
-      { name: 'Fortress', slug: 'fortress', isCompetitive: false, floors: ['Ground Floor', 'Top Floor'] },
-      { name: 'House', slug: 'house', isCompetitive: false, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
-      { name: 'Kanal', slug: 'kanal', isCompetitive: false, floors: ['Lower Basement', 'Basement', 'Ground Floor', 'Middle Floor', 'Top Floor'] },
-      { name: 'Nighthaven Labs', slug: 'nighthaven-labs', isCompetitive: false, floors: ['Basement', 'Ground Floor', 'Top Floor'] },
-      { name: 'Outback', slug: 'outback', isCompetitive: false, floors: ['Ground Floor', 'Top Floor'] },
-      { name: 'Plane', slug: 'plane', isCompetitive: false, floors: ['Bottom Floor', 'Middle Floor', 'Top Floor'] },
-      { name: 'Tower', slug: 'tower', isCompetitive: false, floors: ['Bottom Floor', 'Top Floor'] },
-      { name: 'Yacht', slug: 'yacht', isCompetitive: false, floors: ['Basement', 'First Floor', 'Second Floor', 'Top Floor'] },
+      { name: 'Favela', slug: 'favela', isCompetitive: false, floors: [{ name: 'Basement', variants: 'bd' }, { name: 'First Floor', variants: 'bd' }, { name: 'Second Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
+      { name: 'Fortress', slug: 'fortress', isCompetitive: false, floors: [{ name: 'Ground Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
+      { name: 'House', slug: 'house', isCompetitive: false, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Kanal', slug: 'kanal', isCompetitive: false, floors: [{ name: 'Lower Basement', variants: 'bdw' }, { name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Middle Floor', variants: 'b' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Nighthaven Labs', slug: 'nighthaven-labs', isCompetitive: false, floors: [{ name: 'Basement', variants: 'bdw' }, { name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Outback', slug: 'outback', isCompetitive: false, floors: [{ name: 'Ground Floor', variants: 'bdw' }, { name: 'Top Floor', variants: 'bdw' }] },
+      { name: 'Plane', slug: 'plane', isCompetitive: false, floors: [{ name: 'Bottom Floor', variants: 'bd' }, { name: 'Middle Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
+      { name: 'Tower', slug: 'tower', isCompetitive: false, floors: [{ name: 'Bottom Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
+      { name: 'Yacht', slug: 'yacht', isCompetitive: false, floors: [{ name: 'Basement', variants: 'bd' }, { name: 'First Floor', variants: 'bd' }, { name: 'Second Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
     ];
 
     for (const map of r6Maps) {
@@ -70,11 +72,15 @@ async function seed() {
       }).returning();
 
       for (let i = 0; i < map.floors.length; i++) {
+        const f = map.floors[i]!;
+        const num = i + 1;
         await db.insert(mapFloors).values({
           mapId: m.id,
-          name: map.floors[i]!,
-          floorNumber: i + 1,
-          imagePath: `/maps/${map.slug}-floor-${i + 1}.webp`,
+          name: f.name,
+          floorNumber: num,
+          imagePath: `/maps/${map.slug}-${num}-blueprint.webp`,
+          darkImagePath: f.variants !== 'b' ? `/maps/${map.slug}-${num}-dark.webp` : null,
+          whiteImagePath: f.variants === 'bdw' ? `/maps/${map.slug}-${num}-white.webp` : null,
         });
       }
     }
@@ -138,68 +144,68 @@ async function seed() {
     }
     console.log(`Created ${r6Operators.length} R6 operators`);
 
-    // R6 Gadgets
-    const r6Gadgets = [
-      // Unique gadgets
-      { name: 'CCE Shield', category: 'unique' as const },
-      { name: 'Evil Eye', category: 'unique' as const },
-      { name: 'Prisma', category: 'unique' as const },
-      { name: 'EE-ONE-D', category: 'unique' as const },
-      { name: 'Adrenal Surge', category: 'unique' as const },
-      { name: 'ERC-7', category: 'unique' as const },
-      { name: 'Logic Bomb', category: 'unique' as const },
-      { name: 'KS79 Lifeline', category: 'unique' as const },
-      { name: 'Grzmot Mine', category: 'unique' as const },
-      { name: 'Candela', category: 'unique' as const },
-      { name: 'Gu Mine', category: 'unique' as const },
-      { name: 'Black Mirror', category: 'unique' as const },
-      { name: 'Eyenox', category: 'unique' as const },
-      { name: 'X-Kairos', category: 'unique' as const },
-      { name: 'Yokai', category: 'unique' as const },
-      { name: 'Silent Step', category: 'unique' as const },
-      { name: 'Micro Crossbow', category: 'unique' as const },
-      { name: 'TAPS Mk III', category: 'unique' as const },
-      { name: 'Skeleton Key', category: 'unique' as const },
-      { name: 'Welcome Mat', category: 'unique' as const },
-      { name: 'Signal Disruptor', category: 'unique' as const },
-      { name: 'The Caber', category: 'unique' as const },
-      { name: 'Z8 Grenades', category: 'unique' as const },
-      { name: 'EMP Grenade', category: 'unique' as const },
-      { name: 'Breaching Round', category: 'unique' as const },
-      { name: 'Armor Panel', category: 'unique' as const },
-      { name: 'Heartbeat Sensor', category: 'unique' as const },
-      { name: 'Exothermic Charge', category: 'unique' as const },
-      { name: 'Extendable Shield', category: 'unique' as const },
-      { name: 'Shock Drone', category: 'unique' as const },
-      { name: 'Stim Pistol', category: 'unique' as const },
-      { name: 'Armor Pack', category: 'unique' as const },
-      { name: 'ADS', category: 'unique' as const },
-      { name: 'Shock Wire', category: 'unique' as const },
-      { name: 'Flash Shield', category: 'unique' as const },
-      { name: 'Electronics Detector', category: 'unique' as const },
-      { name: 'Cluster Charge', category: 'unique' as const },
-      { name: 'Flip Sight', category: 'unique' as const },
-      { name: 'Mounted LMG', category: 'unique' as const },
-      { name: 'EDD', category: 'unique' as const },
-      { name: 'Smelting Torch', category: 'unique' as const },
-      { name: 'Black Eye', category: 'unique' as const },
+    // R6 Gadgets (icon paths reference pre-seeded images in uploads/gadgets/)
+    const r6Gadgets: Array<{ name: string; category: 'unique' | 'secondary' | 'general'; icon?: string }> = [
+      // Unique gadgets (icons matched from Sternab/Gadgets)
+      { name: 'CCE Shield', category: 'unique' },
+      { name: 'Evil Eye', category: 'unique', icon: '/gadgets/evil-eye.webp' },
+      { name: 'Prisma', category: 'unique', icon: '/gadgets/prisma.webp' },
+      { name: 'EE-ONE-D', category: 'unique' },
+      { name: 'Adrenal Surge', category: 'unique' },
+      { name: 'ERC-7', category: 'unique' },
+      { name: 'Logic Bomb', category: 'unique' },
+      { name: 'KS79 Lifeline', category: 'unique' },
+      { name: 'Grzmot Mine', category: 'unique', icon: '/gadgets/grzmot-mine.webp' },
+      { name: 'Candela', category: 'unique' },
+      { name: 'Gu Mine', category: 'unique', icon: '/gadgets/gu-mine.webp' },
+      { name: 'Black Mirror', category: 'unique', icon: '/gadgets/black-mirror.webp' },
+      { name: 'Eyenox', category: 'unique' },
+      { name: 'X-Kairos', category: 'unique' },
+      { name: 'Yokai', category: 'unique', icon: '/gadgets/yokai.webp' },
+      { name: 'Silent Step', category: 'unique' },
+      { name: 'Micro Crossbow', category: 'unique' },
+      { name: 'TAPS Mk III', category: 'unique' },
+      { name: 'Skeleton Key', category: 'unique' },
+      { name: 'Welcome Mat', category: 'unique', icon: '/gadgets/welcome-mat.webp' },
+      { name: 'Signal Disruptor', category: 'unique', icon: '/gadgets/signal-disruptor.webp' },
+      { name: 'The Caber', category: 'unique' },
+      { name: 'Z8 Grenades', category: 'unique', icon: '/gadgets/z8-grenades.webp' },
+      { name: 'EMP Grenade', category: 'unique' },
+      { name: 'Breaching Round', category: 'unique' },
+      { name: 'Armor Panel', category: 'unique', icon: '/gadgets/armor-panel.webp' },
+      { name: 'Heartbeat Sensor', category: 'unique' },
+      { name: 'Exothermic Charge', category: 'unique' },
+      { name: 'Extendable Shield', category: 'unique' },
+      { name: 'Shock Drone', category: 'unique' },
+      { name: 'Stim Pistol', category: 'unique' },
+      { name: 'Armor Pack', category: 'unique' },
+      { name: 'ADS', category: 'unique', icon: '/gadgets/ads.webp' },
+      { name: 'Shock Wire', category: 'unique', icon: '/gadgets/shock-wire.webp' },
+      { name: 'Flash Shield', category: 'unique' },
+      { name: 'Electronics Detector', category: 'unique' },
+      { name: 'Cluster Charge', category: 'unique' },
+      { name: 'Flip Sight', category: 'unique' },
+      { name: 'Mounted LMG', category: 'unique' },
+      { name: 'EDD', category: 'unique', icon: '/gadgets/edd.webp' },
+      { name: 'Smelting Torch', category: 'unique' },
+      { name: 'Black Eye', category: 'unique', icon: '/gadgets/black-eye.webp' },
       // Secondary gadgets
-      { name: 'Barbed Wire', category: 'secondary' as const },
-      { name: 'Breaching Charge', category: 'secondary' as const },
-      { name: 'Bulletproof Cam', category: 'secondary' as const },
-      { name: 'Nitro Cell (C4)', category: 'secondary' as const },
-      { name: 'Claymore', category: 'secondary' as const },
-      { name: 'Deployable Shield', category: 'secondary' as const },
-      { name: 'Frag Grenade', category: 'secondary' as const },
-      { name: 'Impact Grenade', category: 'secondary' as const },
-      { name: 'Smoke Grenade', category: 'secondary' as const },
-      { name: 'Stun Grenade', category: 'secondary' as const },
+      { name: 'Barbed Wire', category: 'secondary', icon: '/gadgets/barbed-wire.webp' },
+      { name: 'Breaching Charge', category: 'secondary' },
+      { name: 'Bulletproof Cam', category: 'secondary', icon: '/gadgets/bulletproof-cam.webp' },
+      { name: 'Nitro Cell (C4)', category: 'secondary', icon: '/gadgets/nitro-cell.webp' },
+      { name: 'Claymore', category: 'secondary', icon: '/gadgets/claymore.webp' },
+      { name: 'Deployable Shield', category: 'secondary', icon: '/gadgets/deployable-shield.webp' },
+      { name: 'Frag Grenade', category: 'secondary' },
+      { name: 'Impact Grenade', category: 'secondary', icon: '/gadgets/impact-grenade.webp' },
+      { name: 'Smoke Grenade', category: 'secondary', icon: '/gadgets/smoke-grenade.webp' },
+      { name: 'Stun Grenade', category: 'secondary' },
       // General
-      { name: 'Barricade', category: 'general' as const },
-      { name: 'Drone', category: 'general' as const },
-      { name: 'Objective', category: 'general' as const },
-      { name: 'Rappel', category: 'general' as const },
-      { name: 'Reinforcement', category: 'general' as const },
+      { name: 'Barricade', category: 'general', icon: '/gadgets/barricade.webp' },
+      { name: 'Drone', category: 'general', icon: '/gadgets/drone.webp' },
+      { name: 'Objective', category: 'general' },
+      { name: 'Rappel', category: 'general' },
+      { name: 'Reinforcement', category: 'general' },
     ];
 
     for (const g of r6Gadgets) {
@@ -207,6 +213,7 @@ async function seed() {
         gameId: r6Game.id,
         name: g.name,
         category: g.category,
+        icon: g.icon ?? null,
       });
     }
     console.log(`Created ${r6Gadgets.length} R6 gadgets`);
