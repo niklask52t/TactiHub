@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '../../db/connection.js';
 import { users } from '../../db/schema/index.js';
 import { requireAdmin } from '../../middleware/auth.js';
+import { sendAdminVerifiedEmail } from '../../services/email.service.js';
 
 export default async function adminUsersRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAdmin);
@@ -51,6 +52,32 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     if (!user) return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
 
     return { data: { id: user.id, username: user.username, email: user.email, role: user.role } };
+  });
+
+  // PUT /api/admin/users/:id/verify
+  fastify.put('/:id/verify', async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    if (!user) return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+
+    if (user.emailVerifiedAt) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'User is already verified', statusCode: 400 });
+    }
+
+    const [updated] = await db.update(users)
+      .set({ emailVerifiedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+
+    // Send notification email (best-effort)
+    try {
+      await sendAdminVerifiedEmail(updated.email, updated.username);
+    } catch {
+      // Email delivery failure should not block verification
+    }
+
+    return { data: { id: updated.id, username: updated.username, email: updated.email, emailVerifiedAt: updated.emailVerifiedAt } };
   });
 
   // DELETE /api/admin/users/:id

@@ -58,7 +58,7 @@ export default function GadgetsPage() {
               <div className="space-y-2"><Label>Name</Label><Input name="name" required /></div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <select name="category" className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm">
+                <select name="category" className="flex h-9 w-full rounded-md border border-input bg-background text-foreground px-3 py-1 text-sm">
                   <option value="unique">Unique</option>
                   <option value="secondary">Secondary</option>
                   <option value="general">General</option>

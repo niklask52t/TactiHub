@@ -40,7 +40,8 @@ export default async function adminGamesRoutes(fastify: FastifyInstance) {
       const fields: Record<string, string> = {};
       for await (const part of parts) {
         if (part.type === 'file') {
-          iconPath = await processUpload(part, 'games', { width: 128, height: 128 });
+          const result = await processUpload(part, 'games', { width: 128, height: 128 });
+          if (result) iconPath = result;
         } else {
           fields[part.fieldname] = (part as any).value;
         }
@@ -76,7 +77,8 @@ export default async function adminGamesRoutes(fastify: FastifyInstance) {
       const fields: Record<string, string> = {};
       for await (const part of parts) {
         if (part.type === 'file') {
-          iconPath = await processUpload(part, 'games', { width: 128, height: 128 });
+          const result = await processUpload(part, 'games', { width: 128, height: 128 });
+          if (result) iconPath = result;
         } else {
           fields[part.fieldname] = (part as any).value;
         }

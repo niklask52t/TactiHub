@@ -40,6 +40,20 @@ export async function sendVerificationEmail(email: string, token: string) {
   });
 }
 
+export async function sendAdminVerifiedEmail(email: string, username: string) {
+  await getTransporter().sendMail({
+    from: FROM,
+    to: email,
+    subject: 'Your TactiHub account has been verified',
+    html: `
+      <h1>Account Verified</h1>
+      <p>Hi ${username},</p>
+      <p>An administrator has manually verified your TactiHub account. You can now log in and use all features.</p>
+      <p>Welcome to TactiHub!</p>
+    `,
+  });
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${BASE_URL}/auth/reset-password/${token}`;
 

@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.2.2-orange)
+![Version](https://img.shields.io/badge/version-1.3.0-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -29,7 +29,8 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Guest Access** — Rooms are viewable without login (read-only). Log in to draw.
 - **Admin Panel** — Full CRUD management for games, maps, floors, operators, gadgets, users, and registration tokens.
 - **Token-Based Registration** — Admin can toggle public registration on/off and create invite tokens for controlled access.
-- **Email Verification** — New accounts must verify their email. Unverified accounts are cleaned up after 30 days.
+- **Email Verification** — New accounts must verify their email. Admins can also manually verify users from the admin panel.
+- **Floor Layout Management** — Upload and manage floor layout images per map through the admin panel with reordering support.
 - **Dark Theme** — Built with a dark color scheme matching the TactiHub brand (orange/red + dark grays).
 - **Help & FAQ** — Built-in help page with tool descriptions, keyboard shortcuts, and frequently asked questions.
 
@@ -63,7 +64,7 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 ```
 TactiHub/
 ├── docker-compose.yml          # PostgreSQL 16 + Redis 7
-├── package.json                # Root workspace config (v1.2.2)
+├── package.json                # Root workspace config (v1.3.0)
 ├── pnpm-workspace.yaml         # Workspace definition
 ├── tsconfig.base.json          # Shared TypeScript config
 ├── .env.example                # Environment template

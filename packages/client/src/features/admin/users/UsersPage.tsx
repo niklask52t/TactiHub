@@ -2,8 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPut, apiDelete } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Shield, Trash2 } from 'lucide-react';
+import { Shield, Trash2, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface UserData {
   id: string; username: string; email: string; role: string;
@@ -12,6 +14,7 @@ interface UserData {
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
+  const [verifyUser, setVerifyUser] = useState<UserData | null>(null);
 
   const { data } = useQuery({
     queryKey: ['admin', 'users'],
@@ -21,6 +24,16 @@ export default function UsersPage() {
   const roleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) => apiPut(`/admin/users/${id}/role`, { role }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }); toast.success('Role updated'); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: (id: string) => apiPut(`/admin/users/${id}/verify`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success('User verified successfully. Notification email sent.');
+      setVerifyUser(null);
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -60,13 +73,18 @@ export default function UsersPage() {
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                    {!user.emailVerifiedAt && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Verify user" onClick={() => setVerifyUser(user)}>
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Toggle role" onClick={() => {
                       const newRole = user.role === 'admin' ? 'user' : 'admin';
                       roleMutation.mutate({ id: user.id, role: newRole });
                     }}>
                       <Shield className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { if (confirm('Delete this user?')) deleteMutation.mutate(user.id); }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Delete user" onClick={() => { if (confirm('Delete this user?')) deleteMutation.mutate(user.id); }}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -79,6 +97,38 @@ export default function UsersPage() {
           <p className="p-4 text-center text-muted-foreground">No users found</p>
         )}
       </div>
+
+      {/* Double-confirmation verify dialog */}
+      <Dialog open={!!verifyUser} onOpenChange={(open) => { if (!open) setVerifyUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manually Verify User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to manually verify <strong className="text-foreground">{verifyUser?.username}</strong> ({verifyUser?.email})?
+            </p>
+            <p className="text-sm text-muted-foreground">
+              This will mark their email as verified without them clicking the verification link. A notification email will be sent to the user.
+            </p>
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-sm font-medium text-destructive">This action cannot be undone.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              variant="default"
+              disabled={verifyMutation.isPending}
+              onClick={() => { if (verifyUser) verifyMutation.mutate(verifyUser.id); }}
+            >
+              {verifyMutation.isPending ? 'Verifying...' : 'Yes, Verify User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -45,7 +45,8 @@ export default async function adminMapsRoutes(fastify: FastifyInstance) {
       const fields: Record<string, string> = {};
       for await (const part of parts) {
         if (part.type === 'file') {
-          thumbnailPath = await processUpload(part, 'maps', { width: 400, height: 300 });
+          const result = await processUpload(part, 'maps', { width: 400, height: 300 });
+          if (result) thumbnailPath = result;
         } else {
           fields[part.fieldname] = (part as any).value;
         }
@@ -83,7 +84,8 @@ export default async function adminMapsRoutes(fastify: FastifyInstance) {
       const fields: Record<string, string> = {};
       for await (const part of parts) {
         if (part.type === 'file') {
-          thumbnailPath = await processUpload(part, 'maps', { width: 400, height: 300 });
+          const result = await processUpload(part, 'maps', { width: 400, height: 300 });
+          if (result) thumbnailPath = result;
         } else {
           fields[part.fieldname] = (part as any).value;
         }

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2 } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -161,6 +161,25 @@ export default function HelpPage() {
               Want to try TactiHub without creating an account? Use the <strong>Sandbox</strong> to draw on any map locally.
               Sandbox drawings are not saved — log in and create a room or battle plan to persist your work.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Admin Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Admin Panel</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Admins have access to the admin panel for managing the platform:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li><strong>Games</strong> — Add/edit games with name, slug, icon, and active status</li>
+              <li><strong>Maps</strong> — Add maps per game with thumbnail, competitive/active toggles</li>
+              <li><strong>Floor Layouts</strong> — Upload and manage floor images for each map (reorder, rename, delete)</li>
+              <li><strong>Operators &amp; Gadgets</strong> — Manage operators/agents and their gadgets/abilities with icons</li>
+              <li><strong>Users</strong> — View all users, toggle roles (admin/user), manually verify emails, delete users</li>
+              <li><strong>Tokens</strong> — Create single-use registration tokens when public registration is disabled</li>
+              <li><strong>Settings</strong> — Toggle public registration on/off</li>
+            </ul>
           </CardContent>
         </Card>
       </div>

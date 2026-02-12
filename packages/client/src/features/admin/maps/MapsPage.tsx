@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowLeft, Layers } from 'lucide-react';
 import { useState } from 'react';
 
 interface MapData {
@@ -48,6 +48,9 @@ export default function MapsPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    // Radix Switch sends "on" when checked, nothing when unchecked — normalize to "true"/"false"
+    form.set('isCompetitive', form.has('isCompetitive') && form.get('isCompetitive') ? 'true' : 'false');
+    form.set('isActive', form.has('isActive') && form.get('isActive') ? 'true' : 'false');
     if (editMap) {
       updateMutation.mutate({ id: editMap.id, formData: form });
     } else {
@@ -91,6 +94,9 @@ export default function MapsPage() {
               </div>
             </CardHeader>
             <CardContent className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/admin/maps/${map.id}/floors`)}>
+                <Layers className="mr-1 h-3 w-3" /> Floors
+              </Button>
               <Button variant="outline" size="sm" onClick={() => { setEditMap(map); setIsOpen(true); }}><Pencil className="h-3 w-3" /></Button>
               <Button variant="outline" size="sm" onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(map.id); }}><Trash2 className="h-3 w-3 text-destructive" /></Button>
             </CardContent>

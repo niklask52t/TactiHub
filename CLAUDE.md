@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.2.2
+**Version**: 1.3.0
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -91,7 +91,8 @@ packages/
 4. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
 5. Token refresh → POST /api/auth/refresh returns new access token
 6. Admin can toggle public registration and create invite tokens
-7. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side
+7. **Admin manual verification**: PUT /api/admin/users/:id/verify — verifies a user without email, sends notification email
+8. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side
 
 ### Socket.IO Events
 - Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`
@@ -165,6 +166,9 @@ docker compose down -v      # Stop + delete ALL data (pgdata + redisdata volumes
 - Admin login after seed: `admin` / `admin@tactihub.local` / `changeme` (forced credential change on first login)
 - Upload directory structure: `uploads/{games,maps,operators,gadgets}/`
 - Images uploaded via admin panel are processed by Sharp (resized, converted to WebP)
+- `processUpload()` returns `null` for empty file buffers (e.g. form submits without selecting a file) — callers skip processing
+- Radix UI Switch sends "on" in FormData, not "true" — client normalizes to "true"/"false" before sending
+- Admin floor management: `/admin/maps/:mapId/floors` — upload floor layout images per map
 
 ---
 
@@ -228,6 +232,9 @@ The Vite dev client proxies all `/api/*` and `/socket.io` requests to `localhost
 POST register, login, logout, refresh, forgot-password, reset-password, change-credentials
 GET verify-email/:token, me, registration-status (public)
 
+### Admin Users: `/api/admin/users/`
+GET (paginated), PUT/:id/role, PUT/:id/verify (manual email verification + notification), DELETE/:id
+
 ### Public: `/api/`
 GET games, games/:slug, games/:slug/maps/:mapSlug, games/:slug/operators, games/:slug/gadgets
 
@@ -260,4 +267,5 @@ Full CRUD for games, maps, map-floors, operators, gadgets, operator-gadgets, use
 | `/:gameSlug/plans` | MyPlansPage | Protected |
 | `/room/create` | CreateRoomPage | Protected |
 | `/room/:connectionString` | RoomPage | Public (guests read-only) |
+| `/admin/maps/:mapId/floors` | FloorsPage | Admin only |
 | `/admin/*` | Admin pages | Admin only |

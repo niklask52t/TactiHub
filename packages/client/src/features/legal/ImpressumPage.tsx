@@ -138,8 +138,22 @@ export default function ImpressumPage() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="default">v1.2.2</Badge>
+                <Badge variant="default">v1.3.0</Badge>
                 <span className="text-xs text-muted-foreground">Current</span>
+              </div>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
+                <li>Admin manual user verification (with confirmation dialog and notification email)</li>
+                <li>Floor layout management UI (upload, reorder, rename, delete per map)</li>
+                <li>Fixed "Input Buffer is empty" crash when toggling game/map status without file upload</li>
+                <li>Fixed gadget category dropdown visibility in dark mode</li>
+                <li>Fixed Radix Switch form values not correctly sent as "true"/"false"</li>
+                <li>Gaming-style design (HUD corners, particles, glow effects, grid background on auth pages)</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline">v1.2.2</Badge>
               </div>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
                 <li>Forced credential change on first login with default admin account</li>

@@ -39,7 +39,10 @@ export default function OperatorsPage() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    createMutation.mutate(new FormData(e.currentTarget));
+    const form = new FormData(e.currentTarget);
+    // Radix Switch sends "on" when checked, nothing when unchecked — normalize to "true"/"false"
+    form.set('isAttacker', form.has('isAttacker') && form.get('isAttacker') ? 'true' : 'false');
+    createMutation.mutate(form);
   };
 
   const attackers = data?.data.filter(o => o.isAttacker) || [];

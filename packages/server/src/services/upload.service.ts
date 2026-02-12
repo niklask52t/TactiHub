@@ -13,8 +13,12 @@ export async function processUpload(
   file: MultipartFile,
   category: UploadCategory,
   options: { width?: number; height?: number } = {},
-): Promise<string> {
+): Promise<string | null> {
   const buffer = await file.toBuffer();
+
+  if (!buffer.length) {
+    return null; // No file data provided
+  }
 
   if (buffer.length > MAX_FILE_SIZE) {
     throw new Error(`File size exceeds maximum of ${MAX_FILE_SIZE} bytes`);

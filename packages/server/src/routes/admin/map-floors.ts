@@ -27,7 +27,8 @@ export default async function adminMapFloorsRoutes(fastify: FastifyInstance) {
     const parts = request.parts();
     for await (const part of parts) {
       if (part.type === 'file') {
-        imagePath = await processUpload(part, 'maps', { width: 1200 });
+        const result = await processUpload(part, 'maps', { width: 1200 });
+        if (result) imagePath = result;
       } else if (part.fieldname === 'name') {
         name = (part as any).value;
       } else if (part.fieldname === 'floorNumber') {
@@ -59,7 +60,8 @@ export default async function adminMapFloorsRoutes(fastify: FastifyInstance) {
       const parts = request.parts();
       for await (const part of parts) {
         if (part.type === 'file') {
-          updates.imagePath = await processUpload(part, 'maps', { width: 1200 });
+          const result = await processUpload(part, 'maps', { width: 1200 });
+          if (result) updates.imagePath = result;
         } else if (part.fieldname === 'name') {
           updates.name = (part as any).value;
         } else if (part.fieldname === 'floorNumber') {

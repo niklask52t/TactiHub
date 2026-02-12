@@ -54,6 +54,8 @@ export default function GamesPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    // Radix Switch sends "on" when checked, nothing when unchecked — normalize to "true"/"false"
+    form.set('isActive', form.has('isActive') && form.get('isActive') ? 'true' : 'false');
     if (editGame) {
       updateMutation.mutate({ id: editGame.id, formData: form });
     } else {

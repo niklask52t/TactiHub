@@ -62,6 +62,14 @@ const faqs = [
     a: 'Make sure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM are correctly set in your .env file. For SSL (port 465), set SMTP_SECURE=true. For STARTTLS (port 587), leave SMTP_SECURE=false. Check your server logs for SMTP errors.',
   },
   {
+    q: 'Can admins verify users manually?',
+    a: 'Yes. In the admin panel under Users, click the checkmark icon on any unverified user. A confirmation dialog will appear. Once confirmed, the user is verified and receives a notification email.',
+  },
+  {
+    q: 'How do I upload map floor layouts?',
+    a: 'In the admin panel, go to Games > Maps > select a map > Floors. You can upload, reorder, rename, and delete floor layout images for each map.',
+  },
+  {
     q: 'How do I report a bug or suggest a feature?',
     a: 'Open an issue on the GitHub repository at github.com/niklask52t/TactiHub.',
   },
