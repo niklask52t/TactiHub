@@ -17,9 +17,23 @@ interface Release {
 
 const releases: Release[] = [
   {
-    version: '1.6.0',
+    version: '1.7.0',
     date: '2026-02-13',
     tag: 'Latest',
+    changes: [
+      { type: 'feature', text: 'Resize & Rotate for selected drawings \u2014 8 resize handles (corners + edges) and a rotate handle above the bounding box' },
+      { type: 'feature', text: 'All R6 Siege operators added (~78 total) \u2014 complete roster through Year 10' },
+      { type: 'feature', text: 'All gadgets now visible in sidebar \u2014 text fallback for gadgets without icons, grouped by category' },
+      { type: 'feature', text: 'Auto-switch to Select tool after drawing \u2014 immediately shows resize/rotate handles' },
+      { type: 'fix', text: 'Fixed undo/redo system \u2014 corrected payload indexing, prevented redo from clearing undo stack' },
+      { type: 'fix', text: 'Fixed z-index overlaps \u2014 chat panel no longer hidden behind compass or icon sidebar' },
+      { type: 'fix', text: 'Added missing draw:updated socket listener \u2014 peer draw updates now sync correctly' },
+      { type: 'improvement', text: 'Sticky footer \u2014 footer stays at bottom of viewport even when page content is short' },
+    ],
+  },
+  {
+    version: '1.6.0',
+    date: '2026-02-13',
     changes: [
       { type: 'feature', text: 'In-room text chat — ephemeral messaging between room participants with unread badge' },
       { type: 'feature', text: 'Select & Drag tool — click to select your own drawings, drag to reposition them' },

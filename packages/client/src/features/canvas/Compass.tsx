@@ -1,6 +1,6 @@
 export function Compass() {
   return (
-    <div className="absolute bottom-4 left-4 z-10 pointer-events-none select-none opacity-60">
+    <div className="absolute bottom-16 left-4 z-[5] pointer-events-none select-none opacity-60">
       <svg width="48" height="48" viewBox="0 0 48 48">
         <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground" />
         <polygon points="24,4 20,20 24,16 28,20" className="fill-primary" />

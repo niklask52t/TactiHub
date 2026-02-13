@@ -30,13 +30,14 @@ export default function RoomPage() {
     addChatMessage,
   } = useRoomStore();
 
-  const { pushMyDraw, popUndo, popRedo, clearHistory } = useCanvasStore();
+  const { pushMyDraw, popUndo, popRedo, updateDrawId, clearHistory } = useCanvasStore();
   const cursors = useRoomStore((s) => s.cursors);
 
   // Peer laser lines state
   const [peerLaserLines, setPeerLaserLines] = useState<LaserLineData[]>([]);
   const cursorThrottleRef = useRef(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isRedoingRef = useRef(false);
 
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -80,6 +81,10 @@ export default function RoomPage() {
       refetchPlan();
     });
 
+    socket.on('draw:updated', () => {
+      refetchPlan();
+    });
+
     socket.on('battleplan:changed', ({ battleplan: bp }) => {
       setBattleplan(bp);
     });
@@ -103,6 +108,7 @@ export default function RoomPage() {
       socket.off('cursor:moved');
       socket.off('draw:created');
       socket.off('draw:deleted');
+      socket.off('draw:updated');
       socket.off('battleplan:changed');
       socket.off('laser:line');
       socket.off('chat:messaged');
@@ -146,8 +152,10 @@ export default function RoomPage() {
         ...prev,
         [floorId]: [...(prev[floorId] || []), ...newDraws],
       }));
-      for (const d of newDraws) {
-        pushMyDraw({ id: d.id, floorId, payload: drawItems[0] });
+      if (!isRedoingRef.current) {
+        for (let i = 0; i < newDraws.length; i++) {
+          pushMyDraw({ id: newDraws[i].id, floorId, payload: drawItems[i] });
+        }
       }
       return;
     }
@@ -157,9 +165,15 @@ export default function RoomPage() {
 
     try {
       const res = await apiPost<{ data: any[] }>(`/battleplan-floors/${floorId}/draws`, { items: drawItems });
-      // Track each created draw for undo
-      for (const created of res.data) {
-        pushMyDraw({ id: created.id, floorId, payload: drawItems[0] });
+      if (!isRedoingRef.current) {
+        // Track each created draw for undo with correct payload
+        for (let i = 0; i < res.data.length; i++) {
+          pushMyDraw({ id: res.data[i].id, floorId, payload: drawItems[i] ?? drawItems[0] });
+        }
+        // Auto-select the last created draw
+        if (res.data.length > 0) {
+          useCanvasStore.getState().setSelectedDrawId(res.data[res.data.length - 1].id);
+        }
       }
       refetchPlan();
     } catch {
@@ -215,10 +229,34 @@ export default function RoomPage() {
 
   const handleRedo = useCallback(async () => {
     const entry = popRedo();
-    if (entry) {
-      await handleDrawCreate(entry.floorId, [entry.payload]);
+    if (!entry) return;
+
+    isRedoingRef.current = true;
+    try {
+      if (!isAuthenticated) {
+        // Guest: recreate locally
+        const newId = `local-${++localIdCounter.current}`;
+        const newDraw = { ...entry.payload, id: newId, isLocal: true };
+        setLocalDraws(prev => ({
+          ...prev,
+          [entry.floorId]: [...(prev[entry.floorId] || []), newDraw],
+        }));
+        updateDrawId(entry.id, newId);
+      } else {
+        const socket = getSocket();
+        socket.emit('draw:create', { battleplanFloorId: entry.floorId, draws: [entry.payload] });
+        const res = await apiPost<{ data: any[] }>(`/battleplan-floors/${entry.floorId}/draws`, { items: [entry.payload] });
+        if (res.data.length > 0) {
+          updateDrawId(entry.id, res.data[0].id);
+        }
+        refetchPlan();
+      }
+    } catch {
+      // Silent failure
+    } finally {
+      isRedoingRef.current = false;
     }
-  }, [popRedo, handleDrawCreate]);
+  }, [popRedo, isAuthenticated, updateDrawId]);
 
   // Keyboard shortcuts: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
   useEffect(() => {

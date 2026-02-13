@@ -29,6 +29,18 @@ interface IconSidebarProps {
   onToggle: () => void;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  unique: '#fd7100',
+  secondary: '#3A6082',
+  general: '#539D9B',
+};
+
+function getGadgetAbbrev(name: string): string {
+  const words = name.split(/[\s-]+/);
+  if (words.length === 1) return name.slice(0, 2).toUpperCase();
+  return words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
 export function IconSidebar({ gameSlug, open, onToggle }: IconSidebarProps) {
   const { selectedIcon, setSelectedIcon, setTool } = useCanvasStore();
   const [search, setSearch] = useState('');
@@ -57,7 +69,7 @@ export function IconSidebar({ gameSlug, open, onToggle }: IconSidebarProps) {
   });
 
   const operators = operatorsData?.data || [];
-  const gadgets = (gadgetsData?.data || []).filter((g) => g.icon);
+  const gadgets = gadgetsData?.data || [];
 
   const lowerSearch = search.toLowerCase();
   const filteredOperators = lowerSearch
@@ -66,6 +78,10 @@ export function IconSidebar({ gameSlug, open, onToggle }: IconSidebarProps) {
   const filteredGadgets = lowerSearch
     ? gadgets.filter((g) => g.name.toLowerCase().includes(lowerSearch))
     : gadgets;
+
+  const uniqueGadgets = filteredGadgets.filter((g) => g.category === 'unique');
+  const secondaryGadgets = filteredGadgets.filter((g) => g.category === 'secondary');
+  const generalGadgets = filteredGadgets.filter((g) => g.category === 'general');
 
   const attackers = filteredOperators.filter((op) => op.isAttacker);
   const defenders = filteredOperators.filter((op) => !op.isAttacker);
@@ -186,20 +202,38 @@ export function IconSidebar({ gameSlug, open, onToggle }: IconSidebarProps) {
               </TabsContent>
 
               <TabsContent value="gadgets" className="flex-1 overflow-y-auto px-3 pb-3 mt-2">
-                <div className="grid grid-cols-4 gap-1">
-                  {filteredGadgets.map((g) => (
-                    <Button
-                      key={g.id}
-                      variant={selectedIcon?.id === g.id ? 'default' : 'ghost'}
-                      className="h-14 w-full p-0 flex flex-col items-center justify-center gap-0.5"
-                      title={g.name}
-                      onClick={() => handleSelect({ type: 'gadget', id: g.id, url: g.icon! })}
-                    >
-                      <img src={`/uploads${g.icon}`} alt={g.name} className="h-8 w-8" />
-                      <span className="text-[9px] leading-tight truncate w-full text-center">{g.name}</span>
-                    </Button>
-                  ))}
-                </div>
+                {[
+                  { label: 'Unique', items: uniqueGadgets },
+                  { label: 'Secondary', items: secondaryGadgets },
+                  { label: 'General', items: generalGadgets },
+                ].map(({ label, items }) => items.length > 0 && (
+                  <div key={label} className="mb-3">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">{label}</p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {items.map((g) => (
+                        <Button
+                          key={g.id}
+                          variant={selectedIcon?.id === g.id ? 'default' : 'ghost'}
+                          className="h-14 w-full p-0 flex flex-col items-center justify-center gap-0.5"
+                          title={g.name}
+                          onClick={() => handleSelect({ type: 'gadget', id: g.id, url: g.icon || '', name: g.name, color: CATEGORY_COLORS[g.category] || '#888888' })}
+                        >
+                          {g.icon ? (
+                            <img src={`/uploads${g.icon}`} alt={g.name} className="h-8 w-8" />
+                          ) : (
+                            <div
+                              className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                              style={{ backgroundColor: CATEGORY_COLORS[g.category] || '#888888' }}
+                            >
+                              {getGadgetAbbrev(g.name)}
+                            </div>
+                          )}
+                          <span className="text-[9px] leading-tight truncate w-full text-center">{g.name}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 {filteredGadgets.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-4">No gadgets found</p>
                 )}

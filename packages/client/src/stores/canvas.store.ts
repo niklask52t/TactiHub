@@ -33,9 +33,13 @@ interface CanvasStoreState {
   setDimensions: (imgW: number, imgH: number, contW: number, contH: number) => void;
   resetViewport: () => void;
 
-  // Selection
+  // Selection & interaction
   selectedDrawId: string | null;
   setSelectedDrawId: (id: string | null) => void;
+  interactionMode: 'none' | 'move' | 'resize' | 'rotate';
+  activeResizeHandle: string | null;
+  setInteractionMode: (mode: 'none' | 'move' | 'resize' | 'rotate') => void;
+  setActiveResizeHandle: (handle: string | null) => void;
 
   // Undo/Redo history
   myDrawHistory: DrawHistoryEntry[];
@@ -43,6 +47,7 @@ interface CanvasStoreState {
   pushMyDraw: (entry: DrawHistoryEntry) => void;
   popUndo: () => DrawHistoryEntry | null;
   popRedo: () => DrawHistoryEntry | null;
+  updateDrawId: (oldId: string, newId: string) => void;
   clearHistory: () => void;
 }
 
@@ -99,9 +104,13 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
     });
   },
 
-  // Selection
+  // Selection & interaction
   selectedDrawId: null,
   setSelectedDrawId: (id) => set({ selectedDrawId: id }),
+  interactionMode: 'none' as const,
+  activeResizeHandle: null,
+  setInteractionMode: (mode) => set({ interactionMode: mode }),
+  setActiveResizeHandle: (handle) => set({ activeResizeHandle: handle }),
 
   // Undo/Redo
   myDrawHistory: [],
@@ -130,5 +139,9 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
     });
     return entry;
   },
+  updateDrawId: (oldId, newId) => set((s) => ({
+    myDrawHistory: s.myDrawHistory.map(e => e.id === oldId ? { ...e, id: newId } : e),
+    undoStack: s.undoStack.map(e => e.id === oldId ? { ...e, id: newId } : e),
+  })),
   clearHistory: () => set({ myDrawHistory: [], undoStack: [] }),
 }));

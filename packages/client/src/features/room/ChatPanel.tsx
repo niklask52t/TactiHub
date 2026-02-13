@@ -42,7 +42,7 @@ export function ChatPanel({ open, onToggle }: ChatPanelProps) {
       <Button
         variant="outline"
         size="sm"
-        className="absolute bottom-4 left-4 z-10"
+        className="absolute bottom-4 left-4 z-30"
         onClick={onToggle}
       >
         <MessageSquare className="h-4 w-4 mr-1" />
@@ -57,7 +57,7 @@ export function ChatPanel({ open, onToggle }: ChatPanelProps) {
   }
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 w-80 h-96 bg-background border rounded-lg shadow-lg flex flex-col">
+    <div className="absolute bottom-4 left-4 z-30 w-80 h-96 bg-background border rounded-lg shadow-lg flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b">
         <span className="text-sm font-medium">Chat</span>

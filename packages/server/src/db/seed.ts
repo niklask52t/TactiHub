@@ -133,6 +133,56 @@ async function seed() {
       { name: 'IQ', color: '#F8C334', isAttacker: true },
       { name: 'Fuze', color: '#AB1513', isAttacker: true },
       { name: 'Glaz', color: '#AB1513', isAttacker: true },
+      // Year 3 S4
+      { name: 'Nomad', color: '#A57545', isAttacker: true },
+      // Year 4
+      { name: 'Gridlock', color: '#C25B09', isAttacker: true },
+      { name: 'Nokk', color: '#465E73', isAttacker: true },
+      { name: 'Amaru', color: '#6B3FA0', isAttacker: true },
+      { name: 'Kali', color: '#1B5583', isAttacker: true },
+      // Year 5
+      { name: 'Iana', color: '#8C4FC6', isAttacker: true },
+      { name: 'Ace', color: '#2E8B57', isAttacker: true },
+      { name: 'Zero', color: '#4B6043', isAttacker: true },
+      // Year 6
+      { name: 'Flores', color: '#D4A017', isAttacker: true },
+      { name: 'Osa', color: '#2080C0', isAttacker: true },
+      // Year 7
+      { name: 'Sens', color: '#7B2D8E', isAttacker: true },
+      { name: 'Grim', color: '#3C5A14', isAttacker: true },
+      // Year 8
+      { name: 'Brava', color: '#C7A02A', isAttacker: true },
+      { name: 'Ram', color: '#8B4513', isAttacker: true },
+      // Year 9
+      { name: 'Deimos', color: '#8B0000', isAttacker: true },
+      { name: 'Striker', color: '#607B8B', isAttacker: true },
+      // Year 10
+      { name: 'Rauora', color: '#C06030', isAttacker: true },
+      // Year 3 S4 Defenders
+      { name: 'Kaid', color: '#A0522D', isAttacker: false },
+      // Year 4
+      { name: 'Mozzie', color: '#C25B09', isAttacker: false },
+      { name: 'Warden', color: '#2F4F4F', isAttacker: false },
+      { name: 'Goyo', color: '#6B3FA0', isAttacker: false },
+      { name: 'Wamai', color: '#1B5583', isAttacker: false },
+      // Year 5
+      { name: 'Oryx', color: '#B8860B', isAttacker: false },
+      { name: 'Melusi', color: '#2E8B57', isAttacker: false },
+      { name: 'Aruni', color: '#C06030', isAttacker: false },
+      // Year 6
+      { name: 'Thunderbird', color: '#4B6043', isAttacker: false },
+      { name: 'Thorn', color: '#2D5F2D', isAttacker: false },
+      // Year 7
+      { name: 'Azami', color: '#1C3A5F', isAttacker: false },
+      { name: 'Solis', color: '#7B2D8E', isAttacker: false },
+      // Year 8
+      { name: 'Fenrir', color: '#465E73', isAttacker: false },
+      { name: 'Tubarao', color: '#1A6B8A', isAttacker: false },
+      // Year 9
+      { name: 'Sentry', color: '#607B8B', isAttacker: false },
+      { name: 'Skopos', color: '#8B4513', isAttacker: false },
+      // Year 10
+      { name: 'Denari', color: '#C7A02A', isAttacker: false },
     ];
 
     for (const op of r6Operators) {
@@ -190,6 +240,39 @@ async function seed() {
       { name: 'EDD', category: 'unique', icon: '/gadgets/edd.webp' },
       { name: 'Smelting Torch', category: 'unique' },
       { name: 'Black Eye', category: 'unique', icon: '/gadgets/black-eye.webp' },
+      // Year 3 S4+ unique gadgets (new operators)
+      { name: 'Airjab Launcher', category: 'unique' },
+      { name: 'Rtila Electroclaw', category: 'unique' },
+      { name: 'Trax Stingers', category: 'unique' },
+      { name: 'Pest Launcher', category: 'unique' },
+      { name: 'HEL Presence Reduction', category: 'unique' },
+      { name: 'Glance Smart Glasses', category: 'unique' },
+      { name: 'Garra Hook', category: 'unique' },
+      { name: 'Volcan Shield', category: 'unique' },
+      { name: 'LV Explosive Lance', category: 'unique' },
+      { name: 'Mag-NET System', category: 'unique' },
+      { name: 'Gemini Replicator', category: 'unique' },
+      { name: 'Remah Dash', category: 'unique' },
+      { name: 'S.E.L.M.A. Aqua Breacher', category: 'unique' },
+      { name: 'Banshee Sonic Defence', category: 'unique' },
+      { name: 'ARGUS Launcher', category: 'unique' },
+      { name: 'Surya Laser Gate', category: 'unique' },
+      { name: 'RCE-Ratero Charge', category: 'unique' },
+      { name: 'Kona Station', category: 'unique' },
+      { name: 'Talon-8 Clear Shield', category: 'unique' },
+      { name: 'Razorbloom Shell', category: 'unique' },
+      { name: 'R.O.U. Projector System', category: 'unique' },
+      { name: 'Kiba Barrier', category: 'unique' },
+      { name: 'Kawan Hive Launcher', category: 'unique' },
+      { name: 'SPEC-IO Electro-Sensor', category: 'unique' },
+      { name: 'Kludge Drone', category: 'unique' },
+      { name: 'F-NATT Dread Mine', category: 'unique' },
+      { name: 'BU-GI Auto-Breacher', category: 'unique' },
+      { name: 'Zoto Canister', category: 'unique' },
+      { name: 'DeathMARK', category: 'unique' },
+      { name: 'V10 Pantheon Shell', category: 'unique' },
+      { name: 'D.O.M. Panel Launcher', category: 'unique' },
+      { name: 'T.R.I.P. Connector', category: 'unique' },
       // Secondary gadgets
       { name: 'Barbed Wire', category: 'secondary', icon: '/gadgets/barbed-wire.webp' },
       { name: 'Breaching Charge', category: 'secondary' },

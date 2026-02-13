@@ -98,8 +98,8 @@ const faqs = [
     a: 'Use the export buttons in the bottom-right corner of the canvas (next to the zoom controls). Click the camera icon to download the current floor as a PNG image, or click the file icon to export all floors as a multi-page PDF. The export includes the map background and all visible drawings. Available to everyone, including guests.',
   },
   {
-    q: 'Can I move drawings after placing them?',
-    a: 'Yes. Select the Select & Drag tool (arrow icon) in the toolbar, then click on one of your own drawings to select it (shown with an orange highlight). Drag it to a new position. You can only select and move your own drawings — others\' draws appear dimmed.',
+    q: 'Can I move, resize, or rotate drawings after placing them?',
+    a: 'Yes. Select the Select tool (arrow icon) in the toolbar, then click on one of your own drawings. You\'ll see an orange highlight with 8 resize handles (small squares at corners and edges) and a rotate handle (circle above). Drag the drawing to reposition, drag a resize handle to scale, or drag the rotate handle to rotate. After drawing something, the tool automatically switches to Select mode so you can adjust immediately. You can only interact with your own drawings \u2014 others\' draws appear dimmed.',
   },
   {
     q: 'Why can\'t I erase someone else\'s drawing?',
@@ -116,6 +116,10 @@ const faqs = [
   {
     q: 'Can I add a description or notes to my battle plan?',
     a: 'Yes. In the battle plan viewer, plan owners can add and edit a description and notes. Click the pencil icon next to each section to edit. The description appears on plan cards in lists, while notes are visible in the full plan viewer.',
+  },
+  {
+    q: 'Why does the tool switch to Select after I draw something?',
+    a: 'After completing a drawing (pen, line, rectangle, text), the tool automatically switches to Select mode and highlights the new drawing. This lets you immediately reposition, resize, or rotate what you just drew. The Icon tool stays active so you can place multiple icons in a row.',
   },
   {
     q: 'How do I report a bug or suggest a feature?',

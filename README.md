@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.6.0-orange)
+![Version](https://img.shields.io/badge/version-1.7.0-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -40,7 +40,7 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Canvas Drawing System** — 3-layer canvas with tools for freehand pen, straight lines, rectangles, text (adjustable font size), and operator/gadget icons.
 - **Zoom + Pan** — Mouse wheel zoom centered on cursor (25%-400%), pan tool, middle-click pan, and reset button.
 - **Eraser** — Click on your own drawings to delete them. Others' draws appear dimmed and can't be erased.
-- **Select & Drag** — Click to select your own drawings, drag to reposition them on the canvas.
+- **Select, Drag, Resize & Rotate** — Click to select your own drawings, drag to reposition, use corner/edge handles to resize, or use the rotate handle to rotate. Auto-switches to select mode after drawing.
 - **Undo / Redo** — Ctrl+Z / Ctrl+Y keyboard shortcuts and toolbar buttons.
 - **In-Room Chat** — Ephemeral text messaging between room participants with unread badge. Messages are not persisted.
 - **Battle Plan Management** — Save, name, and organize battle plans. Mark as public to share with the community, or keep private.
@@ -121,7 +121,7 @@ The color scheme is derived from the TactiHub logo gradient and uses the [OKLCH]
 ```
 TactiHub/
 ├── docker-compose.yml          # PostgreSQL 16 + Redis 7
-├── package.json                # Root workspace config (v1.6.0)
+├── package.json                # Root workspace config (v1.7.0)
 ├── pnpm-workspace.yaml         # Workspace definition
 ├── tsconfig.base.json          # Shared TypeScript config
 ├── .env.example                # Environment template
@@ -306,7 +306,7 @@ Docker Compose starts:
 
 The seed creates:
 - **Admin account**: `admin` / `admin@tactihub.local` / `changeme`
-- **Rainbow Six Siege**: 21 maps (correct per-map floor counts with Blueprint/Darkprint/Whiteprint image paths), 42 operators, 55 gadgets (23 with pre-seeded icons)
+- **Rainbow Six Siege**: 21 maps (correct per-map floor counts with Blueprint/Darkprint/Whiteprint image paths), ~78 operators, ~87 gadgets (23 with pre-seeded icons)
 - **Valorant**: 4 maps (2 floors each), 11 agents, 40 abilities
 
 All R6 map floor images (165 WebP files) and gadget icons (23 WebP files) are included in the repository under `packages/server/uploads/`. They're available immediately after seeding — no extra import step needed.

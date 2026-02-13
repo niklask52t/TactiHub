@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.7.0 — 2026-02-13
+
+- [feature] Resize & Rotate for selected drawings — 8 resize handles (corners + edges) and a rotate handle above the bounding box
+- [feature] All R6 Siege operators added (~78 total) — complete roster through Year 10 including Skopos, Denari, Striker, Rauora
+- [feature] All gadgets now visible in sidebar — text fallback for gadgets without icons, grouped by category (Unique/Secondary/General)
+- [feature] Auto-switch to Select tool after drawing — immediately shows resize/rotate handles on the new drawing
+- [fix] Fixed undo/redo system — corrected payload indexing, prevented redo from clearing undo stack, eliminated double-push to history
+- [fix] Fixed z-index overlaps — chat panel no longer hidden behind compass, icon sidebar toggle, or operator icons
+- [fix] Added missing draw:updated socket listener — peer draw updates now sync correctly across room participants
+- [improvement] Sticky footer — footer stays at bottom of viewport even when page content is short
+
 ## v1.6.0 — 2026-02-13
 
 - [feature] In-room text chat — ephemeral messaging between room participants with unread badge

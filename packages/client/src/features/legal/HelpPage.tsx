@@ -54,8 +54,8 @@ export default function HelpPage() {
               <div className="flex items-start gap-3">
                 <MousePointer2 className="h-5 w-5 mt-0.5 text-primary shrink-0" />
                 <div>
-                  <p className="font-medium">Select &amp; Drag</p>
-                  <p className="text-sm text-muted-foreground">Click on your own drawing to select it, then drag to reposition. An orange highlight shows the selection.</p>
+                  <p className="font-medium">Select, Resize &amp; Rotate</p>
+                  <p className="text-sm text-muted-foreground">Click on your own drawing to select it. Drag to reposition. Use the 8 square handles (corners and edges) to resize. Use the circle handle above the selection to rotate. After drawing, the tool automatically switches to Select mode so you can immediately adjust.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

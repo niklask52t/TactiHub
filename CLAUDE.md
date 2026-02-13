@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.6.0
+**Version**: 1.7.0
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -87,9 +87,10 @@ packages/
 
 ### Undo/Redo
 - `myDrawHistory` and `undoStack` in canvas Zustand store
-- `pushMyDraw(entry)` after REST create returns IDs
+- `pushMyDraw(entry)` after REST create returns IDs (guarded by `isRedoingRef` to prevent double-push)
 - `popUndo()` → delete via REST + socket broadcast
-- `popRedo()` → recreate via REST + socket broadcast
+- `popRedo()` → recreate via REST + socket broadcast + `updateDrawId(oldId, newId)` to track new server ID
+- `updateDrawId(oldId, newId)` updates both `myDrawHistory` and `undoStack` when redo creates a new draw with a different ID
 - Keyboard: Ctrl+Z (undo), Ctrl+Y / Ctrl+Shift+Z (redo)
 
 ### Auth Flow
@@ -121,8 +122,9 @@ packages/
 - Both are **not persisted** to database — purely ephemeral broadcast
 
 ### Icon Tool (Operator/Gadget placement)
-- Tool.Icon in toolbar shows IconPicker popover with operators (by side) and gadgets (with icons)
-- IconPicker fetches from `/api/games/:slug/operators` and `/api/games/:slug/gadgets`
+- Tool.Icon in toolbar shows IconSidebar with operators (by side: Attackers/Defenders) and gadgets (grouped by category: Unique/Secondary/General)
+- IconSidebar fetches from `/api/games/:slug/operators` and `/api/games/:slug/gadgets`
+- All gadgets shown regardless of icon availability — text fallback (colored circle with abbreviation) for gadgets without icons
 - Game slug comes from battleplan response (now includes `game: { id, slug, name }`)
 - Click places `type: 'icon'` draw with `{ iconUrl, size: 40 }` — persisted like other draws
 - Icon sidebar has vertical "Icons" label when collapsed, `animate-pulse` on first visit per session (sessionStorage)
@@ -136,13 +138,16 @@ packages/
 - Available to all users (authenticated and guests), uses `renderDraw()` exported from CanvasLayer
 - Client dependency: `jspdf`
 
-### Select & Drag Tool
-- Tool.Select in toolbar allows selecting and dragging own draws
+### Select, Resize & Rotate Tool
+- Tool.Select in toolbar allows selecting, dragging, resizing, and rotating own draws
 - Click: hitTest to find draw under cursor (own draws only), highlight with orange dashed bounding box
-- Drag: renders preview on active canvas, offsets all coordinates (originX/Y, destinationX/Y, path points)
+- **Move**: Drag the selected draw to reposition — offsets all coordinates (originX/Y, destinationX/Y, path points)
+- **Resize**: 8 handles (nw/n/ne/e/se/s/sw/w) — drag to scale the draw proportionally. Uses `applyResizeToDraw()` to transform coordinates per draw type
+- **Rotate**: Circle handle above bounding box — drag to rotate. Stores `rotation` (radians) in draw data. Rendered via `ctx.translate → ctx.rotate → ctx.translate` around bounding box center
 - Release: persists via PUT /api/draws/:id + socket broadcast
 - `getDrawBounds()` helper in CanvasLayer computes axis-aligned bounding box for all draw types
-- `selectedDrawId` stored in Zustand canvas store
+- `selectedDrawId`, `interactionMode` ('none'|'move'|'resize'|'rotate'), `activeResizeHandle` in Zustand canvas store
+- **Auto-switch**: After completing a drawing (pen, line, rect, text), tool automatically switches to Select and auto-selects the new draw. Icon tool stays active for multi-placement.
 
 ### Ownership-Based Draw Interaction
 - Eraser and Select tools only interact with draws where `draw.userId === currentUserId`
@@ -269,7 +274,7 @@ tactihub-update             # Same, if symlinked: sudo ln -sf /opt/tactihub/upda
 - The client uses `tsc -b` (project references) for build — `shared` must have `composite: true`
 - `tsconfig.node.json` in client is for vite.config.ts only
 - `noUnusedLocals` and `noUnusedParameters` are enabled in client — remove unused imports
-- Seed data includes: 1 admin user, 2 games (R6 + Valorant), 21 R6 maps with correct floor counts + cover thumbnails, operators/agents, gadgets/abilities
+- Seed data includes: 1 admin user, 2 games (R6 + Valorant), 21 R6 maps with correct floor counts + cover thumbnails, ~78 R6 operators (complete Y1-Y10 roster), ~87 gadgets (23 with pre-seeded icons), 11 Valorant agents, 40 abilities
 - Admin login after seed: `admin` / `admin@tactihub.local` / `changeme` (forced credential change on first login)
 - Upload directory structure: `uploads/{games,maps,operators,gadgets}/` — maps/ and gadgets/ are tracked in git (pre-seeded), games/ and operators/ are gitignored
 - Pre-seeded images: 165 map floor WebP + 23 gadget icon WebP + 21 map cover WebP committed to repo, referenced by seed via deterministic names (`{slug}-{num}-{variant}.webp`, `{slug}-cover.webp`)
