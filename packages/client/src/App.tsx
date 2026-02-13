@@ -39,6 +39,7 @@ const AccountSettingsPage = lazy(() => import('@/features/account/AccountSetting
 const ImpressumPage = lazy(() => import('@/features/legal/ImpressumPage'));
 const HelpPage = lazy(() => import('@/features/legal/HelpPage'));
 const FAQPage = lazy(() => import('@/features/legal/FAQPage'));
+const ChangelogPage = lazy(() => import('@/features/legal/ChangelogPage'));
 
 function PageLoader() {
   return (
@@ -90,6 +91,7 @@ export function App() {
           <Route path="/impressum" element={<ImpressumPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/faq" element={<FAQPage />} />
+          <Route path="/changelog" element={<ChangelogPage />} />
           <Route path="/sandbox" element={<SandboxPage />} />
           <Route path="/:gameSlug" element={<GameDashboard />} />
           <Route path="/:gameSlug/plans/public" element={<PublicPlansPage />} />

@@ -257,7 +257,7 @@ pnpm db:studio              # Open Drizzle Studio
 docker compose up -d        # Start PostgreSQL + Redis
 docker compose down         # Stop containers (data stays in volumes)
 docker compose down -v      # Stop + delete ALL data (pgdata + redisdata volumes)
-bash dev-reset.sh           # Full dev reset: pull dev, nuke DB, rebuild from scratch
+bash update.sh              # Interactive: dev (full reset) or prod (update only)
 ```
 
 ---
@@ -289,7 +289,7 @@ When resetting the database (`docker compose down -v`), the old migration files 
 rm -rf packages/server/drizzle/*
 pnpm db:generate
 ```
-The `dev-reset.sh` script does this automatically.
+The `update.sh` script (mode 1: dev) does this automatically.
 
 ### drizzle-kit cannot resolve .js extensions
 drizzle-kit uses CJS `require()` internally which cannot resolve `.js` → `.ts` imports. All `db:generate`, `db:migrate`, `db:seed`, and `db:studio` scripts run through `tsx` to handle this. Do NOT remove the `tsx` prefix from these scripts in `packages/server/package.json`.
@@ -367,6 +367,7 @@ Full CRUD for games, maps, map-floors, operators, gadgets, operator-gadgets, use
 | `/sandbox` | SandboxPage | Public |
 | `/help` | HelpPage | Public |
 | `/faq` | FAQPage | Public |
+| `/changelog` | ChangelogPage | Public |
 | `/impressum` | ImpressumPage | Public |
 | `/:gameSlug` | GameDashboard | Public |
 | `/:gameSlug/plans/public` | PublicPlansPage | Public |

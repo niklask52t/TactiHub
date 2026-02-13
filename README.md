@@ -328,7 +328,7 @@ Log in with the default admin credentials to access the admin panel and manage g
 | `docker compose up -d` | Start PostgreSQL + Redis containers |
 | `docker compose down` | Stop containers (data persists in volumes) |
 | `docker compose down -v` | Stop containers and **delete all data** (DB + Redis) |
-| `bash dev-reset.sh` | **Full dev reset**: pull dev branch, nuke DB, rebuild everything from scratch |
+| `bash update.sh` | Interactive update: choose **dev** (full reset) or **prod** (update only) mode |
 
 ---
 
@@ -369,13 +369,13 @@ pnpm build
 
 If you need to start fresh (this **deletes all data** — users, battleplans, everything):
 
-**Option A — Automated (recommended for dev):**
+**Option A — Automated (recommended):**
 
 ```bash
-bash dev-reset.sh
+bash update.sh
 ```
 
-This script pulls the latest `dev` branch, nukes the database volumes, reinstalls dependencies, and re-runs generate/migrate/seed in one go. It includes a confirmation prompt before proceeding.
+Select mode **1 (dev)** for a full reset. The script requires double confirmation before deleting data, then pulls the latest dev branch, nukes the database volumes, reinstalls dependencies, and re-runs generate/migrate/seed in one go.
 
 **Option B — Manual:**
 

@@ -83,6 +83,7 @@ export function AppLayout() {
           <div className="flex items-center gap-4">
             <Link to="/help" className="hover:text-primary transition-colors">Help</Link>
             <Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link>
+            <Link to="/changelog" className="hover:text-primary transition-colors">Changelog</Link>
             <Link to="/impressum" className="hover:text-primary transition-colors">Impressum</Link>
           </div>
         </div>
