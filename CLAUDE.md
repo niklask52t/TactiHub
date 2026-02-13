@@ -230,19 +230,6 @@ bash dev-reset.sh           # Full dev reset: pull dev, nuke DB, rebuild from sc
 
 ## Known Gotchas / Deployment Notes
 
-### Vite dev server only listens on localhost
-Even with `host: true` in `vite.config.ts`, Vite may ignore it. To expose to the network:
-```bash
-pnpm --filter @tactihub/client exec vite --host
-```
-Or start server and client in separate terminals:
-```bash
-# Terminal 1 — Backend
-pnpm --filter @tactihub/server dev
-# Terminal 2 — Frontend (network-accessible)
-pnpm --filter @tactihub/client exec vite --host
-```
-
 ### Stale Drizzle migration files cause "already exists" errors
 When resetting the database (`docker compose down -v`), the old migration files in `packages/server/drizzle/` still exist. If the schema evolved across multiple migrations (e.g., one creates a table, another adds a column), regenerating on top of stale files produces conflicts. **Always clean migrations before regenerating from scratch:**
 ```bash

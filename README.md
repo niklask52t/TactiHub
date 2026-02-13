@@ -290,21 +290,7 @@ All R6 map floor images (165 WebP files) and gadget icons (23 WebP files) are in
 pnpm dev
 ```
 
-This starts both the server (port 3001) and client (port 5173) on `localhost`.
-
-**Option B — Network accessible (for remote servers / LXC containers):**
-
-Open two terminals:
-
-```bash
-# Terminal 1 — Backend API
-pnpm --filter @tactihub/server dev
-
-# Terminal 2 — Frontend (exposed to network)
-pnpm --filter @tactihub/client exec vite --host
-```
-
-The `--host` flag makes the Vite dev server listen on `0.0.0.0` so you can access it from other machines on your network.
+This starts both the server (port 3001) and client (port 5173). The client listens on `0.0.0.0`, so it's accessible from other machines on your network.
 
 The Vite dev server proxies API requests (`/api/*`) and Socket.IO to the Fastify server on port 3001 automatically.
 
@@ -427,14 +413,6 @@ The backend server is not running. The Vite client proxies all API requests to `
 
 ```bash
 pnpm --filter @tactihub/server dev
-```
-
-### Site not accessible from other machines on the network
-
-Vite defaults to `localhost` only. Start with `--host`:
-
-```bash
-pnpm --filter @tactihub/client exec vite --host
 ```
 
 ### `docker compose down -v` — What gets deleted?
