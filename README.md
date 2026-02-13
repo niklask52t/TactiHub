@@ -329,6 +329,17 @@ Log in with the default admin credentials to access the admin panel and manage g
 | `docker compose down` | Stop containers (data persists in volumes) |
 | `docker compose down -v` | Stop containers and **delete all data** (DB + Redis) |
 | `bash update.sh` | Interactive update: choose **dev** (full reset) or **prod** (update only) mode |
+| `tactihub-update` | Same as above, available system-wide after symlinking (see below) |
+
+### Global `tactihub-update` command
+
+To run the update script from anywhere on the system:
+
+```bash
+sudo ln -sf /opt/tactihub/update.sh /usr/local/bin/tactihub-update
+```
+
+Replace `/opt/tactihub` with your actual install path. After this, simply run `tactihub-update` from any directory.
 
 ---
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Resolve project root (works even when called via symlink from /usr/local/bin)
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # Prompt that only accepts y or n
 ask_yn() {
   local prompt="$1"
