@@ -329,7 +329,10 @@ The Vite dev client proxies all `/api/*` and `/socket.io` requests to `localhost
 - Version is defined in two places: `package.json` (root) and `APP_VERSION` in `packages/shared/src/constants/index.ts`
 - Both must be kept in sync when bumping versions
 - Version is displayed in the footer (AppLayout) and Impressum page
-- Version history is maintained in the Impressum page component
+- Version history is maintained in three places that **must all be updated** when releasing a new version:
+  1. `CHANGELOG.md` (root) — plain Markdown, used for external homepage sync
+  2. `packages/client/src/features/legal/ChangelogPage.tsx` — the `/changelog` page in the app
+  3. Keep both in sync with identical content
 
 ---
 

@@ -121,7 +121,7 @@ The color scheme is derived from the TactiHub logo gradient and uses the [OKLCH]
 ```
 TactiHub/
 ├── docker-compose.yml          # PostgreSQL 16 + Redis 7
-├── package.json                # Root workspace config (v1.3.0)
+├── package.json                # Root workspace config (v1.6.0)
 ├── pnpm-workspace.yaml         # Workspace definition
 ├── tsconfig.base.json          # Shared TypeScript config
 ├── .env.example                # Environment template
