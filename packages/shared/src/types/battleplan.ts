@@ -82,11 +82,14 @@ export interface IconData {
   size: number;
 }
 
+export type SlotSide = 'defender' | 'attacker';
+
 export interface OperatorSlot {
   id: string;
   battleplanId: string;
   slotNumber: number;
   operatorId: string | null;
+  side: SlotSide;
   createdAt: string;
   updatedAt: string;
   operator?: Operator | null;

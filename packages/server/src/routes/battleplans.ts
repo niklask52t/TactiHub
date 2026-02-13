@@ -29,7 +29,7 @@ async function getBattleplanWithDetails(id: string, userId?: string) {
 
   const slots = await db.select().from(operatorSlots)
     .where(eq(operatorSlots.battleplanId, id))
-    .orderBy(operatorSlots.slotNumber);
+    .orderBy(operatorSlots.side, operatorSlots.slotNumber);
 
   const slotsWithOperators = await Promise.all(slots.map(async (slot) => {
     let operator = null;
@@ -136,11 +136,12 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
       });
     }
 
-    // Auto-create operator slots
+    // Auto-create defender operator slots
     for (let i = 1; i <= MAX_OPERATOR_SLOTS; i++) {
       await db.insert(operatorSlots).values({
         battleplanId: plan.id,
         slotNumber: i,
+        side: 'defender',
       });
     }
 
@@ -239,19 +240,64 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
       }
     }
 
-    // Copy operator slots
+    // Copy operator slots (including side)
     if (source.operatorSlots) {
       for (const slot of source.operatorSlots) {
         await db.insert(operatorSlots).values({
           battleplanId: newPlan.id,
           slotNumber: slot.slotNumber,
           operatorId: slot.operatorId,
+          side: slot.side,
         });
       }
     }
 
     const fullPlan = await getBattleplanWithDetails(newPlan.id, request.user!.userId);
     return reply.status(201).send({ data: fullPlan });
+  });
+
+  // POST /api/battleplans/:id/attacker-lineup
+  fastify.post('/:id/attacker-lineup', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const [existing] = await db.select().from(battleplans).where(eq(battleplans.id, id));
+    if (!existing) return reply.status(404).send({ error: 'Not Found', message: 'Battleplan not found', statusCode: 404 });
+    if (existing.ownerId !== request.user!.userId && request.user!.role !== 'admin') {
+      return reply.status(403).send({ error: 'Forbidden', message: 'Not authorized', statusCode: 403 });
+    }
+
+    // Check if attacker slots already exist
+    const existingAttackerSlots = await db.select().from(operatorSlots)
+      .where(and(eq(operatorSlots.battleplanId, id), eq(operatorSlots.side, 'attacker')));
+    if (existingAttackerSlots.length > 0) {
+      return reply.status(409).send({ error: 'Conflict', message: 'Attacker lineup already exists', statusCode: 409 });
+    }
+
+    for (let i = 1; i <= MAX_OPERATOR_SLOTS; i++) {
+      await db.insert(operatorSlots).values({
+        battleplanId: id,
+        slotNumber: i,
+        side: 'attacker',
+      });
+    }
+
+    const fullPlan = await getBattleplanWithDetails(id, request.user!.userId);
+    return reply.status(201).send({ data: fullPlan });
+  });
+
+  // DELETE /api/battleplans/:id/attacker-lineup
+  fastify.delete('/:id/attacker-lineup', { preHandler: [requireAuth] }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const [existing] = await db.select().from(battleplans).where(eq(battleplans.id, id));
+    if (!existing) return reply.status(404).send({ error: 'Not Found', message: 'Battleplan not found', statusCode: 404 });
+    if (existing.ownerId !== request.user!.userId && request.user!.role !== 'admin') {
+      return reply.status(403).send({ error: 'Forbidden', message: 'Not authorized', statusCode: 403 });
+    }
+
+    await db.delete(operatorSlots).where(
+      and(eq(operatorSlots.battleplanId, id), eq(operatorSlots.side, 'attacker'))
+    );
+
+    return { message: 'Attacker lineup removed' };
   });
 
   // POST /api/battleplans/:id/vote

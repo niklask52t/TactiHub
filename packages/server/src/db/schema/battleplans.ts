@@ -5,6 +5,7 @@ import { maps, mapFloors } from './maps.js';
 import { operators } from './operators.js';
 
 export const drawTypeEnum = pgEnum('draw_type', ['path', 'line', 'rectangle', 'text', 'icon']);
+export const slotSideEnum = pgEnum('slot_side', ['defender', 'attacker']);
 
 export const battleplans = pgTable('battleplans', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -49,6 +50,7 @@ export const operatorSlots = pgTable('operator_slots', {
   battleplanId: uuid('battleplan_id').notNull().references(() => battleplans.id, { onDelete: 'cascade' }),
   slotNumber: integer('slot_number').notNull(),
   operatorId: uuid('operator_id').references(() => operators.id, { onDelete: 'set null' }),
+  side: slotSideEnum('side').notNull().default('defender'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

@@ -17,6 +17,7 @@ export const DEFAULT_ICON_SIZE = 32;
 export const DEFAULT_COLOR = '#FF0000';
 
 export const MAX_OPERATOR_SLOTS = 5;
+export const SLOT_SIDES = ['defender', 'attacker'] as const;
 
 export const CURSOR_THROTTLE_MS = 60;
 export const CURSOR_TIMEOUT_MS = 30000;
@@ -41,4 +42,4 @@ export const ZOOM_STEP = 0.1;
 
 export const DEFAULT_ADMIN_EMAIL = 'admin@tactihub.local';
 
-export const APP_VERSION = '1.7.0';
+export const APP_VERSION = '1.8.0';

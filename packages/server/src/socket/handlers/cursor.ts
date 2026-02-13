@@ -43,10 +43,20 @@ export function setupCursorHandlers(io: Server, socket: Socket, userId: string) 
             slotId,
             operatorId,
             operator,
+            side: slot.side,
           });
         } catch (err) {
           console.error('Error updating operator slot:', err);
         }
+        break;
+      }
+    }
+  });
+
+  socket.on('attacker-lineup:create', ({ battleplanId }) => {
+    for (const [connString, state] of roomStates) {
+      if (state.users.has(socket.id)) {
+        socket.to(connString).emit('attacker-lineup:created', { battleplanId });
         break;
       }
     }

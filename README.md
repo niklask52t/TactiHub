@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.7.0-orange)
+![Version](https://img.shields.io/badge/version-1.8.0-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -48,6 +48,7 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Battleplan Description & Notes** — Add descriptions and notes to plans, inline-editable for owners.
 - **Share by Link** — Public toggle + share button copies a direct link. Public plans are viewable without login.
 - **Voting System** — Upvote/downvote public battle plans to surface the best strategies.
+- **Operator Lineup System** — Select 5 defenders per battleplan, optionally add 5 attackers. Sidebar auto-filters operators and gadgets to lineup members. "Show all" toggle reveals hidden items with warning.
 - **Operator/Agent Slots** — Assign operators (R6) or agents (Valorant) to 5 slots per plan, synced in real-time.
 - **Floor Switching** — Navigate multi-floor maps with keyboard shortcuts (J/K) or buttons.
 - **View Mode Switcher** — Toggle between Blueprint, Darkprint, and Whiteprint floor views (when available). Default is always Blueprint.
@@ -121,7 +122,7 @@ The color scheme is derived from the TactiHub logo gradient and uses the [OKLCH]
 ```
 TactiHub/
 ├── docker-compose.yml          # PostgreSQL 16 + Redis 7
-├── package.json                # Root workspace config (v1.7.0)
+├── package.json                # Root workspace config (v1.8.0)
 ├── pnpm-workspace.yaml         # Workspace definition
 ├── tsconfig.base.json          # Shared TypeScript config
 ├── .env.example                # Environment template

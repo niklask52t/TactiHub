@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2, Camera, FileDown, MousePointer2, MessageSquare, Tag } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2, Camera, FileDown, MousePointer2, MessageSquare, Tag, UserCheck } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -272,6 +272,27 @@ export default function HelpPage() {
               <li>Public plans can be <strong>filtered by tag</strong> on the community page</li>
               <li>Tags are shown as colored badges on plan cards</li>
             </ul>
+          </CardContent>
+        </Card>
+
+        {/* Operator Lineup */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5" /> Operator Lineup</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Each battleplan has a <strong>Lineup</strong> of 5 defender operator slots. Select operators for your lineup using the dropdown selectors in the Lineup tab of the icon sidebar.</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>When operators are assigned, the <strong>Operators</strong> and <strong>Gadgets</strong> tabs automatically filter to show only lineup members and their gadgets</li>
+              <li>Use the <strong>"Show all"</strong> checkbox to reveal all operators/gadgets — non-lineup items show an orange "Nicht im Lineup" warning</li>
+              <li>If no operators are assigned yet, all operators and gadgets are shown (no filtering)</li>
+              <li>Already-assigned operators are hidden from other slot dropdowns to prevent duplicates</li>
+            </ul>
+            <Separator />
+            <p className="font-medium text-foreground">Attacker Lineup (Optional)</p>
+            <p>Click <strong>"Add Attacker Lineup"</strong> in the Lineup tab to create 5 attacker slots. Attackers only appear in the sidebar when an attacker lineup exists. Remove it anytime with the trash icon.</p>
+            <Separator />
+            <p>Lineup changes are synced in real-time to all room participants via Socket.IO. The lineup is also displayed as operator avatars on the BattleplanViewer page.</p>
           </CardContent>
         </Card>
 

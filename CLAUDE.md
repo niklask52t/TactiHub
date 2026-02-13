@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.7.0
+**Version**: 1.8.0
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -59,6 +59,7 @@ packages/
 - `settings` table is key-value for app-wide config (registration_enabled, etc.)
 - `operator_gadgets` is a many-to-many junction table (composite PK)
 - `votes` has unique constraint on (user_id, battleplan_id)
+- `slot_side` enum: defender, attacker — `operator_slots.side` column with default 'defender'
 
 ### Floor Image Variants (Blueprint / Darkprint / Whiteprint)
 - Each floor can have up to 3 image variants: `imagePath` (blueprint, required), `darkImagePath`, `whiteImagePath` (optional)
@@ -130,6 +131,19 @@ packages/
 - Icon sidebar has vertical "Icons" label when collapsed, `animate-pulse` on first visit per session (sessionStorage)
 - Module-level `iconImageCache` Map in CanvasLayer prevents async flicker on icon re-renders
 
+### Operator Lineup System
+- Each battleplan has 5 defender operator slots (created automatically via `side: 'defender'`)
+- Optional attacker lineup: POST `/:id/attacker-lineup` creates 5 attacker slots, DELETE removes them
+- `operator_slots` table has `side` column (`slot_side` pgEnum: 'defender' | 'attacker') with default 'defender'
+- IconSidebar has 3 tabs: **Lineup** (dropdowns), **Operators** (filtered grid), **Gadgets** (filtered grid)
+- When lineup has assigned operators: Operators/Gadgets tabs auto-filter to lineup members
+- When lineup is empty (no operators assigned): all operators/gadgets shown (no filtering)
+- "Show all" checkbox reveals all items with orange "Nicht im Lineup" warning on non-lineup entries
+- Gadget filtering: collects gadget IDs from `operator.gadgets[]` (returned by operators API) of lineup operators
+- Attackers section hidden unless attacker lineup exists
+- Real-time sync: `operator-slot:update/updated` (includes `side`), `attacker-lineup:create/created` socket events
+- BattleplanViewer: read-only lineup display with operator avatar circles (blue border for DEF, orange for ATK)
+
 ### Export (PNG + PDF)
 - Export utilities in `packages/client/src/features/canvas/utils/exportCanvas.ts`
 - **PNG**: `exportFloorAsPng()` — composites current floor background + all draws onto offscreen canvas, triggers download
@@ -185,8 +199,9 @@ packages/
 - Chat state (chatMessages, unreadCount) in room Zustand store, cleared on room leave
 
 ### Socket.IO Events
-- Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`, `laser:line`, `chat:message`
-- Server emits: `room:joined`, `room:user-joined`, `room:user-left`, `cursor:moved`, `draw:created`, `draw:deleted`, `draw:updated`, `operator-slot:updated`, `battleplan:changed`, `laser:line`, `chat:messaged`
+- Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`, `laser:line`, `chat:message`, `attacker-lineup:create`
+- Server emits: `room:joined`, `room:user-joined`, `room:user-left`, `cursor:moved`, `draw:created`, `draw:deleted`, `draw:updated`, `operator-slot:updated`, `battleplan:changed`, `laser:line`, `chat:messaged`, `attacker-lineup:created`
+- `operator-slot:updated` includes `side` field ('defender' | 'attacker')
 - `cursor:move` now includes optional `isLaser` flag for laser dot rendering
 - `laser:line` broadcasts `{ userId, points, color }` — no DB persistence
 - 10 colors in pool, assigned to users on room join

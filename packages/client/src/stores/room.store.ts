@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { RoomUser, Battleplan, CursorPosition, ChatMessage } from '@tactihub/shared';
+import type { RoomUser, Battleplan, CursorPosition, ChatMessage, OperatorSlot } from '@tactihub/shared';
 
 interface RoomStoreState {
   connectionString: string | null;
@@ -21,6 +21,7 @@ interface RoomStoreState {
   removeCursor: (userId: string) => void;
   addChatMessage: (msg: ChatMessage) => void;
   resetUnread: () => void;
+  updateOperatorSlot: (slotId: string, operatorId: string | null, operator: unknown, side: string) => void;
   reset: () => void;
 }
 
@@ -57,6 +58,13 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
     unreadCount: s.unreadCount + 1,
   })),
   resetUnread: () => set({ unreadCount: 0 }),
+  updateOperatorSlot: (slotId, operatorId, operator, side) => set((s) => {
+    if (!s.battleplan?.operatorSlots) return s;
+    const updatedSlots = s.battleplan.operatorSlots.map((slot) =>
+      slot.id === slotId ? { ...slot, operatorId, operator: operator as OperatorSlot['operator'], side: side as OperatorSlot['side'] } : slot
+    );
+    return { battleplan: { ...s.battleplan, operatorSlots: updatedSlots } };
+  }),
   reset: () => set({
     connectionString: null,
     users: [],

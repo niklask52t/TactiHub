@@ -25,7 +25,7 @@ interface BattleplanFull {
     mapFloor?: { id: string; name: string; floorNumber: number; imagePath: string; darkImagePath?: string | null; whiteImagePath?: string | null };
     draws?: any[];
   }>;
-  operatorSlots?: Array<{ id: string; slotNumber: number; operatorId: string | null; operator?: any }>;
+  operatorSlots?: Array<{ id: string; slotNumber: number; operatorId: string | null; side: string; operator?: any }>;
   voteCount?: number; userVote?: number | null;
 }
 
@@ -172,6 +172,56 @@ export default function BattleplanViewer() {
           </div>
         )}
       </div>
+
+      {/* Lineup display */}
+      {plan.operatorSlots && plan.operatorSlots.some(s => s.operatorId) && (() => {
+        const defSlots = plan.operatorSlots!.filter(s => s.side === 'defender' && s.operatorId).sort((a, b) => a.slotNumber - b.slotNumber);
+        const atkSlots = plan.operatorSlots!.filter(s => s.side === 'attacker' && s.operatorId).sort((a, b) => a.slotNumber - b.slotNumber);
+        return (
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            {defSlots.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-medium uppercase mr-1">DEF</span>
+                {defSlots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className="h-8 w-8 rounded-full overflow-hidden border-2 border-blue-500"
+                    title={slot.operator?.name || 'Unknown'}
+                  >
+                    {slot.operator?.icon ? (
+                      <img src={`/uploads${slot.operator.icon}`} alt={slot.operator.name} className="h-full w-full" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white bg-blue-600">
+                        {slot.operator?.name?.[0] || '?'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {atkSlots.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-medium uppercase mr-1">ATK</span>
+                {atkSlots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className="h-8 w-8 rounded-full overflow-hidden border-2 border-orange-500"
+                    title={slot.operator?.name || 'Unknown'}
+                  >
+                    {slot.operator?.icon ? (
+                      <img src={`/uploads${slot.operator.icon}`} alt={slot.operator.name} className="h-full w-full" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white bg-orange-600">
+                        {slot.operator?.name?.[0] || '?'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {(plan.description || isOwner) && (
         <Card className="mb-4">

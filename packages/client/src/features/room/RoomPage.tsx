@@ -27,7 +27,7 @@ export default function RoomPage() {
     users, battleplan,
     setUsers, addUser, removeUser, setMyColor, setBattleplan,
     updateCursor, removeCursor, setConnectionString, reset,
-    addChatMessage,
+    addChatMessage, updateOperatorSlot,
   } = useRoomStore();
 
   const { pushMyDraw, popUndo, popRedo, updateDrawId, clearHistory } = useCanvasStore();
@@ -93,6 +93,14 @@ export default function RoomPage() {
       addChatMessage(msg);
     });
 
+    socket.on('operator-slot:updated', ({ slotId, operatorId, operator, side }: { slotId: string; operatorId: string | null; operator: unknown; side: string }) => {
+      updateOperatorSlot(slotId, operatorId, operator, side);
+    });
+
+    socket.on('attacker-lineup:created', () => {
+      refetchPlan();
+    });
+
     socket.on('laser:line', ({ userId, points, color }: { userId: string; points: Array<{ x: number; y: number }>; color: string }) => {
       setPeerLaserLines((prev) => [
         ...prev,
@@ -110,6 +118,8 @@ export default function RoomPage() {
       socket.off('draw:deleted');
       socket.off('draw:updated');
       socket.off('battleplan:changed');
+      socket.off('operator-slot:updated');
+      socket.off('attacker-lineup:created');
       socket.off('laser:line');
       socket.off('chat:messaged');
       disconnectSocket();
@@ -273,6 +283,34 @@ export default function RoomPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleUndo, handleRedo]);
 
+  const handleSlotChange = useCallback(async (slotId: string, operatorId: string | null) => {
+    if (!isAuthenticated) return;
+    const socket = getSocket();
+    socket.emit('operator-slot:update', { slotId, operatorId });
+  }, [isAuthenticated]);
+
+  const handleCreateAttackerLineup = useCallback(async () => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      const res = await apiPost<{ data: any }>(`/battleplans/${battleplan.id}/attacker-lineup`, {});
+      setBattleplan(res.data);
+      const socket = getSocket();
+      socket.emit('attacker-lineup:create', { battleplanId: battleplan.id });
+    } catch {
+      toast.error('Failed to create attacker lineup');
+    }
+  }, [isAuthenticated, battleplan, setBattleplan]);
+
+  const handleRemoveAttackerLineup = useCallback(async () => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      await apiDelete(`/battleplans/${battleplan.id}/attacker-lineup`);
+      refetchPlan();
+    } catch {
+      toast.error('Failed to remove attacker lineup');
+    }
+  }, [isAuthenticated, battleplan, refetchPlan]);
+
   const handleLaserLine = useCallback((points: Array<{ x: number; y: number }>, color: string) => {
     const socket = getSocket();
     socket.emit('laser:line', { points, color });
@@ -360,6 +398,12 @@ export default function RoomPage() {
             gameSlug={gameSlug}
             open={sidebarOpen}
             onToggle={() => setSidebarOpen((v) => !v)}
+            battleplanId={battleplan?.id}
+            operatorSlots={battleplan?.operatorSlots}
+            onSlotChange={handleSlotChange}
+            onCreateAttackerLineup={handleCreateAttackerLineup}
+            onRemoveAttackerLineup={handleRemoveAttackerLineup}
+            isAuthenticated={isAuthenticated}
           />
         )}
 

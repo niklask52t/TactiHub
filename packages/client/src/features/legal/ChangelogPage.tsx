@@ -17,9 +17,24 @@ interface Release {
 
 const releases: Release[] = [
   {
-    version: '1.7.0',
+    version: '1.8.0',
     date: '2026-02-13',
     tag: 'Latest',
+    changes: [
+      { type: 'feature', text: 'Operator Lineup System \u2014 select 5 defenders per battleplan to filter the icon sidebar' },
+      { type: 'feature', text: 'Optional Attacker Lineup \u2014 add 5 attacker slots on demand, remove when not needed' },
+      { type: 'feature', text: 'Lineup tab in Icon Sidebar \u2014 3-tab layout (Lineup / Operators / Gadgets) with dropdown selectors' },
+      { type: 'feature', text: 'Smart sidebar filtering \u2014 operators and gadgets auto-filter to lineup members' },
+      { type: 'feature', text: '"Show all" toggle \u2014 reveals all operators/gadgets with "Nicht im Lineup" warning' },
+      { type: 'feature', text: 'Lineup display on BattleplanViewer \u2014 read-only operator avatars with DEF/ATK labels' },
+      { type: 'feature', text: 'Real-time lineup sync \u2014 slot changes broadcast via Socket.IO to all room participants' },
+      { type: 'improvement', text: 'Gadget filtering uses operator-gadget relationships for precise results' },
+      { type: 'improvement', text: 'Duplicate prevention \u2014 already-assigned operators hidden from lineup dropdowns' },
+    ],
+  },
+  {
+    version: '1.7.0',
+    date: '2026-02-13',
     changes: [
       { type: 'feature', text: 'Resize & Rotate for selected drawings \u2014 8 resize handles (corners + edges) and a rotate handle above the bounding box' },
       { type: 'feature', text: 'All R6 Siege operators added (~78 total) \u2014 complete roster through Year 10' },

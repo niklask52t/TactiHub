@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.8.0 — 2026-02-13
+
+- [feature] Operator Lineup System — select 5 defenders per battleplan to filter the icon sidebar to only lineup operators and their gadgets
+- [feature] Optional Attacker Lineup — add a second set of 5 attacker slots on demand, remove when not needed
+- [feature] Lineup tab in Icon Sidebar — 3-tab layout (Lineup / Operators / Gadgets) with dropdown selectors for each slot
+- [feature] Smart sidebar filtering — operators and gadgets tabs auto-filter to lineup members when operators are assigned
+- [feature] "Show all" toggle — reveals all operators/gadgets with orange "Nicht im Lineup" warning on non-lineup items
+- [feature] Lineup display on BattleplanViewer — read-only operator avatar circles with DEF/ATK labels and colored borders
+- [feature] Real-time lineup sync — operator slot changes broadcast via Socket.IO to all room participants
+- [improvement] Gadget filtering uses operator-gadget relationships — only gadgets belonging to lineup operators are shown
+- [improvement] Duplicate prevention — already-assigned operators are hidden from lineup dropdowns
+
 ## v1.7.0 — 2026-02-13
 
 - [feature] Resize & Rotate for selected drawings — 8 resize handles (corners + edges) and a rotate handle above the bounding box

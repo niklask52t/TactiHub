@@ -40,6 +40,7 @@ export default async function roomsRoutes(fastify: FastifyInstance) {
         await db.insert(operatorSlots).values({
           battleplanId: plan.id,
           slotNumber: i,
+          side: 'defender',
         });
       }
 

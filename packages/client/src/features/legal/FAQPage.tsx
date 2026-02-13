@@ -122,6 +122,18 @@ const faqs = [
     a: 'After completing a drawing (pen, line, rectangle, text), the tool automatically switches to Select mode and highlights the new drawing. This lets you immediately reposition, resize, or rotate what you just drew. The Icon tool stays active so you can place multiple icons in a row.',
   },
   {
+    q: 'What is the Operator Lineup?',
+    a: 'Each battleplan has 5 defender operator slots (the Lineup). Open the icon sidebar and go to the Lineup tab to assign operators using the dropdown selectors. Once operators are assigned, the Operators and Gadgets tabs automatically filter to show only lineup members and their gadgets. Use the "Show all" checkbox to see everything, with non-lineup items marked in orange.',
+  },
+  {
+    q: 'Can I add attackers to the lineup?',
+    a: 'Yes. In the Lineup tab, click "Add Attacker Lineup" to create 5 attacker slots. Attackers only appear in the sidebar when an attacker lineup exists. You can remove the attacker lineup anytime by clicking the trash icon next to the Attackers header.',
+  },
+  {
+    q: 'Why are some operators/gadgets hidden in the sidebar?',
+    a: 'When you assign operators to your lineup, the Operators and Gadgets tabs filter to show only lineup members and their associated gadgets. This helps you focus on the relevant items for your strategy. Check the "Show all" box to reveal everything — non-lineup items will show an orange "Nicht im Lineup" warning.',
+  },
+  {
     q: 'How do I report a bug or suggest a feature?',
     a: 'Open an issue on the GitHub repository at github.com/niklask52t/TactiHub.',
   },

@@ -41,6 +41,7 @@ export interface SocketEvents {
   'operator-slot:update': { slotId: string; operatorId: string | null };
   'battleplan:change': { battleplanId: string };
   'chat:message': { text: string };
+  'attacker-lineup:create': { battleplanId: string };
 
   // Server -> Client
   'room:joined': { userId: string; color: string; users: RoomUser[] };
@@ -50,7 +51,8 @@ export interface SocketEvents {
   'draw:created': { userId: string; draws: unknown[] };
   'draw:deleted': { userId: string; drawIds: string[] };
   'draw:updated': { userId: string; drawId: string; data: Record<string, unknown> };
-  'operator-slot:updated': { slotId: string; operatorId: string | null; operator: unknown };
+  'operator-slot:updated': { slotId: string; operatorId: string | null; operator: unknown; side: string };
+  'attacker-lineup:created': { battleplanId: string };
   'battleplan:changed': { battleplan: unknown };
   'chat:messaged': ChatMessage;
 }
