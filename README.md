@@ -49,7 +49,8 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **View Mode Switcher** — Toggle between Blueprint, Darkprint, and Whiteprint floor views (when available). Default is always Blueprint.
 - **Compass** — SVG north indicator overlay on every canvas.
 - **Sandbox Mode** — Try drawing on any map without creating an account. Drawings are local only.
-- **Guest Access** — Rooms are viewable without login (read-only). Log in to draw.
+- **Guest Access** — Guests can view and draw in rooms without logging in. Guest drawings are local only and won't be saved or shared with other room members.
+- **Export Drawings** — Export the current floor as PNG or all floors as a multi-page landscape PDF. Available to all users including guests.
 - **Admin Panel** — Full CRUD management for games, maps, floors, operators, gadgets, users, and registration tokens.
 - **Token-Based Registration** — Admin can toggle public registration on/off and create invite tokens for controlled access.
 - **Email Verification** — New accounts must verify their email. Admins can also manually verify users from the admin panel.

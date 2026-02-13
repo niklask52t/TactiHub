@@ -12,7 +12,7 @@ import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Copy, Users, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, Users, Info } from 'lucide-react';
 import type { CursorPosition } from '@tactihub/shared';
 import { CURSOR_THROTTLE_MS } from '@tactihub/shared';
 import type { LaserLineData } from '@/features/canvas/CanvasLayer';
@@ -33,6 +33,10 @@ export default function RoomPage() {
   const [peerLaserLines, setPeerLaserLines] = useState<LaserLineData[]>([]);
   const cursorThrottleRef = useRef(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Local-only draws for guests (not persisted)
+  const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
+  const localIdCounter = useRef(0);
 
   useEffect(() => {
     if (!connectionString) return;
@@ -120,6 +124,23 @@ export default function RoomPage() {
   }, [planData]);
 
   const handleDrawCreate = useCallback(async (floorId: string, drawItems: any[]) => {
+    if (!isAuthenticated) {
+      // Guest: store locally, no API/socket calls
+      const newDraws = drawItems.map(item => ({
+        ...item,
+        id: `local-${++localIdCounter.current}`,
+        isLocal: true,
+      }));
+      setLocalDraws(prev => ({
+        ...prev,
+        [floorId]: [...(prev[floorId] || []), ...newDraws],
+      }));
+      for (const d of newDraws) {
+        pushMyDraw({ id: d.id, floorId, payload: drawItems[0] });
+      }
+      return;
+    }
+
     const socket = getSocket();
     socket.emit('draw:create', { battleplanFloorId: floorId, draws: drawItems });
 
@@ -133,18 +154,34 @@ export default function RoomPage() {
     } catch {
       // Persistence failed silently
     }
-  }, [pushMyDraw]);
+  }, [isAuthenticated, pushMyDraw]);
 
   const handleDrawDelete = useCallback(async (drawIds: string[]) => {
-    const socket = getSocket();
-    socket.emit('draw:delete', { drawIds });
-
-    for (const id of drawIds) {
-      apiDelete(`/draws/${id}`).catch(() => {});
+    // Handle local draws (guest or authenticated)
+    const localIds = drawIds.filter(id => id.startsWith('local-'));
+    if (localIds.length > 0) {
+      setLocalDraws(prev => {
+        const next = { ...prev };
+        for (const fid of Object.keys(next)) {
+          next[fid] = next[fid]!.filter(d => !localIds.includes(d.id));
+        }
+        return next;
+      });
     }
 
-    refetchPlan();
-  }, [refetchPlan]);
+    // Handle server draws (only when authenticated)
+    const serverIds = drawIds.filter(id => !id.startsWith('local-'));
+    if (serverIds.length > 0 && isAuthenticated) {
+      const socket = getSocket();
+      socket.emit('draw:delete', { drawIds: serverIds });
+
+      for (const id of serverIds) {
+        apiDelete(`/draws/${id}`).catch(() => {});
+      }
+
+      refetchPlan();
+    }
+  }, [isAuthenticated, refetchPlan]);
 
   const handleUndo = useCallback(() => {
     const entry = popUndo();
@@ -163,7 +200,6 @@ export default function RoomPage() {
   // Keyboard shortcuts: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!isAuthenticated) return;
       if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         handleUndo();
@@ -174,7 +210,7 @@ export default function RoomPage() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleUndo, handleRedo, isAuthenticated]);
+  }, [handleUndo, handleRedo]);
 
   const handleLaserLine = useCallback((points: Array<{ x: number; y: number }>, color: string) => {
     const socket = getSocket();
@@ -218,11 +254,11 @@ export default function RoomPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Guest banner */}
+      {/* Guest info banner */}
       {!isAuthenticated && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-destructive/10 border-b border-destructive/20 text-sm text-destructive">
-          <AlertTriangle className="h-4 w-4" />
-          Viewing as guest. <Link to="/auth/login" className="underline font-medium">Log in</Link> to draw.
+        <div className="flex items-center justify-center gap-2 px-4 py-1.5 bg-muted/50 border-b text-sm text-muted-foreground">
+          <Info className="h-3.5 w-3.5" />
+          Guest mode — changes won&apos;t be saved. <Link to="/auth/login" className="underline font-medium text-primary">Log in</Link> to persist.
         </div>
       )}
 
@@ -251,16 +287,14 @@ export default function RoomPage() {
       </div>
 
       {/* Toolbar */}
-      {isAuthenticated && (
-        <div className="flex justify-center py-2 border-b">
-          <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
-        </div>
-      )}
+      <div className="flex justify-center py-2 border-b">
+        <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
+      </div>
 
       {/* Canvas area */}
       <div className="flex-1 overflow-hidden relative">
         {/* Icon sidebar */}
-        {isAuthenticated && gameSlug && (
+        {gameSlug && (
           <IconSidebar
             gameSlug={gameSlug}
             open={sidebarOpen}
@@ -268,17 +302,17 @@ export default function RoomPage() {
           />
         )}
 
-        <div className="h-full p-4" style={{ marginLeft: isAuthenticated && gameSlug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
+        <div className="h-full p-4" style={{ marginLeft: gameSlug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
           {battleplan?.floors ? (
             <CanvasView
               floors={battleplan.floors}
-              readOnly={!isAuthenticated}
               onDrawCreate={handleDrawCreate}
               onDrawDelete={handleDrawDelete}
               onLaserLine={handleLaserLine}
               onCursorMove={handleCursorMove}
               peerLaserLines={peerLaserLines}
               cursors={cursors}
+              localDraws={localDraws}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">

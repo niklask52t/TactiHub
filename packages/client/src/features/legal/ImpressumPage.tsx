@@ -143,6 +143,11 @@ export default function ImpressumPage() {
               </div>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
                 <li>Magic Link (passwordless) login via email — enter email or username, receive a login link, click to log in</li>
+                <li>Guests can now draw locally in rooms (full toolbar, icons, undo/redo — drawings not persisted or shared)</li>
+                <li>PNG export (current floor) and PDF export (all floors as multi-page landscape) for all users including guests</li>
+                <li>Icon sidebar with vertical &quot;Icons&quot; label and pulse animation for first-visit discoverability</li>
+                <li>Improved map centering with ResizeObserver (fixes top-flush/bottom-gap issue)</li>
+                <li>Icon image cache to prevent flicker on re-renders</li>
               </ul>
             </div>
             <Separator />
@@ -245,7 +250,7 @@ export default function ImpressumPage() {
                 <li>Eraser tool (click to delete drawings)</li>
                 <li>Undo/Redo (Ctrl+Z / Ctrl+Y, toolbar buttons)</li>
                 <li>Share battle plans by link (public toggle, share button)</li>
-                <li>Guest access (sandbox mode, read-only room viewing)</li>
+                <li>Guest access (sandbox mode, room viewing)</li>
                 <li>Compass overlay on canvas</li>
                 <li>Improved room creation with game/map selection flow</li>
                 <li>Help page, FAQ page, and versioned Impressum</li>

@@ -102,7 +102,7 @@ packages/
 6. Token refresh → POST /api/auth/refresh returns new access token
 7. Admin can toggle public registration and create invite tokens
 8. **Admin manual verification**: PUT /api/admin/users/:id/verify — verifies a user without email, sends notification email
-9. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side
+9. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side. Client-side guests have full toolbar/icon access and can draw locally (stored in React state, not persisted or synced)
 
 ### Account Deletion Flow
 1. User → Account Settings → Delete Account → two confirmation dialogs (type username)
@@ -125,6 +125,16 @@ packages/
 - IconPicker fetches from `/api/games/:slug/operators` and `/api/games/:slug/gadgets`
 - Game slug comes from battleplan response (now includes `game: { id, slug, name }`)
 - Click places `type: 'icon'` draw with `{ iconUrl, size: 40 }` — persisted like other draws
+- Icon sidebar has vertical "Icons" label when collapsed, `animate-pulse` on first visit per session (sessionStorage)
+- Module-level `iconImageCache` Map in CanvasLayer prevents async flicker on icon re-renders
+
+### Export (PNG + PDF)
+- Export utilities in `packages/client/src/features/canvas/utils/exportCanvas.ts`
+- **PNG**: `exportFloorAsPng()` — composites current floor background + all draws onto offscreen canvas, triggers download
+- **PDF**: `exportAllFloorsAsPdf()` — iterates all floors, composites each onto offscreen canvas, builds multi-page landscape PDF with floor name headers via jsPDF
+- Export buttons in CanvasView bottom-right area (Camera icon = PNG, FileDown icon = PDF)
+- Available to all users (authenticated and guests), uses `renderDraw()` exported from CanvasLayer
+- Client dependency: `jspdf`
 
 ### Socket.IO Events
 - Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`, `laser:line`
@@ -132,7 +142,7 @@ packages/
 - `cursor:move` now includes optional `isLaser` flag for laser dot rendering
 - `laser:line` broadcasts `{ userId, points, color }` — no DB persistence
 - 10 colors in pool, assigned to users on room join
-- Guest connections are allowed but cannot emit draw/update events
+- Guest connections are allowed but cannot emit draw/update events (guests draw locally on the client side)
 
 ---
 
@@ -320,7 +330,7 @@ Full CRUD for games, maps, map-floors, operators, gadgets, operator-gadgets, use
 | `/:gameSlug/plans/:planId` | BattleplanViewer | Public (optionalAuth on server) |
 | `/:gameSlug/plans` | MyPlansPage | Protected |
 | `/room/create` | CreateRoomPage | Protected |
-| `/room/:connectionString` | RoomPage | Public (guests read-only) |
+| `/room/:connectionString` | RoomPage | Public (guests can draw locally) |
 | `/account` | AccountSettingsPage | Protected |
 | `/auth/confirm-deletion/:token` | ConfirmDeletionPage | Public |
 | `/auth/magic-link` | MagicLinkRequestPage | Public |

@@ -3,6 +3,20 @@ import { useCanvasStore } from '@/stores/canvas.store';
 import { Tool, ZOOM_STEP } from '@tactihub/shared';
 import { hitTestDraw } from './utils/hitTest';
 
+// Module-level icon image cache — survives re-renders and component remounts
+const iconImageCache = new Map<string, HTMLImageElement>();
+
+function getIconImage(url: string): HTMLImageElement {
+  let img = iconImageCache.get(url);
+  if (!img) {
+    img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = url;
+    iconImageCache.set(url, img);
+  }
+  return img;
+}
+
 interface Floor {
   id: string;
   mapFloorId: string;
@@ -29,6 +43,83 @@ interface CanvasLayerProps {
   peerLaserLines?: LaserLineData[];
   cursors?: Map<string, { x: number; y: number; color: string; userId: string; isLaser?: boolean }>;
   activeImagePath?: string;
+}
+
+/** Render a single draw onto a canvas context. Exported for use in export utilities. */
+export function renderDraw(ctx: CanvasRenderingContext2D, draw: any, drawsRef?: { current: () => void }) {
+  const data = draw.data || {};
+  ctx.save();
+
+  switch (draw.type) {
+    case 'path': {
+      const points = data.points || [];
+      if (points.length < 2) break;
+      ctx.beginPath();
+      ctx.strokeStyle = data.color || '#FF0000';
+      ctx.lineWidth = data.lineWidth || 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.stroke();
+      break;
+    }
+    case 'line': {
+      ctx.beginPath();
+      ctx.strokeStyle = data.color || '#FF0000';
+      ctx.lineWidth = data.lineWidth || 3;
+      ctx.lineCap = 'round';
+      ctx.moveTo(draw.originX, draw.originY);
+      ctx.lineTo(draw.destinationX ?? draw.originX, draw.destinationY ?? draw.originY);
+      ctx.stroke();
+      break;
+    }
+    case 'rectangle': {
+      ctx.strokeStyle = data.color || '#FF0000';
+      ctx.lineWidth = data.lineWidth || 3;
+      const w = data.width || (draw.destinationX ?? draw.originX) - draw.originX;
+      const h = data.height || (draw.destinationY ?? draw.originY) - draw.originY;
+      if (data.filled) {
+        ctx.fillStyle = data.color || '#FF0000';
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(draw.originX, draw.originY, w, h);
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeRect(draw.originX, draw.originY, w, h);
+      break;
+    }
+    case 'text': {
+      ctx.fillStyle = data.color || '#FF0000';
+      ctx.font = `${data.fontSize || 16}px sans-serif`;
+      ctx.fillText(data.text || '', draw.originX, draw.originY);
+      break;
+    }
+    case 'icon': {
+      const s = data.size || 32;
+      if (data.iconUrl) {
+        const img = getIconImage(data.iconUrl);
+        if (img.complete && img.naturalWidth > 0) {
+          ctx.drawImage(img, draw.originX - s / 2, draw.originY - s / 2, s, s);
+        } else if (drawsRef) {
+          img.onload = () => { drawsRef.current(); };
+        }
+      } else if (data.fallbackText) {
+        ctx.beginPath();
+        ctx.fillStyle = data.fallbackColor || '#888888';
+        ctx.arc(draw.originX, draw.originY, s / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.round(s * 0.5)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(data.fallbackText, draw.originX, draw.originY);
+      }
+      break;
+    }
+  }
+  ctx.restore();
 }
 
 export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerDraws, peerLaserLines, cursors, activeImagePath }: CanvasLayerProps) {
@@ -62,6 +153,35 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
 
   // Keep a ref to the latest renderDraws to avoid stale closures in the image onload callback
   const renderDrawsRef = useRef<() => void>(() => {});
+
+  // ResizeObserver: recalculate viewport centering when container size changes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const observer = new ResizeObserver(() => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const { width, height } = container.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          const store = useCanvasStore.getState();
+          const { imageWidth, imageHeight } = store;
+          if (imageWidth > 0 && imageHeight > 0) {
+            store.setDimensions(imageWidth, imageHeight, width, height);
+            store.resetViewport();
+          }
+        }
+      }, 100);
+    });
+
+    observer.observe(container);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, []);
 
   // Load background image
   useEffect(() => {
@@ -103,13 +223,16 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       }
 
       // Center the image in the viewport only when dimensions change
+      // Use rAF to ensure flex layout is settled before measuring container
       if (dimensionsChanged) {
-        const container = containerRef.current;
-        if (container) {
-          const store = useCanvasStore.getState();
-          store.setDimensions(img.width, img.height, container.clientWidth, container.clientHeight);
-          store.resetViewport();
-        }
+        requestAnimationFrame(() => {
+          const container = containerRef.current;
+          if (container) {
+            const store = useCanvasStore.getState();
+            store.setDimensions(img.width, img.height, container.clientWidth, container.clientHeight);
+            store.resetViewport();
+          }
+        });
       }
     };
     img.src = `/uploads${resolvedImagePath}`;
@@ -129,7 +252,7 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     const allDraws = [...(floor.draws || []), ...(peerDraws || [])];
     for (const draw of allDraws) {
       if (draw.isDeleted) continue;
-      renderDraw(ctx, draw);
+      renderDraw(ctx, draw, renderDrawsRef);
     }
   }, [floor.draws, peerDraws]);
 
@@ -138,82 +261,6 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
 
   useEffect(() => { renderDraws(); }, [renderDraws]);
 
-  function renderDraw(ctx: CanvasRenderingContext2D, draw: any) {
-    const data = draw.data || {};
-    ctx.save();
-
-    switch (draw.type) {
-      case 'path': {
-        const points = data.points || [];
-        if (points.length < 2) break;
-        ctx.beginPath();
-        ctx.strokeStyle = data.color || '#FF0000';
-        ctx.lineWidth = data.lineWidth || 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.moveTo(points[0].x, points[0].y);
-        for (let i = 1; i < points.length; i++) {
-          ctx.lineTo(points[i].x, points[i].y);
-        }
-        ctx.stroke();
-        break;
-      }
-      case 'line': {
-        ctx.beginPath();
-        ctx.strokeStyle = data.color || '#FF0000';
-        ctx.lineWidth = data.lineWidth || 3;
-        ctx.lineCap = 'round';
-        ctx.moveTo(draw.originX, draw.originY);
-        ctx.lineTo(draw.destinationX ?? draw.originX, draw.destinationY ?? draw.originY);
-        ctx.stroke();
-        break;
-      }
-      case 'rectangle': {
-        ctx.strokeStyle = data.color || '#FF0000';
-        ctx.lineWidth = data.lineWidth || 3;
-        const w = data.width || (draw.destinationX ?? draw.originX) - draw.originX;
-        const h = data.height || (draw.destinationY ?? draw.originY) - draw.originY;
-        if (data.filled) {
-          ctx.fillStyle = data.color || '#FF0000';
-          ctx.globalAlpha = 0.3;
-          ctx.fillRect(draw.originX, draw.originY, w, h);
-          ctx.globalAlpha = 1;
-        }
-        ctx.strokeRect(draw.originX, draw.originY, w, h);
-        break;
-      }
-      case 'text': {
-        ctx.fillStyle = data.color || '#FF0000';
-        ctx.font = `${data.fontSize || 16}px sans-serif`;
-        ctx.fillText(data.text || '', draw.originX, draw.originY);
-        break;
-      }
-      case 'icon': {
-        const s = data.size || 32;
-        if (data.iconUrl) {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            ctx.drawImage(img, draw.originX - s / 2, draw.originY - s / 2, s, s);
-          };
-          img.src = data.iconUrl;
-        } else if (data.fallbackText) {
-          // Colored circle with initial letter for operators without icons
-          ctx.beginPath();
-          ctx.fillStyle = data.fallbackColor || '#888888';
-          ctx.arc(draw.originX, draw.originY, s / 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = `bold ${Math.round(s * 0.5)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(data.fallbackText, draw.originX, draw.originY);
-        }
-        break;
-      }
-    }
-    ctx.restore();
-  }
 
   // Laser fade animation loop
   useEffect(() => {
@@ -365,8 +412,8 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
   }, [handleWheel]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Pan: middle-click or Pan tool
-    if (e.button === 1 || (tool === Tool.Pan && !readOnly)) {
+    // Pan: middle-click or Pan tool (always allowed, even readOnly)
+    if (e.button === 1 || tool === Tool.Pan) {
       e.preventDefault();
       setIsPanning(true);
       lastPanPosRef.current = { x: e.clientX, y: e.clientY };
@@ -461,7 +508,7 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       onCursorMove?.(pos.x, pos.y, tool === Tool.LaserDot);
 
       // Track local laser dot position
-      if (tool === Tool.LaserDot && !readOnly) {
+      if (tool === Tool.LaserDot) {
         setLocalLaserPos(pos);
       } else if (localLaserPos) {
         setLocalLaserPos(null);

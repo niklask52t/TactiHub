@@ -32,6 +32,17 @@ interface IconSidebarProps {
 export function IconSidebar({ gameSlug, open, onToggle }: IconSidebarProps) {
   const { selectedIcon, setSelectedIcon, setTool } = useCanvasStore();
   const [search, setSearch] = useState('');
+  const [hasBeenSeen, setHasBeenSeen] = useState(() =>
+    sessionStorage.getItem('iconSidebarSeen') === 'true'
+  );
+
+  const handleToggle = () => {
+    if (!hasBeenSeen) {
+      setHasBeenSeen(true);
+      sessionStorage.setItem('iconSidebarSeen', 'true');
+    }
+    onToggle();
+  };
 
   const { data: operatorsData } = useQuery({
     queryKey: ['operators', gameSlug],
@@ -68,11 +79,21 @@ export function IconSidebar({ gameSlug, open, onToggle }: IconSidebarProps) {
     <>
       {/* Toggle button */}
       <button
-        onClick={onToggle}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center h-10 w-6 bg-background/95 backdrop-blur border border-l-0 rounded-r-md hover:bg-muted transition-colors"
+        onClick={handleToggle}
+        className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center gap-0.5 px-1 py-3 bg-background/95 backdrop-blur border border-l-0 rounded-r-lg hover:bg-muted transition-all duration-200 ${!hasBeenSeen && !open ? 'animate-pulse' : ''}`}
         style={{ left: open ? 280 : 0 }}
+        title={open ? 'Close icon panel' : 'Operators & Gadgets'}
       >
-        {open ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        {open ? (
+          <ChevronLeft className="h-4 w-4" />
+        ) : (
+          <>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+            <span className="text-[10px] font-medium tracking-wide whitespace-nowrap" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+              Icons
+            </span>
+          </>
+        )}
       </button>
 
       {/* Sidebar panel */}

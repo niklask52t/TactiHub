@@ -11,7 +11,7 @@ const faqs = [
   },
   {
     q: 'Do I need an account to use TactiHub?',
-    a: 'You can browse public plans and try the Sandbox mode without an account. To create rooms, save battle plans, or draw in rooms, you need to register and log in.',
+    a: 'You can browse public plans, try the Sandbox mode, and draw in rooms as a guest without an account. Guest drawings are local only and not saved. To create rooms and save battle plans, you need to register and log in.',
   },
   {
     q: 'How does registration work?',
@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: 'Can guests view my room?',
-    a: 'Yes. Anyone with the room link can view the room as a guest. Guests can see drawings and cursors but cannot draw themselves — they need to log in for that.',
+    a: 'Yes. Anyone with the room link can join the room as a guest. Guests can see drawings, cursors, and draw on the map locally. Their drawings appear only on their screen and are not shared with other room members. Log in to persist and share drawings.',
   },
   {
     q: 'How do I share a battle plan?',
@@ -92,6 +92,10 @@ const faqs = [
   {
     q: 'What is reCAPTCHA?',
     a: 'reCAPTCHA is a Google service that helps protect the registration form from bots and spam. If the server admin has configured it, you\'ll see an "I\'m not a robot" checkbox during registration. Simply check the box to verify you\'re human. If reCAPTCHA is not configured, registration works without it.',
+  },
+  {
+    q: 'How do I export my drawings?',
+    a: 'Use the export buttons in the bottom-right corner of the canvas (next to the zoom controls). Click the camera icon to download the current floor as a PNG image, or click the file icon to export all floors as a multi-page PDF. The export includes the map background and all visible drawings. Available to everyone, including guests.',
   },
   {
     q: 'How do I report a bug or suggest a feature?',

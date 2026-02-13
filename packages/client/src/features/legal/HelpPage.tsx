@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2 } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2, Camera, FileDown } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -158,7 +158,7 @@ export default function HelpPage() {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>Create a room by choosing a game and map. Share the invite link with your teammates — they can join by clicking the link or entering the room code.</p>
             <p>Everyone in the room sees each other's drawings and cursor positions in real-time. Each user gets assigned a unique color.</p>
-            <p>Guests can view rooms without logging in, but they need to be logged in to draw.</p>
+            <p>Guests can view and draw in rooms without logging in. Guest drawings are local only and won&apos;t be saved or visible to other room members. Log in to persist and share your drawings.</p>
           </CardContent>
         </Card>
 
@@ -205,6 +205,33 @@ export default function HelpPage() {
               <li>You'll be logged in automatically</li>
             </ol>
             <p>The link expires after 15 minutes and can only be used once. If the link expires, simply request a new one.</p>
+          </CardContent>
+        </Card>
+
+        {/* Export */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5" /> Export Drawings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Export your strategy drawings using the buttons in the bottom-right corner of the canvas (next to the zoom controls).</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-start gap-3">
+                <Camera className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">PNG Export</p>
+                  <p>Downloads the current floor as a PNG image with all drawings composited onto the map background.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <FileDown className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">PDF Export</p>
+                  <p>Downloads all floors as a multi-page landscape PDF with floor names as headers. Great for printing or sharing a complete strategy.</p>
+                </div>
+              </div>
+            </div>
+            <p>Export is available to all users, including guests.</p>
           </CardContent>
         </Card>
 

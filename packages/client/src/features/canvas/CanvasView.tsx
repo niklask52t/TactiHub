@@ -2,10 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { CanvasLayer, type LaserLineData } from './CanvasLayer';
 import { Compass } from './Compass';
 import { Button } from '@/components/ui/button';
-import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize, Camera, FileDown } from 'lucide-react';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { ZOOM_STEP } from '@tactihub/shared';
 import type { ViewMode } from '@tactihub/shared';
+import { exportFloorAsPng, exportAllFloorsAsPdf } from './utils/exportCanvas';
 
 interface MapFloor {
   id: string;
@@ -32,6 +33,7 @@ interface CanvasViewProps {
   onCursorMove?: (x: number, y: number, isLaser: boolean) => void;
   peerLaserLines?: LaserLineData[];
   cursors?: Map<string, { x: number; y: number; color: string; userId: string; isLaser?: boolean }>;
+  localDraws?: Record<string, any[]>;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -40,7 +42,7 @@ const VIEW_MODE_LABELS: Record<ViewMode, string> = {
   white: 'Whiteprint',
 };
 
-export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerLaserLines, cursors }: CanvasViewProps) {
+export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerLaserLines, cursors, localDraws }: CanvasViewProps) {
   const { scale, zoomTo, resetViewport, containerWidth, containerHeight } = useCanvasStore();
 
   const sortedFloors = useMemo(() =>
@@ -184,18 +186,41 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
         </div>
       )}
 
-      {/* Zoom controls — bottom right */}
-      <div className="absolute bottom-4 right-4 z-10 flex flex-col items-center gap-1 bg-background/90 rounded-lg border p-1">
-        <Button variant="ghost" size="sm" onClick={zoomIn}>
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <span className="text-xs font-medium px-2">{Math.round(scale * 100)}%</span>
-        <Button variant="ghost" size="sm" onClick={zoomOut}>
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm" onClick={resetViewport}>
-          <Maximize className="h-4 w-4" />
-        </Button>
+      {/* Export + Zoom controls — bottom right */}
+      <div className="absolute bottom-4 right-4 z-10 flex items-end gap-2">
+        {/* Export controls */}
+        <div className="flex flex-col items-center gap-1 bg-background/90 rounded-lg border p-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Export floor as PNG"
+            onClick={() => currentFloor && exportFloorAsPng(currentFloor, localDraws?.[currentFloor.id] || [], activeImagePath)}
+          >
+            <Camera className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            title="Export all floors as PDF"
+            onClick={() => exportAllFloorsAsPdf(sortedFloors, localDraws || {}, currentFloor?.mapFloor?.name?.split(' ')[0] || 'strategy')}
+          >
+            <FileDown className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Zoom controls */}
+        <div className="flex flex-col items-center gap-1 bg-background/90 rounded-lg border p-1">
+          <Button variant="ghost" size="sm" onClick={zoomIn}>
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <span className="text-xs font-medium px-2">{Math.round(scale * 100)}%</span>
+          <Button variant="ghost" size="sm" onClick={zoomOut}>
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={resetViewport}>
+            <Maximize className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Compass — bottom left */}
@@ -212,6 +237,7 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
         peerLaserLines={peerLaserLines}
         cursors={cursors}
         activeImagePath={activeImagePath}
+        peerDraws={localDraws?.[currentFloor!.id]}
       />
     </div>
   );
