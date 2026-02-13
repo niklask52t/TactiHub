@@ -138,8 +138,25 @@ export default function ImpressumPage() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge variant="default">v1.5.2</Badge>
-                <span className="text-xs text-muted-foreground">Current — 2026-02-12</span>
+                <Badge variant="default">v1.6.0</Badge>
+                <span className="text-xs text-muted-foreground">Current — 2026-02-13</span>
+              </div>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
+                <li>In-room text chat — ephemeral messaging between room participants with unread badge</li>
+                <li>Select &amp; Drag tool — click to select your own drawings, drag to reposition them</li>
+                <li>Ownership-based draw interaction — eraser and select only affect your own drawings, others&apos; draws are dimmed</li>
+                <li>Adjustable font size for Text tool (12–64px selector in toolbar)</li>
+                <li>Battleplan tagging — add tags like &quot;Rush&quot;, &quot;Default&quot;, &quot;Retake&quot; to organize and filter plans</li>
+                <li>Battleplan description and notes — inline-editable fields for plan owners</li>
+                <li>Tag filtering on public plans page</li>
+                <li>Server-side ownership checks on draw update and delete endpoints</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline">v1.5.2</Badge>
+                <span className="text-xs text-muted-foreground">2026-02-12</span>
               </div>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5 ml-2">
                 <li>Magic Link (passwordless) login via email — enter email or username, receive a login link, click to log in</li>

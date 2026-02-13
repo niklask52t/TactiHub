@@ -37,12 +37,14 @@ interface CanvasLayerProps {
   readOnly?: boolean;
   onDrawCreate?: (floorId: string, draws: any[]) => void;
   onDrawDelete?: (drawIds: string[]) => void;
+  onDrawUpdate?: (drawId: string, updates: { originX: number; originY: number; destinationX?: number; destinationY?: number; data: any }) => void;
   onLaserLine?: (points: Array<{ x: number; y: number }>, color: string) => void;
   onCursorMove?: (x: number, y: number, isLaser: boolean) => void;
   peerDraws?: any[];
   peerLaserLines?: LaserLineData[];
   cursors?: Map<string, { x: number; y: number; color: string; userId: string; isLaser?: boolean }>;
   activeImagePath?: string;
+  currentUserId?: string | null;
 }
 
 /** Render a single draw onto a canvas context. Exported for use in export utilities. */
@@ -122,13 +124,54 @@ export function renderDraw(ctx: CanvasRenderingContext2D, draw: any, drawsRef?: 
   ctx.restore();
 }
 
-export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerDraws, peerLaserLines, cursors, activeImagePath }: CanvasLayerProps) {
+/** Compute axis-aligned bounding box for a draw (used for selection highlight). */
+export function getDrawBounds(draw: any): { x: number; y: number; width: number; height: number } | null {
+  const data = draw.data || {};
+  switch (draw.type) {
+    case 'path': {
+      const points = data.points || [];
+      if (points.length === 0) return null;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const p of points) {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      }
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+    case 'line':
+      return {
+        x: Math.min(draw.originX, draw.destinationX ?? draw.originX),
+        y: Math.min(draw.originY, draw.destinationY ?? draw.originY),
+        width: Math.abs((draw.destinationX ?? draw.originX) - draw.originX),
+        height: Math.abs((draw.destinationY ?? draw.originY) - draw.originY),
+      };
+    case 'rectangle': {
+      const w = data.width || (draw.destinationX ?? draw.originX) - draw.originX;
+      const h = data.height || (draw.destinationY ?? draw.originY) - draw.originY;
+      return { x: Math.min(draw.originX, draw.originX + w), y: Math.min(draw.originY, draw.originY + h), width: Math.abs(w), height: Math.abs(h) };
+    }
+    case 'text': {
+      const fs = data.fontSize || 16;
+      const approxW = (data.text || '').length * fs * 0.6;
+      return { x: draw.originX, y: draw.originY - fs, width: approxW, height: fs * 1.3 };
+    }
+    case 'icon': {
+      const s = data.size || 32;
+      return { x: draw.originX - s / 2, y: draw.originY - s / 2, width: s, height: s };
+    }
+    default: return null;
+  }
+}
+
+export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, onDrawUpdate, onLaserLine, onCursorMove, peerDraws, peerLaserLines, cursors, activeImagePath, currentUserId }: CanvasLayerProps) {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { tool, color, lineWidth, fontSize, offsetX, offsetY, scale, zoomTo, panBy } = useCanvasStore();
+  const { tool, color, lineWidth, fontSize, offsetX, offsetY, scale, zoomTo, panBy, selectedDrawId, setSelectedDrawId } = useCanvasStore();
 
   const [isDrawing, setIsDrawing] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -136,6 +179,10 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
   const [currentPath, setCurrentPath] = useState<Array<{ x: number; y: number }>>([]);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 });
+
+  // Select & drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; draw: any } | null>(null);
 
   // Laser pointer state
   const laserPointsRef = useRef<Array<{ x: number; y: number }>>([]);
@@ -252,9 +299,28 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     const allDraws = [...(floor.draws || []), ...(peerDraws || [])];
     for (const draw of allDraws) {
       if (draw.isDeleted) continue;
+      ctx.save();
+      // Dim others' draws
+      if (currentUserId && draw.userId && draw.userId !== currentUserId) {
+        ctx.globalAlpha = 0.6;
+      }
       renderDraw(ctx, draw, renderDrawsRef);
+      ctx.restore();
+
+      // Selection highlight
+      if (draw.id === selectedDrawId) {
+        ctx.save();
+        ctx.strokeStyle = '#fd7100';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        const bounds = getDrawBounds(draw);
+        if (bounds) {
+          ctx.strokeRect(bounds.x - 4, bounds.y - 4, bounds.width + 8, bounds.height + 8);
+        }
+        ctx.restore();
+      }
     }
-  }, [floor.draws, peerDraws]);
+  }, [floor.draws, peerDraws, currentUserId, selectedDrawId]);
 
   // Keep renderDrawsRef in sync with the latest renderDraws callback
   renderDrawsRef.current = renderDraws;
@@ -379,7 +445,7 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       ctx.stroke();
       ctx.restore();
     }
-  }, [cursors, isDrawing, currentPath, color, lineWidth, laserFadeLines, peerLaserLines, tool, localLaserPos]);
+  }, [cursors, isDrawing, currentPath, color, lineWidth, laserFadeLines, peerLaserLines, tool, localLaserPos, isDragging]);
 
   // Convert screen coordinates to canvas coordinates accounting for viewport transform
   const getCanvasCoords = (e: React.MouseEvent): { x: number; y: number } => {
@@ -422,16 +488,39 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
 
     if (readOnly) return;
 
-    // Eraser: click to delete
+    // Eraser: click to delete (own draws only)
     if (tool === Tool.Eraser) {
       const pos = getCanvasCoords(e);
       const allDraws = [...(floor.draws || []), ...(peerDraws || [])];
       for (let i = allDraws.length - 1; i >= 0; i--) {
-        if (allDraws[i]!.id && hitTestDraw(allDraws[i]!, pos.x, pos.y)) {
-          onDrawDelete?.([allDraws[i]!.id]);
+        const draw = allDraws[i]!;
+        if (!draw.id || draw.isDeleted) continue;
+        // Ownership check: only delete own draws
+        if (currentUserId && draw.userId && draw.userId !== currentUserId) continue;
+        if (hitTestDraw(draw, pos.x, pos.y)) {
+          onDrawDelete?.([draw.id]);
           return;
         }
       }
+      return;
+    }
+
+    // Select: click to select own draw, start drag
+    if (tool === Tool.Select) {
+      const pos = getCanvasCoords(e);
+      const allDraws = [...(floor.draws || []), ...(peerDraws || [])];
+      for (let i = allDraws.length - 1; i >= 0; i--) {
+        const draw = allDraws[i]!;
+        if (!draw.id || draw.isDeleted) continue;
+        if (currentUserId && draw.userId && draw.userId !== currentUserId) continue;
+        if (hitTestDraw(draw, pos.x, pos.y)) {
+          setSelectedDrawId(draw.id);
+          setIsDragging(true);
+          dragStartRef.current = { x: pos.x, y: pos.y, draw: JSON.parse(JSON.stringify(draw)) };
+          return;
+        }
+      }
+      setSelectedDrawId(null);
       return;
     }
 
@@ -499,6 +588,36 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       const dy = e.clientY - lastPanPosRef.current.y;
       panBy(dx, dy);
       lastPanPosRef.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
+
+    // Select tool: dragging preview
+    if (isDragging && tool === Tool.Select && dragStartRef.current) {
+      const pos = getCanvasCoords(e);
+      const dx = pos.x - dragStartRef.current.x;
+      const dy = pos.y - dragStartRef.current.y;
+      const canvas = activeCanvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const original = dragStartRef.current.draw;
+          const preview = {
+            ...original,
+            originX: original.originX + dx,
+            originY: original.originY + dy,
+            destinationX: original.destinationX != null ? original.destinationX + dx : undefined,
+            destinationY: original.destinationY != null ? original.destinationY + dy : undefined,
+            data: {
+              ...original.data,
+              ...(original.type === 'path' && original.data.points
+                ? { points: original.data.points.map((p: any) => ({ x: p.x + dx, y: p.y + dy })) }
+                : {}),
+            },
+          };
+          renderDraw(ctx, preview, renderDrawsRef);
+        }
+      }
       return;
     }
 
@@ -597,6 +716,45 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       return;
     }
 
+    // Select tool: finish drag
+    if (isDragging && tool === Tool.Select && dragStartRef.current) {
+      const pos = getCanvasCoords(e);
+      const dx = pos.x - dragStartRef.current.x;
+      const dy = pos.y - dragStartRef.current.y;
+      setIsDragging(false);
+
+      // Clear active canvas
+      const acCanvas = activeCanvasRef.current;
+      if (acCanvas) {
+        const ctx = acCanvas.getContext('2d');
+        ctx?.clearRect(0, 0, acCanvas.width, acCanvas.height);
+      }
+
+      // If barely moved, treat as click-select only
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2) {
+        dragStartRef.current = null;
+        return;
+      }
+
+      const original = dragStartRef.current.draw;
+      const updates = {
+        originX: Math.round(original.originX + dx),
+        originY: Math.round(original.originY + dy),
+        destinationX: original.destinationX != null ? Math.round(original.destinationX + dx) : undefined,
+        destinationY: original.destinationY != null ? Math.round(original.destinationY + dy) : undefined,
+        data: {
+          ...original.data,
+          ...(original.type === 'path' && original.data.points
+            ? { points: original.data.points.map((p: any) => ({ x: Math.round(p.x + dx), y: Math.round(p.y + dy) })) }
+            : {}),
+        },
+      };
+
+      onDrawUpdate?.(original.id, updates);
+      dragStartRef.current = null;
+      return;
+    }
+
     if (!isDrawing || readOnly) return;
     const pos = getCanvasCoords(e);
     setIsDrawing(false);
@@ -690,6 +848,7 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     if (readOnly) return 'default';
     if (isPanning) return 'grabbing';
     if (tool === Tool.Pan) return 'grab';
+    if (tool === Tool.Select) return isDragging ? 'grabbing' : 'default';
     if (tool === Tool.Eraser) return 'pointer';
     if (tool === Tool.LaserDot || tool === Tool.LaserLine) return 'crosshair';
     return 'crosshair';
@@ -728,6 +887,10 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
             if (isPanning) {
               setIsPanning(false);
               lastPanPosRef.current = null;
+            }
+            if (isDragging) {
+              setIsDragging(false);
+              dragStartRef.current = null;
             }
             if (isDrawing) {
               setIsDrawing(false);

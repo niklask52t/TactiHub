@@ -14,6 +14,7 @@ export const battleplans = pgTable('battleplans', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   notes: text('notes'),
+  tags: text('tags').array().default([]),
   isPublic: boolean('is_public').notNull().default(false),
   isSaved: boolean('is_saved').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),

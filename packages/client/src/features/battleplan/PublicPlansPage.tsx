@@ -1,15 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Eye, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+
+const FILTER_TAGS = ['Aggressive', 'Default', 'Retake', 'Rush', 'Anchor', 'Roam', 'Site A', 'Site B'];
 
 interface PublicPlan {
-  id: string; name: string; description: string | null; isPublic: boolean;
+  id: string; name: string; description: string | null; tags: string[]; isPublic: boolean;
   ownerId: string; gameId: string; mapId: string; createdAt: string;
 }
 
@@ -17,10 +20,11 @@ export default function PublicPlansPage() {
   const { gameSlug } = useParams<{ gameSlug: string }>();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const queryClient = useQueryClient();
+  const [filterTag, setFilterTag] = useState<string>('');
 
   const { data } = useQuery({
-    queryKey: ['battleplans', 'public'],
-    queryFn: () => apiGet<{ data: PublicPlan[] }>('/battleplans'),
+    queryKey: ['battleplans', 'public', filterTag],
+    queryFn: () => apiGet<{ data: PublicPlan[] }>(`/battleplans${filterTag ? `?tags=${encodeURIComponent(filterTag)}` : ''}`),
   });
 
   const handleVote = async (planId: string, value: number) => {
@@ -34,9 +38,31 @@ export default function PublicPlansPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" asChild><Link to={`/${gameSlug}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
         <h1 className="text-3xl font-bold">Public Battle Plans</h1>
+      </div>
+
+      {/* Tag filter bar */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <span className="text-sm text-muted-foreground">Filter:</span>
+        <Badge
+          variant={filterTag === '' ? 'default' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setFilterTag('')}
+        >
+          All
+        </Badge>
+        {FILTER_TAGS.map((tag) => (
+          <Badge
+            key={tag}
+            variant={filterTag === tag ? 'default' : 'outline'}
+            className="cursor-pointer"
+            onClick={() => setFilterTag(filterTag === tag ? '' : tag)}
+          >
+            {tag}
+          </Badge>
+        ))}
       </div>
 
       {data?.data.length === 0 ? (
@@ -48,6 +74,13 @@ export default function PublicPlansPage() {
               <CardHeader>
                 <CardTitle className="text-lg">{plan.name}</CardTitle>
                 {plan.description && <p className="text-sm text-muted-foreground">{plan.description}</p>}
+                {plan.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {plan.tags.map((tag: string) => (
+                      <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="flex items-center gap-2">
                 <Button variant="outline" size="sm" asChild>

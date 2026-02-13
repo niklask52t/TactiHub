@@ -29,11 +29,13 @@ interface CanvasViewProps {
   readOnly?: boolean;
   onDrawCreate?: (floorId: string, draws: any[]) => void;
   onDrawDelete?: (drawIds: string[]) => void;
+  onDrawUpdate?: (drawId: string, updates: any) => void;
   onLaserLine?: (points: Array<{ x: number; y: number }>, color: string) => void;
   onCursorMove?: (x: number, y: number, isLaser: boolean) => void;
   peerLaserLines?: LaserLineData[];
   cursors?: Map<string, { x: number; y: number; color: string; userId: string; isLaser?: boolean }>;
   localDraws?: Record<string, any[]>;
+  currentUserId?: string | null;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -42,7 +44,7 @@ const VIEW_MODE_LABELS: Record<ViewMode, string> = {
   white: 'Whiteprint',
 };
 
-export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onLaserLine, onCursorMove, peerLaserLines, cursors, localDraws }: CanvasViewProps) {
+export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onDrawUpdate, onLaserLine, onCursorMove, peerLaserLines, cursors, localDraws, currentUserId }: CanvasViewProps) {
   const { scale, zoomTo, resetViewport, containerWidth, containerHeight } = useCanvasStore();
 
   const sortedFloors = useMemo(() =>
@@ -232,12 +234,14 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
         readOnly={readOnly}
         onDrawCreate={onDrawCreate}
         onDrawDelete={onDrawDelete}
+        onDrawUpdate={onDrawUpdate}
         onLaserLine={onLaserLine}
         onCursorMove={onCursorMove}
         peerLaserLines={peerLaserLines}
         cursors={cursors}
         activeImagePath={activeImagePath}
         peerDraws={localDraws?.[currentFloor!.id]}
+        currentUserId={currentUserId}
       />
     </div>
   );

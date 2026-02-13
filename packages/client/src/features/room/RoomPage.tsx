@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import { useRoomStore } from '@/stores/room.store';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -16,14 +16,18 @@ import { ArrowLeft, Copy, Users, Info } from 'lucide-react';
 import type { CursorPosition } from '@tactihub/shared';
 import { CURSOR_THROTTLE_MS } from '@tactihub/shared';
 import type { LaserLineData } from '@/features/canvas/CanvasLayer';
+import { ChatPanel } from './ChatPanel';
+import type { ChatMessage } from '@tactihub/shared';
 
 export default function RoomPage() {
   const { connectionString } = useParams<{ connectionString: string }>();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userId = useAuthStore((s) => s.user?.id) ?? null;
   const {
     users, battleplan,
     setUsers, addUser, removeUser, setMyColor, setBattleplan,
     updateCursor, removeCursor, setConnectionString, reset,
+    addChatMessage,
   } = useRoomStore();
 
   const { pushMyDraw, popUndo, popRedo, clearHistory } = useCanvasStore();
@@ -33,6 +37,8 @@ export default function RoomPage() {
   const [peerLaserLines, setPeerLaserLines] = useState<LaserLineData[]>([]);
   const cursorThrottleRef = useRef(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Local-only draws for guests (not persisted)
   const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
@@ -78,6 +84,10 @@ export default function RoomPage() {
       setBattleplan(bp);
     });
 
+    socket.on('chat:messaged', (msg: ChatMessage) => {
+      addChatMessage(msg);
+    });
+
     socket.on('laser:line', ({ userId, points, color }: { userId: string; points: Array<{ x: number; y: number }>; color: string }) => {
       setPeerLaserLines((prev) => [
         ...prev,
@@ -95,6 +105,7 @@ export default function RoomPage() {
       socket.off('draw:deleted');
       socket.off('battleplan:changed');
       socket.off('laser:line');
+      socket.off('chat:messaged');
       disconnectSocket();
       clearHistory();
       reset();
@@ -180,6 +191,18 @@ export default function RoomPage() {
       }
 
       refetchPlan();
+    }
+  }, [isAuthenticated, refetchPlan]);
+
+  const handleDrawUpdate = useCallback(async (drawId: string, updates: any) => {
+    if (!isAuthenticated) return;
+    const socket = getSocket();
+    socket.emit('draw:update', { drawId, data: updates });
+    try {
+      await apiPut(`/draws/${drawId}`, updates);
+      refetchPlan();
+    } catch {
+      // Silent failure
     }
   }, [isAuthenticated, refetchPlan]);
 
@@ -302,17 +325,21 @@ export default function RoomPage() {
           />
         )}
 
+        <ChatPanel open={chatOpen} onToggle={() => setChatOpen(v => !v)} />
+
         <div className="h-full p-4" style={{ marginLeft: gameSlug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
           {battleplan?.floors ? (
             <CanvasView
               floors={battleplan.floors}
               onDrawCreate={handleDrawCreate}
               onDrawDelete={handleDrawDelete}
+              onDrawUpdate={handleDrawUpdate}
               onLaserLine={handleLaserLine}
               onCursorMove={handleCursorMove}
               peerLaserLines={peerLaserLines}
               cursors={cursors}
               localDraws={localDraws}
+              currentUserId={userId}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">

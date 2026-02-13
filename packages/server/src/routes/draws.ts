@@ -53,9 +53,14 @@ export default async function drawsRoutes(fastify: FastifyInstance) {
       data: z.record(z.unknown()).optional(),
     }).parse(request.body);
 
-    const [draw] = await db.update(draws).set({ ...body, updatedAt: new Date() }).where(eq(draws.id, id)).returning();
-    if (!draw) return reply.status(404).send({ error: 'Not Found', message: 'Draw not found', statusCode: 404 });
+    // Ownership check
+    const [existing] = await db.select().from(draws).where(eq(draws.id, id));
+    if (!existing) return reply.status(404).send({ error: 'Not Found', message: 'Draw not found', statusCode: 404 });
+    if (existing.userId && existing.userId !== request.user!.userId) {
+      return reply.status(403).send({ error: 'Forbidden', message: 'Cannot modify another user\'s draw', statusCode: 403 });
+    }
 
+    const [draw] = await db.update(draws).set({ ...body, updatedAt: new Date() }).where(eq(draws.id, id)).returning();
     return { data: draw };
   });
 
@@ -63,9 +68,14 @@ export default async function drawsRoutes(fastify: FastifyInstance) {
   fastify.delete('/draws/:id', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
 
-    const [draw] = await db.update(draws).set({ isDeleted: true, updatedAt: new Date() }).where(eq(draws.id, id)).returning();
-    if (!draw) return reply.status(404).send({ error: 'Not Found', message: 'Draw not found', statusCode: 404 });
+    // Ownership check
+    const [existing] = await db.select().from(draws).where(eq(draws.id, id));
+    if (!existing) return reply.status(404).send({ error: 'Not Found', message: 'Draw not found', statusCode: 404 });
+    if (existing.userId && existing.userId !== request.user!.userId) {
+      return reply.status(403).send({ error: 'Forbidden', message: 'Cannot delete another user\'s draw', statusCode: 403 });
+    }
 
+    const [draw] = await db.update(draws).set({ isDeleted: true, updatedAt: new Date() }).where(eq(draws.id, id)).returning();
     return { data: draw };
   });
 }

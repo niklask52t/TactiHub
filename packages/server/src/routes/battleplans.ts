@@ -68,20 +68,25 @@ async function getBattleplanWithDetails(id: string, userId?: string) {
 export default async function battleplansRoutes(fastify: FastifyInstance) {
   // GET /api/battleplans - Public battleplans
   fastify.get('/', { preHandler: [optionalAuth] }, async (request) => {
-    const { page = '1', pageSize = '20', gameId, mapId, sort = 'newest' } = request.query as Record<string, string>;
+    const { page = '1', pageSize = '20', gameId, tags: tagsParam } = request.query as Record<string, string>;
     const p = Math.max(1, parseInt(page));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize)));
 
-    let query = db.select().from(battleplans).where(eq(battleplans.isPublic, true));
-
-    if (gameId) {
-      query = db.select().from(battleplans).where(and(eq(battleplans.isPublic, true), eq(battleplans.gameId, gameId)));
+    const conditions = [eq(battleplans.isPublic, true)];
+    if (gameId) conditions.push(eq(battleplans.gameId, gameId));
+    if (tagsParam) {
+      const tagList = tagsParam.split(',').map(t => t.trim()).filter(Boolean);
+      if (tagList.length > 0) {
+        conditions.push(sql`${battleplans.tags} @> ARRAY[${sql.join(tagList.map(t => sql`${t}`), sql`, `)}]::text[]`);
+      }
     }
 
-    const [{ total }] = await db.select({ total: count() }).from(battleplans).where(eq(battleplans.isPublic, true));
+    const whereClause = and(...conditions);
+
+    const [{ total }] = await db.select({ total: count() }).from(battleplans).where(whereClause);
 
     const result = await db.select().from(battleplans)
-      .where(eq(battleplans.isPublic, true))
+      .where(whereClause)
       .orderBy(desc(battleplans.createdAt))
       .limit(ps)
       .offset((p - 1) * ps);
@@ -110,6 +115,7 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
       mapId: z.string().uuid(),
       name: z.string().min(1).max(255),
       description: z.string().optional(),
+      tags: z.array(z.string().max(30)).max(10).optional(),
     }).parse(request.body);
 
     const [plan] = await db.insert(battleplans).values({
@@ -118,6 +124,7 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
       mapId: body.mapId,
       name: body.name,
       description: body.description,
+      tags: body.tags || [],
     }).returning();
 
     // Auto-create floors from map
@@ -162,6 +169,7 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
       name: z.string().min(1).max(255).optional(),
       description: z.string().optional(),
       notes: z.string().optional(),
+      tags: z.array(z.string().max(30)).max(10).optional(),
       isPublic: z.boolean().optional(),
       isSaved: z.boolean().optional(),
     }).parse(request.body);
@@ -203,6 +211,7 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
       name: `${source.name} (Copy)`,
       description: source.description,
       notes: source.notes,
+      tags: source.tags || [],
     }).returning();
 
     // Copy floors and draws

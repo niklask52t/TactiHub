@@ -6,6 +6,7 @@ import { COLORS_ARRAY } from '@tactihub/shared';
 import { setupRoomHandlers } from './handlers/room.js';
 import { setupDrawingHandlers } from './handlers/drawing.js';
 import { setupCursorHandlers } from './handlers/cursor.js';
+import { setupChatHandlers } from './handlers/chat.js';
 import { db } from '../db/connection.js';
 import { users } from '../db/schema/index.js';
 import { eq } from 'drizzle-orm';
@@ -69,6 +70,7 @@ export function setupSocket(io: Server, _redis: Redis) {
     setupRoomHandlers(io, socket, userId, username);
     setupDrawingHandlers(io, socket, userId);
     setupCursorHandlers(io, socket, userId);
+    setupChatHandlers(io, socket, userId, username);
 
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${username} (${socket.id})`);

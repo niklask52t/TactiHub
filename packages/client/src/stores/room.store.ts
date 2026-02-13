@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { RoomUser, Battleplan, CursorPosition } from '@tactihub/shared';
+import type { RoomUser, Battleplan, CursorPosition, ChatMessage } from '@tactihub/shared';
 
 interface RoomStoreState {
   connectionString: string | null;
@@ -8,6 +8,8 @@ interface RoomStoreState {
   battleplan: Battleplan | null;
   currentFloorId: string | null;
   cursors: Map<string, CursorPosition>;
+  chatMessages: ChatMessage[];
+  unreadCount: number;
   setConnectionString: (cs: string) => void;
   setUsers: (users: RoomUser[]) => void;
   addUser: (user: RoomUser) => void;
@@ -17,6 +19,8 @@ interface RoomStoreState {
   setCurrentFloorId: (id: string | null) => void;
   updateCursor: (cursor: CursorPosition) => void;
   removeCursor: (userId: string) => void;
+  addChatMessage: (msg: ChatMessage) => void;
+  resetUnread: () => void;
   reset: () => void;
 }
 
@@ -27,6 +31,8 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
   battleplan: null,
   currentFloorId: null,
   cursors: new Map(),
+  chatMessages: [],
+  unreadCount: 0,
   setConnectionString: (cs) => set({ connectionString: cs }),
   setUsers: (users) => set({ users }),
   addUser: (user) => set((s) => ({ users: [...s.users, user] })),
@@ -46,6 +52,11 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
     newCursors.delete(userId);
     return { cursors: newCursors };
   }),
+  addChatMessage: (msg) => set((s) => ({
+    chatMessages: [...s.chatMessages, msg],
+    unreadCount: s.unreadCount + 1,
+  })),
+  resetUnread: () => set({ unreadCount: 0 }),
   reset: () => set({
     connectionString: null,
     users: [],
@@ -53,5 +64,7 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
     battleplan: null,
     currentFloorId: null,
     cursors: new Map(),
+    chatMessages: [],
+    unreadCount: 0,
   }),
 }));

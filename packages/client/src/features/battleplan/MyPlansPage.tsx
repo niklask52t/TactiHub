@@ -5,14 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2, Eye, ArrowLeft, Share2 } from 'lucide-react';
+import { Plus, Trash2, Eye, ArrowLeft, Share2, X } from 'lucide-react';
 import { useState } from 'react';
 
+const SUGGESTED_TAGS = ['Aggressive', 'Default', 'Retake', 'Rush', 'Anchor', 'Roam', 'Site A', 'Site B'];
+
 interface Battleplan {
-  id: string; name: string; description: string | null; isPublic: boolean;
+  id: string; name: string; description: string | null; tags: string[]; isPublic: boolean;
   gameId: string; mapId: string; createdAt: string; updatedAt: string;
 }
 
@@ -30,6 +34,8 @@ export default function MyPlansPage() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState('');
+  const [newTags, setNewTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
 
   const { data: gameData } = useQuery({
     queryKey: ['game', gameSlug],
@@ -45,8 +51,15 @@ export default function MyPlansPage() {
   const plans = plansData?.data.filter(p => p.gameId === game?.id) || [];
 
   const createMutation = useMutation({
-    mutationFn: (data: { gameId: string; mapId: string; name: string }) => apiPost<{ data: Battleplan }>('/battleplans', data),
-    onSuccess: (res) => { queryClient.invalidateQueries({ queryKey: ['battleplans'] }); toast.success('Battleplan created'); setIsOpen(false); navigate(`/${gameSlug}/plans/${res.data.id}`); },
+    mutationFn: (data: { gameId: string; mapId: string; name: string; description?: string; tags?: string[] }) => apiPost<{ data: Battleplan }>('/battleplans', data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['battleplans'] });
+      toast.success('Battleplan created');
+      setIsOpen(false);
+      setNewTags([]);
+      setTagInput('');
+      navigate(`/${gameSlug}/plans/${res.data.id}`);
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -58,11 +71,22 @@ export default function MyPlansPage() {
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const description = (form.get('description') as string)?.trim() || undefined;
     createMutation.mutate({
       gameId: game!.id,
       mapId: selectedMapId,
       name: form.get('name') as string,
+      description,
+      tags: newTags.length > 0 ? newTags : undefined,
     });
+  };
+
+  const addTag = (tag: string) => {
+    const trimmed = tag.trim();
+    if (trimmed && !newTags.includes(trimmed) && newTags.length < 10) {
+      setNewTags(prev => [...prev, trimmed]);
+    }
+    setTagInput('');
   };
 
   return (
@@ -78,6 +102,7 @@ export default function MyPlansPage() {
             <DialogHeader><DialogTitle>Create Battle Plan</DialogTitle></DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2"><Label>Name</Label><Input name="name" required /></div>
+              <div className="space-y-2"><Label>Description (optional)</Label><Textarea name="description" placeholder="Brief description of this battleplan..." rows={3} /></div>
               <div className="space-y-2">
                 <Label>Map</Label>
                 <Select value={selectedMapId} onValueChange={setSelectedMapId}>
@@ -86,6 +111,31 @@ export default function MyPlansPage() {
                     {game?.maps.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                {newTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {newTags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => setNewTags(t => t.filter(x => x !== tag))}>
+                        {tag} <X className="h-2 w-2 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <Input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && tagInput.trim()) { e.preventDefault(); addTag(tagInput); } }}
+                  placeholder="Add tag and press Enter"
+                />
+                <div className="flex flex-wrap gap-1">
+                  {SUGGESTED_TAGS.filter(t => !newTags.includes(t)).map((tag) => (
+                    <Badge key={tag} variant="outline" className="cursor-pointer text-xs" onClick={() => addTag(tag)}>
+                      + {tag}
+                    </Badge>
+                  ))}
+                </div>
               </div>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -106,6 +156,14 @@ export default function MyPlansPage() {
             <Card key={plan.id} className="hover:border-primary transition-colors">
               <CardHeader>
                 <CardTitle className="text-lg">{plan.name}</CardTitle>
+                {plan.description && <p className="text-sm text-muted-foreground line-clamp-2">{plan.description}</p>}
+                {plan.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {plan.tags.map((tag: string) => (
+                      <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground">
                   {new Date(plan.updatedAt).toLocaleDateString()}
                 </p>

@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.5.2
+**Version**: 1.6.0
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -53,7 +53,7 @@ packages/
 
 ## Key Architecture Decisions
 
-### Database Schema (15 tables)
+### Database Schema (15 tables + tags column)
 - `draws` table uses a JSONB `data` column instead of polymorphic tables — flexible, no joins needed
 - `draw_type` enum: path, line, rectangle, text, icon
 - `settings` table is key-value for app-wide config (registration_enabled, etc.)
@@ -136,9 +136,52 @@ packages/
 - Available to all users (authenticated and guests), uses `renderDraw()` exported from CanvasLayer
 - Client dependency: `jspdf`
 
+### Select & Drag Tool
+- Tool.Select in toolbar allows selecting and dragging own draws
+- Click: hitTest to find draw under cursor (own draws only), highlight with orange dashed bounding box
+- Drag: renders preview on active canvas, offsets all coordinates (originX/Y, destinationX/Y, path points)
+- Release: persists via PUT /api/draws/:id + socket broadcast
+- `getDrawBounds()` helper in CanvasLayer computes axis-aligned bounding box for all draw types
+- `selectedDrawId` stored in Zustand canvas store
+
+### Ownership-Based Draw Interaction
+- Eraser and Select tools only interact with draws where `draw.userId === currentUserId`
+- Others' draws are rendered with reduced opacity (0.6 alpha) as visual distinction
+- Server enforces ownership on PUT /api/draws/:id and DELETE /api/draws/:id (403 if not owner)
+- `currentUserId` prop passed from RoomPage → CanvasView → CanvasLayer
+
+### Text Font Size Control
+- Font size selector (shadcn Select) appears in toolbar when Text tool is active
+- Options: 12, 16, 20, 24, 32, 48, 64 px
+- Uses existing `fontSize`/`setFontSize` from canvas store
+
+### Battleplan Notes/Description UI
+- Create dialog (MyPlansPage) includes optional description textarea
+- BattleplanViewer shows editable description + notes sections for plan owner
+- Pencil icon to enter edit mode, Save/Cancel buttons, useMutation with apiPut
+- Description shown in plan cards on MyPlansPage and PublicPlansPage
+
+### Battleplan Tagging
+- `tags` text[] array column on battleplans table (PostgreSQL array, max 10 tags, 30 chars each)
+- Tags editable in create dialog (tag input + suggested tags) and BattleplanViewer (owner)
+- Tag badges displayed in plan cards on all plan list pages
+- Public plans filterable by tag via query parameter (`?tags=Aggressive`)
+- Suggested tags: Aggressive, Default, Retake, Rush, Anchor, Roam, Site A, Site B
+- Copy endpoint preserves tags
+
+### In-Room Chat
+- Ephemeral (not persisted to DB) text messaging between room participants
+- `chat:message` client→server event, `chat:messaged` server→client event
+- Server handler broadcasts to all room members via `io.to(room).emit()` (includes sender)
+- Max 500 chars per message
+- ChatPanel component: collapsible overlay (bottom-left), 320x384px
+- Unread badge when panel is closed, auto-scroll, username colored by room color
+- Guests cannot send messages (input disabled)
+- Chat state (chatMessages, unreadCount) in room Zustand store, cleared on room leave
+
 ### Socket.IO Events
-- Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`, `laser:line`
-- Server emits: `room:joined`, `room:user-joined`, `room:user-left`, `cursor:moved`, `draw:created`, `draw:deleted`, `draw:updated`, `operator-slot:updated`, `battleplan:changed`, `laser:line`
+- Client emits: `room:join`, `room:leave`, `cursor:move`, `draw:create`, `draw:delete`, `draw:update`, `operator-slot:update`, `battleplan:change`, `laser:line`, `chat:message`
+- Server emits: `room:joined`, `room:user-joined`, `room:user-left`, `cursor:moved`, `draw:created`, `draw:deleted`, `draw:updated`, `operator-slot:updated`, `battleplan:changed`, `laser:line`, `chat:messaged`
 - `cursor:move` now includes optional `isLaser` flag for laser dot rendering
 - `laser:line` broadcasts `{ userId, points, color }` — no DB persistence
 - 10 colors in pool, assigned to users on room join

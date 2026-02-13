@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2, Camera, FileDown } from 'lucide-react';
+import { Keyboard, Mouse, Pencil, Move, ZoomIn, Eraser, Type, Minus, Square, Users, Share2, Shield, Crosshair, Presentation, Sticker, Settings, Wand2, Camera, FileDown, MousePointer2, MessageSquare, Tag } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -48,7 +48,14 @@ export default function HelpPage() {
                 <Eraser className="h-5 w-5 mt-0.5 text-primary shrink-0" />
                 <div>
                   <p className="font-medium">Eraser</p>
-                  <p className="text-sm text-muted-foreground">Click on any drawing to delete it.</p>
+                  <p className="text-sm text-muted-foreground">Click on a drawing to delete it. You can only erase your own drawings — others&apos; draws appear dimmed.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MousePointer2 className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                <div>
+                  <p className="font-medium">Select &amp; Drag</p>
+                  <p className="text-sm text-muted-foreground">Click on your own drawing to select it, then drag to reposition. An orange highlight shows the selection.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -90,6 +97,7 @@ export default function HelpPage() {
             <div>
               <p className="text-sm text-muted-foreground">
                 Use the <strong>color picker</strong> to change the drawing color and the <strong>slider</strong> to adjust line width.
+                When the Text tool is active, a <strong>font size selector</strong> appears in the toolbar (12–64px).
               </p>
             </div>
           </CardContent>
@@ -232,6 +240,38 @@ export default function HelpPage() {
               </div>
             </div>
             <p>Export is available to all users, including guests.</p>
+          </CardContent>
+        </Card>
+
+        {/* In-Room Chat */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> In-Room Chat</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Use the chat panel to send text messages to everyone in the room. Click the <strong>Chat</strong> button in the bottom-left corner to open the panel.</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Messages are <strong>ephemeral</strong> — they are not saved and disappear when you leave the room</li>
+              <li>Each user&apos;s name is shown in their assigned room color</li>
+              <li>An <strong>unread badge</strong> appears on the chat button when new messages arrive while the panel is closed</li>
+              <li>Guests can read messages but must log in to send</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        {/* Battleplan Tags */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5" /> Battleplan Tags</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Organize your battle plans with tags like &quot;Rush&quot;, &quot;Default&quot;, &quot;Retake&quot;, &quot;Aggressive&quot;, etc.</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Add tags when creating a plan or edit them later in the plan viewer</li>
+              <li>Use suggested tags or type your own (up to 10 tags, max 30 characters each)</li>
+              <li>Public plans can be <strong>filtered by tag</strong> on the community page</li>
+              <li>Tags are shown as colored badges on plan cards</li>
+            </ul>
           </CardContent>
         </Card>
 

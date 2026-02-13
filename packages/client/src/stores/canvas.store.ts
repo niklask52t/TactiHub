@@ -33,6 +33,10 @@ interface CanvasStoreState {
   setDimensions: (imgW: number, imgH: number, contW: number, contH: number) => void;
   resetViewport: () => void;
 
+  // Selection
+  selectedDrawId: string | null;
+  setSelectedDrawId: (id: string | null) => void;
+
   // Undo/Redo history
   myDrawHistory: DrawHistoryEntry[];
   undoStack: DrawHistoryEntry[];
@@ -94,6 +98,10 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
       offsetY: (containerHeight - imageHeight * clamped) / 2,
     });
   },
+
+  // Selection
+  selectedDrawId: null,
+  setSelectedDrawId: (id) => set({ selectedDrawId: id }),
 
   // Undo/Redo
   myDrawHistory: [],

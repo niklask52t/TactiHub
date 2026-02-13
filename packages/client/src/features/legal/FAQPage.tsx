@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: 'How do I draw on the map?',
-    a: 'Select a drawing tool from the toolbar (Pen, Line, Rectangle, or Text), choose your color and line width, then click and drag on the canvas. Use the Eraser tool to remove drawings.',
+    a: 'Select a drawing tool from the toolbar (Pen, Line, Rectangle, or Text), choose your color and line width, then click and drag on the canvas. When using the Text tool, you can adjust the font size with the dropdown in the toolbar. Use the Eraser tool to remove your own drawings.',
   },
   {
     q: 'How do I zoom and pan?',
@@ -96,6 +96,26 @@ const faqs = [
   {
     q: 'How do I export my drawings?',
     a: 'Use the export buttons in the bottom-right corner of the canvas (next to the zoom controls). Click the camera icon to download the current floor as a PNG image, or click the file icon to export all floors as a multi-page PDF. The export includes the map background and all visible drawings. Available to everyone, including guests.',
+  },
+  {
+    q: 'Can I move drawings after placing them?',
+    a: 'Yes. Select the Select & Drag tool (arrow icon) in the toolbar, then click on one of your own drawings to select it (shown with an orange highlight). Drag it to a new position. You can only select and move your own drawings — others\' draws appear dimmed.',
+  },
+  {
+    q: 'Why can\'t I erase someone else\'s drawing?',
+    a: 'The eraser and select tools only work on your own drawings. Other users\' drawings appear slightly dimmed on the canvas. This prevents accidental deletion of teammates\' work during collaboration.',
+  },
+  {
+    q: 'How does the in-room chat work?',
+    a: 'Click the "Chat" button in the bottom-left corner of the room to open the chat panel. Type a message and press Enter or click Send. Messages are visible to all room members and each user\'s name appears in their assigned color. Chat messages are ephemeral — they are not saved and disappear when you leave the room. Guests can read messages but must log in to send.',
+  },
+  {
+    q: 'How do I tag my battle plans?',
+    a: 'When creating a battle plan, you can add tags like "Rush", "Default", "Retake", etc. You can also add or remove tags later in the plan viewer (click the edit icon next to the tags section). Tags help organize your plans and allow filtering on the public plans page. You can use suggested tags or type your own (up to 10 tags, max 30 characters each).',
+  },
+  {
+    q: 'Can I add a description or notes to my battle plan?',
+    a: 'Yes. In the battle plan viewer, plan owners can add and edit a description and notes. Click the pencil icon next to each section to edit. The description appears on plan cards in lists, while notes are visible in the full plan viewer.',
   },
   {
     q: 'How do I report a bug or suggest a feature?',

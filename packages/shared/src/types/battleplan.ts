@@ -9,6 +9,7 @@ export interface Battleplan {
   name: string;
   description: string | null;
   notes: string | null;
+  tags: string[];
   isPublic: boolean;
   isSaved: boolean;
   createdAt: string;

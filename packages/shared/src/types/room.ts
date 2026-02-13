@@ -22,6 +22,14 @@ export interface CursorPosition {
   isLaser?: boolean;
 }
 
+export interface ChatMessage {
+  userId: string;
+  username: string;
+  text: string;
+  timestamp: number;
+  color: string;
+}
+
 export interface SocketEvents {
   // Client -> Server
   'room:join': { connectionString: string };
@@ -32,6 +40,7 @@ export interface SocketEvents {
   'draw:update': { drawId: string; data: Record<string, unknown> };
   'operator-slot:update': { slotId: string; operatorId: string | null };
   'battleplan:change': { battleplanId: string };
+  'chat:message': { text: string };
 
   // Server -> Client
   'room:joined': { userId: string; color: string; users: RoomUser[] };
@@ -43,6 +52,7 @@ export interface SocketEvents {
   'draw:updated': { userId: string; drawId: string; data: Record<string, unknown> };
   'operator-slot:updated': { slotId: string; operatorId: string | null; operator: unknown };
   'battleplan:changed': { battleplan: unknown };
+  'chat:messaged': ChatMessage;
 }
 
 export interface CreateDrawPayload {

@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.5.2-orange)
+![Version](https://img.shields.io/badge/version-1.6.0-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -37,11 +37,15 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 
 - **Multi-Game Support** — Built as a generic platform. Ships with Rainbow Six Siege and Valorant data, but any game with top-down maps can be added through the admin panel.
 - **Real-Time Collaboration** — Create rooms and draw together in real-time with Socket.IO. See teammates' cursors and drawings appear instantly.
-- **Canvas Drawing System** — 3-layer canvas with tools for freehand pen, straight lines, rectangles, text, and operator/gadget icons.
+- **Canvas Drawing System** — 3-layer canvas with tools for freehand pen, straight lines, rectangles, text (adjustable font size), and operator/gadget icons.
 - **Zoom + Pan** — Mouse wheel zoom centered on cursor (25%-400%), pan tool, middle-click pan, and reset button.
-- **Eraser** — Click on any drawing to delete it with precise hit-testing.
+- **Eraser** — Click on your own drawings to delete them. Others' draws appear dimmed and can't be erased.
+- **Select & Drag** — Click to select your own drawings, drag to reposition them on the canvas.
 - **Undo / Redo** — Ctrl+Z / Ctrl+Y keyboard shortcuts and toolbar buttons.
+- **In-Room Chat** — Ephemeral text messaging between room participants with unread badge. Messages are not persisted.
 - **Battle Plan Management** — Save, name, and organize battle plans. Mark as public to share with the community, or keep private.
+- **Battleplan Tags** — Tag plans with categories (Rush, Default, Retake, etc.) for organization and filtering.
+- **Battleplan Description & Notes** — Add descriptions and notes to plans, inline-editable for owners.
 - **Share by Link** — Public toggle + share button copies a direct link. Public plans are viewable without login.
 - **Voting System** — Upvote/downvote public battle plans to surface the best strategies.
 - **Operator/Agent Slots** — Assign operators (R6) or agents (Valorant) to 5 slots per plan, synced in real-time.
