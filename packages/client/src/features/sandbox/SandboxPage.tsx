@@ -5,12 +5,14 @@ import { apiGet } from '@/lib/api';
 import { CanvasView } from '@/features/canvas/CanvasView';
 import { Toolbar } from '@/features/canvas/tools/Toolbar';
 import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
+import StratLayout from '@/features/strat/StratLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, AlertTriangle, Gamepad2, Search } from 'lucide-react';
 import { useCanvasStore } from '@/stores/canvas.store';
+import { useStratStore } from '@/stores/strat.store';
 import type { OperatorSlot } from '@tactihub/shared';
 
 interface Game {
@@ -70,6 +72,106 @@ export default function SandboxPage() {
     setOperatorSlots((prev) => prev.filter((s) => s.side !== 'attacker'));
   }, []);
 
+  // Strat store (local mode — no API/socket)
+  const {
+    activePhaseId, activeOperatorSlotId,
+    setPhases, setActivePhaseId, addPhase, updatePhase, removePhase,
+    setBan, removeBan: removeStoreBan, setOperatorSlots: setStratSlots,
+    updateOperatorSlot: updateStratSlot, getActiveColor, getVisibleSlotIds,
+    landscapeVisible, reset: resetStrat, setStratConfig,
+  } = useStratStore();
+
+  // Initialize local strat state
+  const stratInitRef = useRef(false);
+  useEffect(() => {
+    if (step === 'canvas' && !stratInitRef.current) {
+      stratInitRef.current = true;
+      const defaultPhaseId = crypto.randomUUID();
+      setPhases([{ id: defaultPhaseId, battleplanId: 'sandbox', index: 0, name: 'Action Phase', description: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
+      setActivePhaseId(defaultPhaseId);
+
+      const defaultColors = ['#FF4444', '#44AAFF', '#44FF44', '#FFAA44', '#AA44FF'];
+      const slots = (['attacker', 'defender'] as const).flatMap((side) =>
+        Array.from({ length: 5 }, (_, i) => ({
+          id: crypto.randomUUID(),
+          battleplanId: 'sandbox',
+          slotNumber: i + 1,
+          operatorId: null,
+          operatorName: null,
+          side,
+          color: defaultColors[i] ?? '#FF4444',
+          visible: true,
+          primaryWeapon: null,
+          secondaryWeapon: null,
+          primaryEquipment: null,
+          secondaryEquipment: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })),
+      );
+      setStratSlots(slots);
+    }
+    return () => {
+      if (step !== 'canvas') {
+        stratInitRef.current = false;
+        resetStrat();
+      }
+    };
+  }, [step]);
+
+  // Sandbox strat handlers (local only)
+  const handleStratSlotUpdate = useCallback((slotId: string, data: Record<string, any>) => {
+    updateStratSlot(slotId, data as any);
+  }, [updateStratSlot]);
+
+  const handleStratLoadoutChange = useCallback((slotId: string, field: string, value: string | null) => {
+    updateStratSlot(slotId, { [field]: value } as any);
+  }, [updateStratSlot]);
+
+  const handleStratVisibilityToggle = useCallback((slotId: string, visible: boolean) => {
+    updateStratSlot(slotId, { visible });
+  }, [updateStratSlot]);
+
+  const handleStratColorChange = useCallback((slotId: string, color: string) => {
+    updateStratSlot(slotId, { color });
+  }, [updateStratSlot]);
+
+  const handlePhaseCreate = useCallback((name: string) => {
+    addPhase({ id: crypto.randomUUID(), battleplanId: 'sandbox', index: useStratStore.getState().phases.length, name, description: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  }, [addPhase]);
+
+  const handlePhaseUpdate = useCallback((phaseId: string, name: string) => {
+    updatePhase(phaseId, { name });
+  }, [updatePhase]);
+
+  const handlePhaseDelete = useCallback((phaseId: string) => {
+    removePhase(phaseId);
+  }, [removePhase]);
+
+  const handlePhaseSwitch = useCallback((phaseId: string) => {
+    setActivePhaseId(phaseId);
+  }, [setActivePhaseId]);
+
+  const handleBanUpdate = useCallback((operatorName: string, side: 'attacker' | 'defender', slotIndex: number) => {
+    setBan({ id: crypto.randomUUID(), battleplanId: 'sandbox', operatorName, side, slotIndex, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  }, [setBan]);
+
+  const handleBanRemove = useCallback((banId: string) => {
+    removeStoreBan(banId);
+  }, [removeStoreBan]);
+
+  const handleConfigChange = useCallback((config: Record<string, any>) => {
+    setStratConfig(config as any);
+  }, [setStratConfig]);
+
+  // Sync draw color from active operator slot
+  const { setColor } = useCanvasStore();
+  useEffect(() => {
+    if (step === 'canvas') {
+      setColor(getActiveColor());
+    }
+  }, [activeOperatorSlotId, step, getActiveColor, setColor]);
+
   // Local draws state (no persistence)
   const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
   const localIdCounter = useRef(0);
@@ -104,7 +206,12 @@ export default function SandboxPage() {
   };
 
   const handleDrawCreate = useCallback((floorId: string, draws: any[]) => {
-    const newDraws = draws.map((d) => ({
+    const enriched = draws.map((d) => ({
+      ...d,
+      phaseId: activePhaseId || undefined,
+      operatorSlotId: activeOperatorSlotId || undefined,
+    }));
+    const newDraws = enriched.map((d) => ({
       ...d,
       id: `local-${++localIdCounter.current}`,
       isLocal: true,
@@ -115,10 +222,10 @@ export default function SandboxPage() {
     }));
     if (!isRedoingRef.current) {
       for (let i = 0; i < newDraws.length; i++) {
-        pushMyDraw({ id: newDraws[i].id, floorId, payload: draws[i] });
+        pushMyDraw({ id: newDraws[i].id, floorId, payload: enriched[i] });
       }
     }
-  }, [pushMyDraw]);
+  }, [pushMyDraw, activePhaseId, activeOperatorSlotId]);
 
   const handleDrawDelete = useCallback((drawIds: string[]) => {
     const idSet = new Set(drawIds);
@@ -237,37 +344,54 @@ export default function SandboxPage() {
           <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
         </div>
 
-        {/* Canvas area */}
+        {/* Canvas area with strat layout */}
         <div className="flex-1 overflow-hidden relative">
-          {/* Icon sidebar */}
-          {selectedGame?.slug && (
-            <IconSidebar
-              gameSlug={selectedGame.slug}
-              open={sidebarOpen}
-              onToggle={() => setSidebarOpen((v) => !v)}
-              operatorSlots={operatorSlots}
-              onSlotChange={handleSlotChange}
-              onCreateAttackerLineup={handleCreateAttackerLineup}
-              onRemoveAttackerLineup={handleRemoveAttackerLineup}
-              isAuthenticated={true}
-            />
-          )}
-
-          <div className="h-full p-4" style={{ marginLeft: selectedGame?.slug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
-            {floors.length > 0 ? (
-              <CanvasView
-                floors={floors}
-                onDrawCreate={handleDrawCreate}
-                onDrawDelete={handleDrawDelete}
-                onDrawUpdate={handleDrawUpdate}
-                localDraws={localDraws}
+          <StratLayout
+            onSlotUpdate={handleStratSlotUpdate}
+            onLoadoutChange={handleStratLoadoutChange}
+            onVisibilityToggle={handleStratVisibilityToggle}
+            onColorChange={handleStratColorChange}
+            onBanUpdate={handleBanUpdate}
+            onBanRemove={handleBanRemove}
+            onConfigChange={handleConfigChange}
+            onPhaseCreate={handlePhaseCreate}
+            onPhaseUpdate={handlePhaseUpdate}
+            onPhaseDelete={handlePhaseDelete}
+            onPhaseSwitch={handlePhaseSwitch}
+          >
+            {/* Icon sidebar (inside strat layout center area) */}
+            {selectedGame?.slug && (
+              <IconSidebar
+                gameSlug={selectedGame.slug}
+                open={sidebarOpen}
+                onToggle={() => setSidebarOpen((v) => !v)}
+                operatorSlots={operatorSlots}
+                onSlotChange={handleSlotChange}
+                onCreateAttackerLineup={handleCreateAttackerLineup}
+                onRemoveAttackerLineup={handleRemoveAttackerLineup}
+                isAuthenticated={true}
               />
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                <p>Loading map floors...</p>
-              </div>
             )}
-          </div>
+
+            <div className="h-full p-2" style={{ marginLeft: selectedGame?.slug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
+              {floors.length > 0 ? (
+                <CanvasView
+                  floors={floors}
+                  onDrawCreate={handleDrawCreate}
+                  onDrawDelete={handleDrawDelete}
+                  onDrawUpdate={handleDrawUpdate}
+                  localDraws={localDraws}
+                  activePhaseId={activePhaseId}
+                  visibleSlotIds={getVisibleSlotIds()}
+                  landscapeVisible={landscapeVisible}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <p>Loading map floors...</p>
+                </div>
+              )}
+            </div>
+          </StratLayout>
         </div>
       </div>
     );

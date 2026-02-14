@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Copy, Share2, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth.store';
+import { useStratStore } from '@/stores/strat.store';
 import { CanvasView } from '@/features/canvas/CanvasView';
+import StratLayout from '@/features/strat/StratLayout';
 
 const SUGGESTED_TAGS = ['Aggressive', 'Default', 'Retake', 'Rush', 'Anchor', 'Roam', 'Site A', 'Site B'];
 
@@ -26,6 +28,8 @@ interface BattleplanFull {
     draws?: any[];
   }>;
   operatorSlots?: Array<{ id: string; slotNumber: number; operatorId: string | null; side: string; operator?: any }>;
+  stratSlots?: any[]; phases?: any[]; bans?: any[];
+  stratSide?: string; stratMode?: string; stratSite?: string;
   voteCount?: number; userVote?: number | null;
 }
 
@@ -43,6 +47,32 @@ export default function BattleplanViewer() {
 
   const plan = data?.data;
   const isOwner = plan && userId && plan.ownerId === userId;
+
+  // Strat store for read-only display
+  const {
+    activePhaseId, setPhases, setActivePhaseId, setBans,
+    setOperatorSlots, setStratConfig, getVisibleSlotIds,
+    landscapeVisible, reset: resetStrat,
+  } = useStratStore();
+
+  useEffect(() => {
+    if (plan) {
+      if (plan.phases) {
+        setPhases(plan.phases);
+        if (!activePhaseId && plan.phases.length > 0) setActivePhaseId(plan.phases[0].id);
+      }
+      if (plan.bans) setBans(plan.bans);
+      if (plan.stratSlots) setOperatorSlots(plan.stratSlots);
+      if (plan.stratSide || plan.stratMode || plan.stratSite) {
+        setStratConfig({
+          side: (plan.stratSide as any) || 'Unknown',
+          mode: (plan.stratMode as any) || 'Unknown',
+          site: (plan.stratSite as any) || 'Unknown',
+        });
+      }
+    }
+    return () => resetStrat();
+  }, [plan]);
 
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editDesc, setEditDesc] = useState('');
@@ -285,10 +315,28 @@ export default function BattleplanViewer() {
       )}
 
       <div className="h-[calc(100vh-14rem)]">
-        <CanvasView
-          floors={plan.floors || []}
-          readOnly
-        />
+        {plan.stratSlots && plan.stratSlots.length > 0 ? (
+          <StratLayout
+            onSlotUpdate={() => {}}
+            onLoadoutChange={() => {}}
+            onVisibilityToggle={() => {}}
+            onColorChange={() => {}}
+            readOnly
+          >
+            <CanvasView
+              floors={plan.floors || []}
+              readOnly
+              activePhaseId={activePhaseId}
+              visibleSlotIds={getVisibleSlotIds()}
+              landscapeVisible={landscapeVisible}
+            />
+          </StratLayout>
+        ) : (
+          <CanvasView
+            floors={plan.floors || []}
+            readOnly
+          />
+        )}
       </div>
     </div>
   );

@@ -5,10 +5,12 @@ import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import { useRoomStore } from '@/stores/room.store';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useStratStore } from '@/stores/strat.store';
 import { getSocket, connectSocket, disconnectSocket } from '@/lib/socket';
 import { CanvasView } from '@/features/canvas/CanvasView';
 import { Toolbar } from '@/features/canvas/tools/Toolbar';
 import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
+import StratLayout from '@/features/strat/StratLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -37,8 +39,18 @@ export default function RoomPage() {
     addChatMessage, updateOperatorSlot,
   } = useRoomStore();
 
-  const { pushMyDraw, popUndo, popRedo, updateDrawId, clearHistory } = useCanvasStore();
+  const { pushMyDraw, popUndo, popRedo, updateDrawId, clearHistory, setColor } = useCanvasStore();
   const cursors = useRoomStore((s) => s.cursors);
+
+  // Strat store
+  const {
+    activePhaseId, operatorSlots, activeOperatorSlotId,
+    setPhases, setActivePhaseId, addPhase, updatePhase, removePhase,
+    setBans, setBan, removeBan: removeStoreBan,
+    setStratConfig, setOperatorSlots, updateOperatorSlot: updateStratSlot,
+    getActiveColor, getVisibleSlotIds, landscapeVisible,
+    reset: resetStrat,
+  } = useStratStore();
 
   // Peer laser lines state
   const [peerLaserLines, setPeerLaserLines] = useState<LaserLineData[]>([]);
@@ -124,6 +136,25 @@ export default function RoomPage() {
       ]);
     });
 
+    // Strat sync events
+    socket.on('strat:phase-created', () => refetchPlan());
+    socket.on('strat:phase-updated', () => refetchPlan());
+    socket.on('strat:phase-deleted', () => refetchPlan());
+    socket.on('strat:phase-switched', ({ phaseId }: { phaseId: string }) => {
+      useStratStore.getState().setActivePhaseId(phaseId);
+    });
+    socket.on('strat:ban-updated', () => refetchPlan());
+    socket.on('strat:ban-removed', () => refetchPlan());
+    socket.on('strat:config-updated', () => refetchPlan());
+    socket.on('strat:loadout-updated', () => refetchPlan());
+    socket.on('strat:visibility-toggled', ({ slotId, visible }: { slotId: string; visible: boolean }) => {
+      useStratStore.getState().updateOperatorSlot(slotId, { visible });
+    });
+    socket.on('strat:color-updated', ({ slotId, color }: { slotId: string; color: string }) => {
+      useStratStore.getState().updateOperatorSlot(slotId, { color });
+    });
+    socket.on('strat:slot-updated', () => refetchPlan());
+
     return () => {
       socket.emit('room:leave', { connectionString });
       socket.off('room:joined');
@@ -138,9 +169,21 @@ export default function RoomPage() {
       socket.off('attacker-lineup:created');
       socket.off('laser:line');
       socket.off('chat:messaged');
+      socket.off('strat:phase-created');
+      socket.off('strat:phase-updated');
+      socket.off('strat:phase-deleted');
+      socket.off('strat:phase-switched');
+      socket.off('strat:ban-updated');
+      socket.off('strat:ban-removed');
+      socket.off('strat:config-updated');
+      socket.off('strat:loadout-updated');
+      socket.off('strat:visibility-toggled');
+      socket.off('strat:color-updated');
+      socket.off('strat:slot-updated');
       disconnectSocket();
       clearHistory();
       reset();
+      resetStrat();
     };
   }, [connectionString]);
 
@@ -163,6 +206,23 @@ export default function RoomPage() {
   useEffect(() => {
     if (planData?.data) {
       setBattleplan(planData.data);
+
+      // Initialize strat store from battleplan data
+      if (planData.data.phases) {
+        setPhases(planData.data.phases);
+        if (!activePhaseId && planData.data.phases.length > 0) {
+          setActivePhaseId(planData.data.phases[0].id);
+        }
+      }
+      if (planData.data.bans) setBans(planData.data.bans);
+      if (planData.data.stratSlots) setOperatorSlots(planData.data.stratSlots);
+      if (planData.data.stratSide || planData.data.stratMode || planData.data.stratSite) {
+        setStratConfig({
+          side: planData.data.stratSide || 'Unknown',
+          mode: planData.data.stratMode || 'Unknown',
+          site: planData.data.stratSite || 'Unknown',
+        });
+      }
     }
   }, [planData]);
 
@@ -429,6 +489,120 @@ export default function RoomPage() {
     }
   }, [isAuthenticated, battleplan, refetchPlan]);
 
+  // --- Strat handlers ---
+  const handlePhaseCreate = useCallback(async (name: string) => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      const res = await apiPost<{ data: any }>(`/battleplans/${battleplan.id}/phases`, { name });
+      addPhase(res.data);
+      getSocket().emit('strat:phase-create', { battleplanId: battleplan.id, name });
+    } catch { toast.error('Failed to create phase'); }
+  }, [isAuthenticated, battleplan, addPhase]);
+
+  const handlePhaseUpdate = useCallback(async (phaseId: string, name: string) => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      await apiPost(`/battleplans/${battleplan.id}/phases/${phaseId}/update`, { name });
+      updatePhase(phaseId, { name });
+      getSocket().emit('strat:phase-update', { phaseId, name });
+    } catch { toast.error('Failed to update phase'); }
+  }, [isAuthenticated, battleplan, updatePhase]);
+
+  const handlePhaseDelete = useCallback(async (phaseId: string) => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      await apiPost(`/battleplans/${battleplan.id}/phases/${phaseId}/delete`, {});
+      removePhase(phaseId);
+      getSocket().emit('strat:phase-delete', { phaseId });
+      refetchPlan();
+    } catch { toast.error('Failed to delete phase'); }
+  }, [isAuthenticated, battleplan, removePhase, refetchPlan]);
+
+  const handlePhaseSwitch = useCallback((phaseId: string) => {
+    setActivePhaseId(phaseId);
+    getSocket().emit('strat:phase-switch', { phaseId });
+  }, [setActivePhaseId]);
+
+  const handleBanUpdate = useCallback(async (operatorName: string, side: 'attacker' | 'defender', slotIndex: number) => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      const res = await apiPost<{ data: any }>(`/battleplans/${battleplan.id}/bans`, { operatorName, side, slotIndex });
+      setBan(res.data);
+      getSocket().emit('strat:ban-update', { battleplanId: battleplan.id, operatorName, side, slotIndex });
+    } catch { toast.error('Failed to set ban'); }
+  }, [isAuthenticated, battleplan, setBan]);
+
+  const handleBanRemove = useCallback(async (banId: string) => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      await apiPost(`/battleplans/${battleplan.id}/bans/${banId}/delete`, {});
+      removeStoreBan(banId);
+      getSocket().emit('strat:ban-remove', { banId });
+    } catch { toast.error('Failed to remove ban'); }
+  }, [isAuthenticated, battleplan, removeStoreBan]);
+
+  const handleConfigChange = useCallback(async (config: Record<string, any>) => {
+    if (!isAuthenticated || !battleplan) return;
+    try {
+      await apiPost(`/battleplans/${battleplan.id}/strat-config`, config);
+      setStratConfig(config as any);
+      getSocket().emit('strat:config-update', { battleplanId: battleplan.id, ...config });
+    } catch { toast.error('Failed to update config'); }
+  }, [isAuthenticated, battleplan, setStratConfig]);
+
+  const handleStratSlotUpdate = useCallback(async (slotId: string, data: Record<string, any>) => {
+    if (!isAuthenticated) return;
+    try {
+      await apiPost(`/operator-slots/${slotId}`, data);
+      updateStratSlot(slotId, data as any);
+      getSocket().emit('strat:slot-update', { slotId, ...data });
+      refetchPlan();
+    } catch { toast.error('Failed to update operator slot'); }
+  }, [isAuthenticated, updateStratSlot, refetchPlan]);
+
+  const handleStratLoadoutChange = useCallback(async (slotId: string, field: string, value: string | null) => {
+    if (!isAuthenticated) return;
+    try {
+      await apiPost(`/operator-slots/${slotId}/loadout`, { [field]: value });
+      updateStratSlot(slotId, { [field]: value } as any);
+      getSocket().emit('strat:loadout-update', { slotId, [field]: value });
+    } catch { toast.error('Failed to update loadout'); }
+  }, [isAuthenticated, updateStratSlot]);
+
+  const handleStratVisibilityToggle = useCallback(async (slotId: string, visible: boolean) => {
+    if (!isAuthenticated) return;
+    try {
+      await apiPost(`/operator-slots/${slotId}/visibility`, { visible });
+      updateStratSlot(slotId, { visible });
+      getSocket().emit('strat:visibility-toggle', { slotId, visible });
+    } catch { toast.error('Failed to toggle visibility'); }
+  }, [isAuthenticated, updateStratSlot]);
+
+  const handleStratColorChange = useCallback(async (slotId: string, color: string) => {
+    if (!isAuthenticated) return;
+    try {
+      await apiPost(`/operator-slots/${slotId}/color`, { color });
+      updateStratSlot(slotId, { color });
+      getSocket().emit('strat:color-update', { slotId, color });
+    } catch { toast.error('Failed to update color'); }
+  }, [isAuthenticated, updateStratSlot]);
+
+  // Sync draw color from active operator slot
+  useEffect(() => {
+    const activeColor = getActiveColor();
+    setColor(activeColor);
+  }, [activeOperatorSlotId, operatorSlots, getActiveColor, setColor]);
+
+  // Inject phaseId + operatorSlotId into draw creation
+  const wrappedDrawCreate = useCallback(async (floorId: string, drawItems: any[]) => {
+    const enriched = drawItems.map(item => ({
+      ...item,
+      phaseId: activePhaseId || undefined,
+      operatorSlotId: activeOperatorSlotId || undefined,
+    }));
+    return handleDrawCreate(floorId, enriched);
+  }, [handleDrawCreate, activePhaseId, activeOperatorSlotId]);
+
   const handleLaserLine = useCallback((points: Array<{ x: number; y: number }>, color: string) => {
     const socket = getSocket();
     socket.emit('laser:line', { points, color });
@@ -558,45 +732,63 @@ export default function RoomPage() {
         <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
       </div>
 
-      {/* Canvas area */}
+      {/* Canvas area with strat layout */}
       <div className="flex-1 overflow-hidden relative">
-        {/* Icon sidebar */}
-        {gameSlug && (
-          <IconSidebar
-            gameSlug={gameSlug}
-            open={sidebarOpen}
-            onToggle={() => setSidebarOpen((v) => !v)}
-            battleplanId={battleplan?.id}
-            operatorSlots={battleplan?.operatorSlots}
-            onSlotChange={handleSlotChange}
-            onCreateAttackerLineup={handleCreateAttackerLineup}
-            onRemoveAttackerLineup={handleRemoveAttackerLineup}
-            isAuthenticated={isAuthenticated}
-          />
-        )}
+        {battleplan?.floors ? (
+          <StratLayout
+            onSlotUpdate={handleStratSlotUpdate}
+            onLoadoutChange={handleStratLoadoutChange}
+            onVisibilityToggle={handleStratVisibilityToggle}
+            onColorChange={handleStratColorChange}
+            onBanUpdate={handleBanUpdate}
+            onBanRemove={handleBanRemove}
+            onConfigChange={handleConfigChange}
+            onPhaseCreate={handlePhaseCreate}
+            onPhaseUpdate={handlePhaseUpdate}
+            onPhaseDelete={handlePhaseDelete}
+            onPhaseSwitch={handlePhaseSwitch}
+            readOnly={!isAuthenticated}
+          >
+            {/* Icon sidebar (inside strat layout center area) */}
+            {gameSlug && (
+              <IconSidebar
+                gameSlug={gameSlug}
+                open={sidebarOpen}
+                onToggle={() => setSidebarOpen((v) => !v)}
+                battleplanId={battleplan?.id}
+                operatorSlots={battleplan?.operatorSlots}
+                onSlotChange={handleSlotChange}
+                onCreateAttackerLineup={handleCreateAttackerLineup}
+                onRemoveAttackerLineup={handleRemoveAttackerLineup}
+                isAuthenticated={isAuthenticated}
+              />
+            )}
 
-        <ChatPanel open={chatOpen} onToggle={() => setChatOpen(v => !v)} />
+            <ChatPanel open={chatOpen} onToggle={() => setChatOpen(v => !v)} />
 
-        <div className="h-full p-4" style={{ marginLeft: gameSlug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
-          {battleplan?.floors ? (
-            <CanvasView
-              floors={battleplan.floors}
-              onDrawCreate={handleDrawCreate}
-              onDrawDelete={handleDrawDelete}
-              onDrawUpdate={handleDrawUpdate}
-              onLaserLine={handleLaserLine}
-              onCursorMove={handleCursorMove}
-              peerLaserLines={peerLaserLines}
-              cursors={cursors}
-              localDraws={localDraws}
-              currentUserId={userId}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p>No battleplan selected. The room owner can set one.</p>
+            <div className="h-full p-2" style={{ marginLeft: gameSlug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
+              <CanvasView
+                floors={battleplan.floors}
+                onDrawCreate={wrappedDrawCreate}
+                onDrawDelete={handleDrawDelete}
+                onDrawUpdate={handleDrawUpdate}
+                onLaserLine={handleLaserLine}
+                onCursorMove={handleCursorMove}
+                peerLaserLines={peerLaserLines}
+                cursors={cursors}
+                localDraws={localDraws}
+                currentUserId={userId}
+                activePhaseId={activePhaseId}
+                visibleSlotIds={getVisibleSlotIds()}
+                landscapeVisible={landscapeVisible}
+              />
             </div>
-          )}
-        </div>
+          </StratLayout>
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <p>No battleplan selected. The room owner can set one.</p>
+          </div>
+        )}
       </div>
 
       {/* Plan settings dialog */}
