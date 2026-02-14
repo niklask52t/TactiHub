@@ -34,20 +34,24 @@ echo "=== TactiHub Update ==="
 echo ""
 echo "Current branch: $CURRENT_BRANCH"
 echo ""
-echo "Select mode:"
-echo "  [1] dev      — Full reset: delete ALL data, rebuild from scratch (current branch)"
-echo "  [2] update   — Update only: pull current branch, install, migrate, rebuild (keeps data)"
-echo "  [3] reset    — Full reset on current branch: delete ALL data, rebuild from scratch"
-echo "  [4] prod     — Update only: pull main, install, migrate, rebuild (keeps data)"
-echo "  [5] prod-dev — Update only: pull dev, install, migrate, rebuild (keeps data)"
+echo "── Current Branch ($CURRENT_BRANCH) ──"
+echo "  [1] update — Pull, install, migrate, rebuild (keeps data)"
+echo "  [2] reset  — Full reset: delete ALL data, rebuild from scratch"
+echo ""
+echo "── Dev ──"
+echo "  [3] dev reset — Checkout dev, full reset from scratch"
+echo ""
+echo "── Produktiv ──"
+echo "  [4] prod main — Pull main, install, migrate, rebuild (keeps data)"
+echo "  [5] prod dev  — Pull dev, install, migrate, rebuild (keeps data)"
 echo ""
 
 while true; do
   read -p "Enter mode (1-5): " mode
   case "$mode" in
-    1) MODE="dev"; break ;;
-    2) MODE="update"; BRANCH="$CURRENT_BRANCH"; break ;;
-    3) MODE="dev-current"; break ;;
+    1) MODE="update"; BRANCH="$CURRENT_BRANCH"; break ;;
+    2) MODE="dev-current"; break ;;
+    3) MODE="dev"; break ;;
     4) MODE="prod"; BRANCH="main"; break ;;
     5) MODE="prod"; BRANCH="dev"; break ;;
     *) echo "Please enter 1-5." ;;
