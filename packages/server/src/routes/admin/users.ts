@@ -56,8 +56,8 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     return { data: { id: user.id, username: user.username, email: user.email, role: user.role } };
   });
 
-  // PUT /api/admin/users/:id/verify
-  fastify.put('/:id/verify', async (request, reply) => {
+  // POST /api/admin/users/:id/verify
+  fastify.post('/:id/verify', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
 
     const [user] = await db.select().from(users).where(eq(users.id, id));

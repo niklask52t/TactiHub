@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiGet, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ export default function UsersPage() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: (id: string) => apiPut(`/admin/users/${id}/verify`, {}),
+    mutationFn: (id: string) => apiPost(`/admin/users/${id}/verify`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       toast.success('User verified successfully. Notification email sent.');
