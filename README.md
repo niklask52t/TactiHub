@@ -709,6 +709,13 @@ Certbot will automatically configure SSL in your Nginx config and set up auto-re
 
 ### 7. systemd Service
 
+Create a dedicated system user (no login shell, no home directory):
+
+```bash
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin tactihub
+sudo chown -R tactihub:tactihub /opt/tactihub
+```
+
 Create `/etc/systemd/system/tactihub.service`:
 
 ```ini
