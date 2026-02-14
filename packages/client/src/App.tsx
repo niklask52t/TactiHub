@@ -96,7 +96,6 @@ export function App() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/changelog" element={<ChangelogPage />} />
-          <Route path="/sandbox" element={<SandboxPage />} />
           <Route path="/:gameSlug" element={<GameDashboard />} />
           <Route path="/:gameSlug/plans/public" element={<PublicPlansPage />} />
           <Route path="/:gameSlug/plans/:planId" element={<BattleplanViewer />} />
@@ -124,7 +123,8 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Room (full-screen, no layout — open to guests too) */}
+        {/* Full-screen, no layout — open to guests */}
+        <Route path="/sandbox" element={<SandboxPage />} />
         <Route path="/room/:connectionString" element={<RoomPage />} />
       </Routes>
     </Suspense>

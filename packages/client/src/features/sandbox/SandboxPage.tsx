@@ -8,7 +8,8 @@ import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertTriangle, Gamepad2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, AlertTriangle, Gamepad2, Search } from 'lucide-react';
 import { useCanvasStore } from '@/stores/canvas.store';
 import type { OperatorSlot } from '@tactihub/shared';
 
@@ -38,6 +39,7 @@ export default function SandboxPage() {
   const [selectedGame, setSelectedGame] = useState<GameWithMaps | null>(null);
   const [selectedMap, setSelectedMap] = useState<MapWithFloors | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mapSearch, setMapSearch] = useState('');
 
   // Local operator slots for sandbox lineup
   const slotIdCounter = useRef(0);
@@ -209,22 +211,22 @@ export default function SandboxPage() {
   if (step === 'canvas' && selectedMap) {
     return (
       <div className="h-screen flex flex-col bg-background">
-        {/* Top bar — matches logged-in room layout */}
+        {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" /> Exit</Link>
             </Button>
-            <span className="text-sm font-semibold text-yellow-400">
-              Sandbox — drawings are not saved
-            </span>
-            <span className="ml-4 text-sm font-medium text-muted-foreground">{selectedMap.name}</span>
+            <span className="text-sm font-medium text-white">{selectedMap.name}</span>
           </div>
+          <span className="text-xs text-primary flex items-center gap-1.5">
+            <AlertTriangle className="h-3 w-3" /> Sandbox — drawings are not saved
+          </span>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/auth/login">Log in</Link>
             </Button>
-            <Button variant="ghost" size="sm" asChild>
+            <Button size="sm" asChild>
               <Link to="/auth/register">Register</Link>
             </Button>
           </div>
@@ -272,14 +274,26 @@ export default function SandboxPage() {
   }
 
   if (step === 'map' && selectedGame) {
-    const maps = gameDetailData?.data?.maps || [];
+    const allMaps = gameDetailData?.data?.maps || [];
+    const maps = mapSearch
+      ? allMaps.filter((m) => m.name.toLowerCase().includes(mapSearch.toLowerCase()))
+      : allMaps;
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => { setStep('game'); setSelectedGame(null); }}>
+          <Button variant="ghost" onClick={() => { setStep('game'); setSelectedGame(null); setMapSearch(''); }}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
           <h1 className="text-3xl font-bold">{selectedGame.name} — Choose a Map</h1>
+        </div>
+        <div className="relative max-w-sm mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search maps..."
+            value={mapSearch}
+            onChange={(e) => setMapSearch(e.target.value)}
+            className="pl-9"
+          />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {maps.map((map) => (

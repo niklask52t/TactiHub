@@ -477,7 +477,7 @@ export default function RoomPage() {
             <Copy className="h-3 w-3 mr-1" /> Copy Link
           </Button>
           {battleplan?.map?.name && (
-            <span className="ml-4 text-sm font-medium text-muted-foreground">{battleplan.map.name}</span>
+            <span className="ml-4 text-sm font-medium text-white">{battleplan.map.name}</span>
           )}
         </div>
 

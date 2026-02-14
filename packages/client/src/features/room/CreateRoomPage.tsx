@@ -5,8 +5,9 @@ import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { ArrowLeft, Users, Gamepad2 } from 'lucide-react';
+import { ArrowLeft, Users, Gamepad2, Search } from 'lucide-react';
 
 interface Game {
   id: string; name: string; slug: string; icon: string | null;
@@ -25,6 +26,7 @@ export default function CreateRoomPage() {
   const [step, setStep] = useState<'game' | 'map' | 'confirm'>('game');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
+  const [mapSearch, setMapSearch] = useState('');
 
   const { data: gamesData, isLoading: gamesLoading } = useQuery({
     queryKey: ['games'],
@@ -100,19 +102,32 @@ export default function CreateRoomPage() {
 
   // Step 2: Map selection
   if (step === 'map' && selectedGame) {
-    const maps = gameDetailData?.data?.maps || [];
+    const allMaps = gameDetailData?.data?.maps || [];
+    const maps = mapSearch
+      ? allMaps.filter((m) => m.name.toLowerCase().includes(mapSearch.toLowerCase()))
+      : allMaps;
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => { setStep('game'); setSelectedGame(null); }}>
+          <Button variant="ghost" onClick={() => { setStep('game'); setSelectedGame(null); setMapSearch(''); }}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
           <h1 className="text-3xl font-bold">{selectedGame.name} — Choose a Map</h1>
         </div>
 
+        <div className="relative max-w-sm mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search maps..."
+            value={mapSearch}
+            onChange={(e) => setMapSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
         {maps.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
-            <p>No maps available for this game.</p>
+            <p>{allMaps.length === 0 ? 'No maps available for this game.' : 'No maps match your search.'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
