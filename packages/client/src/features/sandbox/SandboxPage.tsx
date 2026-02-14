@@ -1,477 +1,401 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+/**
+ * SandboxPage — local-only strategy editor.
+ * Game + Map selection → EditorShell with MapCanvas.
+ * No Socket.IO, no REST persistence. All draws stored in React state.
+ */
+
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
-import MapCanvas from '@/features/canvas/MapCanvas';
-import { Toolbar } from '@/features/canvas/tools/Toolbar';
-import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
-import StratLayout from '@/features/strat/StratLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, AlertTriangle, Gamepad2, Search } from 'lucide-react';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { useStratStore } from '@/stores/strat.store';
-import type { OperatorSlot } from '@tactihub/shared';
+import type { ViewMode, StratOperatorSlot } from '@tactihub/shared';
+import { hasSvgMap } from '@/data/svgMapIndex';
+import { EditorShell } from '@/features/editor/EditorShell';
+import MapCanvas from '@/features/canvas/MapCanvas';
+import { exportFloorAsPng, exportAllFloorsAsPdf } from '@/features/canvas/utils/exportCanvas';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
-interface Game {
-  id: string; name: string; slug: string; icon: string | null;
-}
+let drawCounter = 0;
 
-interface MapData {
-  id: string; name: string; slug: string; thumbnail: string | null;
-}
-
-interface GameWithMaps extends Game {
-  maps: MapData[];
-}
-
-interface MapFloor {
-  id: string; name: string; floorNumber: number; imagePath: string;
-  darkImagePath?: string | null; whiteImagePath?: string | null;
-}
-
-interface MapWithFloors extends MapData {
-  floors: MapFloor[];
+/** Generate 5 operator slots for one side */
+function makeSlots(side: 'attacker' | 'defender'): StratOperatorSlot[] {
+  const colors = side === 'attacker'
+    ? ['#1a8fe3', '#2ecc71', '#e67e22', '#9b59b6', '#e74c3c']
+    : ['#e33a3a', '#3498db', '#f1c40f', '#1abc9c', '#e84393'];
+  const now = new Date().toISOString();
+  return Array.from({ length: 5 }, (_, i) => ({
+    id: `${side}-slot-${i + 1}`,
+    battleplanId: 'sandbox',
+    side: side as 'attacker' | 'defender',
+    slotNumber: i + 1,
+    operatorId: null,
+    operatorName: null,
+    color: colors[i]!,
+    visible: true,
+    primaryWeapon: null,
+    secondaryWeapon: null,
+    primaryEquipment: null,
+    secondaryEquipment: null,
+    createdAt: now,
+    updatedAt: now,
+  }));
 }
 
 export default function SandboxPage() {
-  const [step, setStep] = useState<'game' | 'map' | 'canvas'>('game');
-  const [selectedGame, setSelectedGame] = useState<GameWithMaps | null>(null);
-  const [selectedMap, setSelectedMap] = useState<MapWithFloors | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mapSearch, setMapSearch] = useState('');
-
-  // Local operator slots for sandbox lineup
-  const slotIdCounter = useRef(0);
-  const makeSlots = (side: 'defender' | 'attacker', count: number): OperatorSlot[] =>
-    Array.from({ length: count }, (_, i) => ({
-      id: `sandbox-${side}-${++slotIdCounter.current}`,
-      battleplanId: 'sandbox',
-      slotNumber: i + 1,
-      operatorId: null,
-      side,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
-
-  const [operatorSlots, setOperatorSlots] = useState<OperatorSlot[]>(() => makeSlots('defender', 5));
-
-  const handleSlotChange = useCallback((slotId: string, operatorId: string | null) => {
-    setOperatorSlots((prev) =>
-      prev.map((s) => (s.id === slotId ? { ...s, operatorId, updatedAt: new Date().toISOString() } : s))
-    );
-  }, []);
-
-  const handleCreateAttackerLineup = useCallback(() => {
-    setOperatorSlots((prev) => [...prev, ...makeSlots('attacker', 5)]);
-  }, []);
-
-  const handleRemoveAttackerLineup = useCallback(() => {
-    setOperatorSlots((prev) => prev.filter((s) => s.side !== 'attacker'));
-  }, []);
-
-  // Strat store (local mode — no API/socket)
-  const {
-    activePhaseId, activeOperatorSlotId,
-    setPhases, setActivePhaseId, addPhase, updatePhase, removePhase,
-    setBan, removeBan: removeStoreBan, setOperatorSlots: setStratSlots,
-    updateOperatorSlot: updateStratSlot, getActiveColor, getVisibleSlotIds,
-    landscapeVisible, reset: resetStrat, setStratConfig,
-  } = useStratStore();
-
-  // Initialize local strat state
-  const stratInitRef = useRef(false);
-  useEffect(() => {
-    if (step === 'canvas' && !stratInitRef.current) {
-      stratInitRef.current = true;
-      const defaultPhaseId = crypto.randomUUID();
-      setPhases([{ id: defaultPhaseId, battleplanId: 'sandbox', index: 0, name: 'Action Phase', description: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
-      setActivePhaseId(defaultPhaseId);
-
-      const defaultColors = ['#FF4444', '#44AAFF', '#44FF44', '#FFAA44', '#AA44FF'];
-      const slots = (['attacker', 'defender'] as const).flatMap((side) =>
-        Array.from({ length: 5 }, (_, i) => ({
-          id: crypto.randomUUID(),
-          battleplanId: 'sandbox',
-          slotNumber: i + 1,
-          operatorId: null,
-          operatorName: null,
-          side,
-          color: defaultColors[i] ?? '#FF4444',
-          visible: true,
-          primaryWeapon: null,
-          secondaryWeapon: null,
-          primaryEquipment: null,
-          secondaryEquipment: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })),
-      );
-      setStratSlots(slots);
-    }
-    return () => {
-      if (step !== 'canvas') {
-        stratInitRef.current = false;
-        resetStrat();
-      }
-    };
-  }, [step]);
-
-  // Sandbox strat handlers (local only)
-  const handleStratSlotUpdate = useCallback((slotId: string, data: Record<string, any>) => {
-    updateStratSlot(slotId, data as any);
-  }, [updateStratSlot]);
-
-  const handleStratLoadoutChange = useCallback((slotId: string, field: string, value: string | null) => {
-    updateStratSlot(slotId, { [field]: value } as any);
-  }, [updateStratSlot]);
-
-  const handleStratVisibilityToggle = useCallback((slotId: string, visible: boolean) => {
-    updateStratSlot(slotId, { visible });
-  }, [updateStratSlot]);
-
-  const handleStratColorChange = useCallback((slotId: string, color: string) => {
-    updateStratSlot(slotId, { color });
-  }, [updateStratSlot]);
-
-  const handlePhaseCreate = useCallback((name: string) => {
-    addPhase({ id: crypto.randomUUID(), battleplanId: 'sandbox', index: useStratStore.getState().phases.length, name, description: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-  }, [addPhase]);
-
-  const handlePhaseUpdate = useCallback((phaseId: string, name: string) => {
-    updatePhase(phaseId, { name });
-  }, [updatePhase]);
-
-  const handlePhaseDelete = useCallback((phaseId: string) => {
-    removePhase(phaseId);
-  }, [removePhase]);
-
-  const handlePhaseSwitch = useCallback((phaseId: string) => {
-    setActivePhaseId(phaseId);
-  }, [setActivePhaseId]);
-
-  const handleBanUpdate = useCallback((operatorName: string, side: 'attacker' | 'defender', slotIndex: number) => {
-    setBan({ id: crypto.randomUUID(), battleplanId: 'sandbox', operatorName, side, slotIndex, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-  }, [setBan]);
-
-  const handleBanRemove = useCallback((banId: string) => {
-    removeStoreBan(banId);
-  }, [removeStoreBan]);
-
-  const handleConfigChange = useCallback((config: Record<string, any>) => {
-    setStratConfig(config as any);
-  }, [setStratConfig]);
-
-  // Sync draw color from active operator slot
-  const { setColor } = useCanvasStore();
-  useEffect(() => {
-    if (step === 'canvas') {
-      setColor(getActiveColor());
-    }
-  }, [activeOperatorSlotId, step, getActiveColor, setColor]);
-
-  // Local draws state (no persistence)
-  const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
-  const localIdCounter = useRef(0);
+  const canvasStore = useCanvasStore;
+  const stratStore = useStratStore;
   const isRedoingRef = useRef(false);
-  const { pushMyDraw, popUndo, popRedo, updateDrawId, clearHistory } = useCanvasStore();
 
-  const { data: gamesData, isLoading: gamesLoading } = useQuery({
+  // --- Selection state ---
+  const [selectedGameSlug, setSelectedGameSlug] = useState<string | null>(null);
+  const [selectedMapSlug, setSelectedMapSlug] = useState<string | null>(null);
+
+  // Fetch games
+  const { data: games } = useQuery({
     queryKey: ['games'],
-    queryFn: () => apiGet<{ data: Game[] }>('/games'),
+    queryFn: () => apiGet<any>('/games'),
   });
 
-  const { data: gameDetailData } = useQuery({
-    queryKey: ['game', selectedGame?.slug],
-    queryFn: () => apiGet<{ data: GameWithMaps }>(`/games/${selectedGame!.slug}`),
-    enabled: !!selectedGame?.slug,
+  // Fetch maps for selected game
+  const { data: gameData } = useQuery({
+    queryKey: ['game', selectedGameSlug],
+    queryFn: () => apiGet<any>(`/games/${selectedGameSlug}`),
+    enabled: !!selectedGameSlug,
   });
 
-  const { data: mapDetailData } = useQuery({
-    queryKey: ['map', selectedGame?.slug, selectedMap?.slug],
-    queryFn: () => apiGet<{ data: MapWithFloors }>(`/games/${selectedGame!.slug}/maps/${selectedMap!.slug}`),
-    enabled: !!selectedGame?.slug && !!selectedMap?.slug,
+  // Fetch map details (floors)
+  const { data: mapData } = useQuery({
+    queryKey: ['map', selectedGameSlug, selectedMapSlug],
+    queryFn: () => apiGet<any>(`/games/${selectedGameSlug}/maps/${selectedMapSlug}`),
+    enabled: !!selectedGameSlug && !!selectedMapSlug,
   });
 
-  const handleSelectGame = (game: Game) => {
-    setSelectedGame(game as GameWithMaps);
-    setStep('map');
-  };
+  // Build floor data from map
+  const sortedFloors = useMemo(() => {
+    if (!mapData?.floors) return [];
+    return [...mapData.floors]
+      .sort((a: any, b: any) => (a.floorNumber ?? 0) - (b.floorNumber ?? 0))
+      .map((f: any) => ({
+        id: `sandbox-floor-${f.id}`,
+        mapFloorId: f.id,
+        mapFloor: {
+          id: f.id,
+          name: f.name,
+          floorNumber: f.floorNumber,
+          imagePath: f.imagePath,
+          darkImagePath: f.darkImagePath,
+          whiteImagePath: f.whiteImagePath,
+        },
+        draws: [],
+      }));
+  }, [mapData]);
 
-  const handleSelectMap = (map: MapData) => {
-    setSelectedMap(map as MapWithFloors);
-    setStep('canvas');
-  };
+  const [currentFloorIndex, setCurrentFloorIndex] = useState(0);
+  const currentFloor = sortedFloors[currentFloorIndex];
 
+  // Reset floor index when map changes
+  useEffect(() => { setCurrentFloorIndex(0); }, [selectedMapSlug]);
+
+  // View mode
+  const [viewMode, setViewMode] = useState<ViewMode>('blueprint');
+  const svgAvailable = !!selectedMapSlug && hasSvgMap(selectedMapSlug);
+
+  const availableModes = useMemo<ViewMode[]>(() => {
+    const mf = currentFloor?.mapFloor;
+    if (!mf) return svgAvailable ? ['realview'] : ['blueprint'];
+    const modes: ViewMode[] = ['blueprint'];
+    if (mf.darkImagePath) modes.push('dark');
+    if (mf.whiteImagePath) modes.push('white');
+    if (svgAvailable) modes.push('realview');
+    return modes;
+  }, [currentFloor?.mapFloor, svgAvailable]);
+
+  // Initialize strat store with sandbox slots
+  useEffect(() => {
+    const store = stratStore.getState();
+    store.reset();
+    const atkSlots = makeSlots('attacker');
+    const defSlots = makeSlots('defender');
+    store.setOperatorSlots([...atkSlots, ...defSlots]);
+    const now = new Date().toISOString();
+    store.setPhases([{ id: 'sandbox-phase-0', battleplanId: 'sandbox', name: 'Action Phase 0', index: 0, description: null, createdAt: now, updatedAt: now }]);
+    store.setActivePhaseId('sandbox-phase-0');
+    return () => store.reset();
+  }, [stratStore]);
+
+  // Local draws
+  const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
+
+  // Draw create (local only)
   const handleDrawCreate = useCallback((floorId: string, draws: any[]) => {
-    const enriched = draws.map((d) => ({
-      ...d,
-      phaseId: activePhaseId || undefined,
-      operatorSlotId: activeOperatorSlotId || undefined,
-    }));
-    const newDraws = enriched.map((d) => ({
-      ...d,
-      id: `local-${++localIdCounter.current}`,
-      isLocal: true,
-    }));
-    setLocalDraws((prev) => ({
+    const { activePhaseId } = stratStore.getState();
+    const { activeOperatorSlotId } = stratStore.getState();
+
+    const withIds = draws.map(d => {
+      const id = `local-${++drawCounter}`;
+      return {
+        ...d,
+        id,
+        userId: 'sandbox',
+        phaseId: activePhaseId,
+        operatorSlotId: activeOperatorSlotId,
+      };
+    });
+
+    setLocalDraws(prev => ({
       ...prev,
-      [floorId]: [...(prev[floorId] || []), ...newDraws],
+      [floorId]: [...(prev[floorId] || []), ...withIds],
     }));
+
     if (!isRedoingRef.current) {
-      for (let i = 0; i < newDraws.length; i++) {
-        pushMyDraw({ id: newDraws[i].id, floorId, payload: enriched[i] });
+      for (const d of withIds) {
+        canvasStore.getState().pushMyDraw({ id: d.id, floorId, payload: d });
       }
     }
-  }, [pushMyDraw, activePhaseId, activeOperatorSlotId]);
+  }, [canvasStore, stratStore]);
 
+  // Draw delete (local only)
   const handleDrawDelete = useCallback((drawIds: string[]) => {
-    const idSet = new Set(drawIds);
-    setLocalDraws((prev) => {
-      const next: Record<string, any[]> = {};
-      let changed = false;
-      for (const [fid, draws] of Object.entries(prev)) {
-        const filtered = draws.filter((d) => !idSet.has(d.id));
-        if (filtered.length !== draws.length) changed = true;
-        next[fid] = filtered;
+    setLocalDraws(prev => {
+      const next = { ...prev };
+      for (const fid in next) {
+        next[fid] = next[fid]!.filter(d => !drawIds.includes(d.id));
       }
-      return changed ? next : prev;
+      return next;
     });
   }, []);
 
+  // Draw update (local only)
   const handleDrawUpdate = useCallback((drawId: string, updates: any) => {
-    setLocalDraws((prev) => {
-      const next: Record<string, any[]> = {};
-      let changed = false;
-      for (const [fid, draws] of Object.entries(prev)) {
-        next[fid] = draws.map((d) => {
-          if (d.id === drawId) {
-            changed = true;
-            return { ...d, ...updates, data: updates.data ? { ...d.data, ...updates.data } : d.data };
-          }
-          return d;
-        });
+    setLocalDraws(prev => {
+      const next = { ...prev };
+      for (const fid in next) {
+        next[fid] = next[fid]!.map(d =>
+          d.id === drawId ? { ...d, ...updates, data: { ...d.data, ...updates.data } } : d,
+        );
       }
-      return changed ? next : prev;
+      return next;
     });
   }, []);
 
+  // Undo
   const handleUndo = useCallback(() => {
-    const entry = popUndo();
+    const entry = canvasStore.getState().popUndo();
     if (!entry) return;
-    if (entry.action === 'update') {
+    if (entry.action === 'update' && entry.previousState) {
       handleDrawUpdate(entry.id, entry.previousState);
-    } else {
+    } else if (entry.action === 'create') {
       handleDrawDelete([entry.id]);
     }
-  }, [popUndo, handleDrawDelete, handleDrawUpdate]);
+  }, [canvasStore, handleDrawUpdate, handleDrawDelete]);
 
+  // Redo
   const handleRedo = useCallback(() => {
-    const entry = popRedo();
+    const entry = canvasStore.getState().popRedo();
     if (!entry) return;
     if (entry.action === 'update') {
       handleDrawUpdate(entry.id, entry.payload);
-      return;
+    } else if (entry.action === 'create') {
+      isRedoingRef.current = true;
+      handleDrawCreate(entry.floorId, [entry.payload]);
+      isRedoingRef.current = false;
     }
-    isRedoingRef.current = true;
-    const newId = `local-${++localIdCounter.current}`;
-    const newDraw = { ...entry.payload, id: newId, isLocal: true };
-    setLocalDraws((prev) => ({
-      ...prev,
-      [entry.floorId]: [...(prev[entry.floorId] || []), newDraw],
-    }));
-    updateDrawId(entry.id, newId);
-    isRedoingRef.current = false;
-  }, [popRedo, updateDrawId, handleDrawUpdate]);
+  }, [canvasStore, handleDrawUpdate, handleDrawCreate]);
 
-  // Keyboard shortcuts: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
+  // Keyboard shortcuts
   useEffect(() => {
-    if (step !== 'canvas') return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        handleUndo();
-      } else if (e.ctrlKey && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-        e.preventDefault();
-        handleRedo();
-      }
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); handleRedo(); }
+      if (e.key === 'k' || e.key === 'K') setCurrentFloorIndex(i => Math.min(i + 1, sortedFloors.length - 1));
+      if (e.key === 'j' || e.key === 'J') setCurrentFloorIndex(i => Math.max(i - 1, 0));
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [step, handleUndo, handleRedo]);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
 
-  // Clear canvas history on unmount
-  useEffect(() => {
-    return () => clearHistory();
-  }, [clearHistory]);
+  // Phase callbacks (local)
+  const handlePhaseCreate = useCallback((name: string) => {
+    const id = `sandbox-phase-${Date.now()}`;
+    const now = new Date().toISOString();
+    stratStore.getState().addPhase({ id, battleplanId: 'sandbox', name, index: stratStore.getState().phases.length, description: null, createdAt: now, updatedAt: now });
+  }, [stratStore]);
 
-  // Build floors for CanvasView (draws are empty — local draws passed via localDraws prop)
-  const floors = (mapDetailData?.data?.floors || []).map((floor) => ({
-    id: floor.id,
-    mapFloorId: floor.id,
-    mapFloor: floor,
-    draws: [] as any[],
-  }));
+  const handlePhaseUpdate = useCallback((phaseId: string, name: string) => {
+    stratStore.getState().updatePhase(phaseId, { name });
+  }, [stratStore]);
 
-  if (step === 'canvas' && selectedMap) {
+  const handlePhaseDelete = useCallback((phaseId: string) => {
+    stratStore.getState().removePhase(phaseId);
+  }, [stratStore]);
+
+  const handlePhaseSwitch = useCallback((phaseId: string) => {
+    stratStore.getState().setActivePhaseId(phaseId);
+  }, [stratStore]);
+
+  // Config change (local)
+  const handleConfigChange = useCallback((config: any) => {
+    stratStore.getState().setStratConfig(config);
+  }, [stratStore]);
+
+  // Visibility / color (local)
+  const handleVisibilityToggle = useCallback((slotId: string, visible: boolean) => {
+    stratStore.getState().updateOperatorSlot(slotId, { visible });
+  }, [stratStore]);
+
+  const handleColorChange = useCallback((slotId: string, color: string) => {
+    stratStore.getState().updateOperatorSlot(slotId, { color });
+  }, [stratStore]);
+
+  // Export
+  const handleExportPng = useCallback(() => {
+    if (!currentFloor) return;
+    const mf = currentFloor.mapFloor;
+    const imgPath = viewMode === 'dark' && mf?.darkImagePath ? mf.darkImagePath
+      : viewMode === 'white' && mf?.whiteImagePath ? mf.whiteImagePath
+      : mf?.imagePath;
+    exportFloorAsPng(currentFloor, localDraws[currentFloor.id] || [], imgPath);
+  }, [currentFloor, localDraws, viewMode]);
+
+  const handleExportPdf = useCallback(() => {
+    exportAllFloorsAsPdf(
+      [...sortedFloors].reverse(),
+      localDraws,
+      currentFloor?.mapFloor?.name?.split(' ')[0] || 'strategy',
+    );
+  }, [sortedFloors, localDraws, currentFloor]);
+
+  // Floor info for TopNavBar
+  const floorInfo = useMemo(() =>
+    sortedFloors.map((f: any) => ({
+      name: f.mapFloor?.name || `Floor ${f.mapFloor?.floorNumber ?? '?'}`,
+      floorNumber: f.mapFloor?.floorNumber ?? 0,
+    })),
+    [sortedFloors],
+  );
+
+  const activePhaseId = useStratStore((s) => s.activePhaseId);
+  const visibleSlotIds = useStratStore((s) => s.getVisibleSlotIds());
+  const landscapeVisible = useStratStore((s) => s.landscapeVisible);
+
+  // --- Selection UI ---
+  if (!selectedMapSlug || sortedFloors.length === 0) {
+    const gameList = Array.isArray(games) ? games : games?.data || [];
+    const mapList = gameData?.maps || [];
+
     return (
-      <div className="h-screen flex flex-col bg-background">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" /> Exit</Link>
-            </Button>
-            <span className="text-sm font-medium text-white">{selectedMap.name}</span>
-          </div>
-          <span className="text-xs text-primary flex items-center gap-1.5">
-            <AlertTriangle className="h-3 w-3" /> Sandbox Mode — Your drawings won't be saved. <Link to="/auth/login" className="underline">Log in</Link> to create persistent plans.
-          </span>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/auth/login">Log in</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/auth/register">Register</Link>
-            </Button>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center h-screen bg-background text-foreground gap-6">
+        <h1 className="text-2xl font-bold">Sandbox Mode</h1>
+        <p className="text-muted-foreground text-sm">Select a game and map to start drawing</p>
 
-        {/* Toolbar */}
-        <div className="flex justify-center py-2 border-b">
-          <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
-        </div>
-
-        {/* Canvas area with strat layout */}
-        <div className="flex-1 overflow-hidden relative">
-          <StratLayout
-            onSlotUpdate={handleStratSlotUpdate}
-            onLoadoutChange={handleStratLoadoutChange}
-            onVisibilityToggle={handleStratVisibilityToggle}
-            onColorChange={handleStratColorChange}
-            onBanUpdate={handleBanUpdate}
-            onBanRemove={handleBanRemove}
-            onConfigChange={handleConfigChange}
-            onPhaseCreate={handlePhaseCreate}
-            onPhaseUpdate={handlePhaseUpdate}
-            onPhaseDelete={handlePhaseDelete}
-            onPhaseSwitch={handlePhaseSwitch}
-          >
-            {/* Icon sidebar (inside strat layout center area) */}
-            {selectedGame?.slug && (
-              <IconSidebar
-                gameSlug={selectedGame.slug}
-                open={sidebarOpen}
-                onToggle={() => setSidebarOpen((v) => !v)}
-                operatorSlots={operatorSlots}
-                onSlotChange={handleSlotChange}
-                onCreateAttackerLineup={handleCreateAttackerLineup}
-                onRemoveAttackerLineup={handleRemoveAttackerLineup}
-                isAuthenticated={true}
-              />
-            )}
-
-            <div className="h-full p-2" style={{ marginLeft: selectedGame?.slug && sidebarOpen ? 280 : 0, transition: 'margin-left 0.2s ease-in-out' }}>
-              {floors.length > 0 ? (
-                <MapCanvas
-                  floors={floors}
-                  onDrawCreate={handleDrawCreate}
-                  onDrawDelete={handleDrawDelete}
-                  onDrawUpdate={handleDrawUpdate}
-                  localDraws={localDraws}
-                  activePhaseId={activePhaseId}
-                  visibleSlotIds={getVisibleSlotIds()}
-                  landscapeVisible={landscapeVisible}
-                  mapSlug={selectedMap?.slug}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <p>Loading map floors...</p>
-                </div>
-              )}
+        <div className="flex gap-4">
+          {/* Game selection */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Game</span>
+            <div className="flex flex-wrap gap-2">
+              {gameList.map((g: any) => (
+                <Button
+                  key={g.id || g.slug}
+                  variant={selectedGameSlug === g.slug ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setSelectedGameSlug(g.slug); setSelectedMapSlug(null); }}
+                >
+                  {g.name}
+                </Button>
+              ))}
             </div>
-          </StratLayout>
+          </div>
         </div>
+
+        {/* Map grid */}
+        {selectedGameSlug && mapList.length > 0 && (
+          <div className="flex flex-col gap-2 max-w-3xl">
+            <span className="text-xs font-medium text-muted-foreground">Map</span>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+              {mapList.map((m: any) => (
+                <Button
+                  key={m.id || m.slug}
+                  variant="outline"
+                  size="sm"
+                  className="h-auto py-2 flex flex-col gap-1"
+                  onClick={() => setSelectedMapSlug(m.slug)}
+                >
+                  {m.coverImagePath && (
+                    <img
+                      src={`/uploads${m.coverImagePath}`}
+                      alt={m.name}
+                      className="w-full h-16 object-cover rounded-sm"
+                    />
+                  )}
+                  <span className="text-xs">{m.name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/"><ArrowLeft className="h-3 w-3 mr-1" />Back to Home</Link>
+        </Button>
       </div>
     );
   }
 
-  if (step === 'map' && selectedGame) {
-    const allMaps = gameDetailData?.data?.maps || [];
-    const maps = mapSearch
-      ? allMaps.filter((m) => m.name.toLowerCase().includes(mapSearch.toLowerCase()))
-      : allMaps;
-    return (
-      <div className="min-h-screen gaming-bg">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => { setStep('game'); setSelectedGame(null); setMapSearch(''); }}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
-          <h1 className="text-3xl font-bold">{selectedGame.name} — Choose a Map</h1>
-        </div>
-        <div className="relative max-w-sm mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search maps..."
-            value={mapSearch}
-            onChange={(e) => setMapSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {maps.map((map) => (
-            <Card key={map.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => handleSelectMap(map)}>
-              <CardHeader>
-                {map.thumbnail ? (
-                  <img src={`/uploads${map.thumbnail}`} className="w-full h-32 object-cover rounded" alt="" />
-                ) : (
-                  <div className="w-full h-32 bg-muted rounded flex items-center justify-center text-muted-foreground">No preview</div>
-                )}
-              </CardHeader>
-              <CardContent><CardTitle className="text-lg">{map.name}</CardTitle></CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-      </div>
-    );
-  }
-
-  // Step: game
+  // --- Editor ---
   return (
-    <div className="min-h-screen gaming-bg">
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Sandbox — Choose a Game</h1>
-      <div className="flex items-center justify-center gap-2 mb-6 px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary">
-        <AlertTriangle className="h-4 w-4" />
-        Sandbox Mode — Your drawings won't be saved. <Link to="/auth/login" className="underline">Log in</Link> to create persistent plans.
-      </div>
-      {gamesLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gamesData?.data.map((game) => (
-            <Card key={game.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => handleSelectGame(game)}>
-              <CardHeader className="flex flex-row items-center gap-4">
-                {game.icon ? (
-                  <img src={`/uploads${game.icon}`} className="h-16 w-16 rounded-lg" alt="" />
-                ) : (
-                  <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
-                    <Gamepad2 className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-                <CardTitle className="text-xl">{game.name}</CardTitle>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+    <div className="h-screen flex flex-col">
+      <EditorShell
+        mapName={mapData?.name || selectedMapSlug}
+        gameSlug={selectedGameSlug || 'r6-siege'}
+        floors={floorInfo}
+        currentFloorIndex={currentFloorIndex}
+        onFloorChange={setCurrentFloorIndex}
+        viewMode={viewMode}
+        availableModes={availableModes}
+        onViewModeChange={setViewMode}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onExportPng={handleExportPng}
+        onExportPdf={handleExportPdf}
+        onVisibilityToggle={handleVisibilityToggle}
+        onColorChange={handleColorChange}
+        onPhaseCreate={handlePhaseCreate}
+        onPhaseUpdate={handlePhaseUpdate}
+        onPhaseDelete={handlePhaseDelete}
+        onPhaseSwitch={handlePhaseSwitch}
+        onConfigChange={handleConfigChange}
+        readOnly={false}
+        headerRight={
+          <div className="flex items-center gap-1 ml-2">
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => { setSelectedMapSlug(null); canvasStore.getState().clearHistory(); setLocalDraws({}); }}>
+              Change Map
+            </Button>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
+              <Link to="/"><ArrowLeft className="h-3 w-3 mr-1" />Home</Link>
+            </Button>
+          </div>
+        }
+      >
+        <MapCanvas
+          floor={currentFloor!}
+          viewMode={viewMode}
+          floorIndex={currentFloorIndex}
+          readOnly={false}
+          onDrawCreate={handleDrawCreate}
+          onDrawDelete={handleDrawDelete}
+          onDrawUpdate={handleDrawUpdate}
+          localDraws={localDraws[currentFloor!.id] || []}
+          currentUserId="sandbox"
+          activePhaseId={activePhaseId}
+          visibleSlotIds={visibleSlotIds}
+          landscapeVisible={landscapeVisible}
+          mapSlug={selectedMapSlug}
+        />
+      </EditorShell>
     </div>
   );
 }

@@ -1,15 +1,12 @@
 import { create } from 'zustand';
 import type {
-  BattleplanPhase,
-  OperatorBan,
-  StratConfig,
-  StratOperatorSlot,
-  ViewMode,
+  StratConfig, StratSide, StratMode, StratSite,
+  BattleplanPhase, OperatorBan, StratOperatorSlot,
 } from '@tactihub/shared';
-import { getDefaultLayerVisibility } from '@/data/mainData';
+import type { ViewMode } from '@tactihub/shared';
+import { mapLayers } from '@/data/mainData';
 
 interface StratStoreState {
-  // --- Phases ---
   phases: BattleplanPhase[];
   activePhaseId: string | null;
   setPhases: (phases: BattleplanPhase[]) => void;
@@ -18,163 +15,140 @@ interface StratStoreState {
   updatePhase: (phaseId: string, data: Partial<Pick<BattleplanPhase, 'name' | 'description' | 'index'>>) => void;
   removePhase: (phaseId: string) => void;
 
-  // --- Bans ---
   bans: OperatorBan[];
   setBans: (bans: OperatorBan[]) => void;
   setBan: (ban: OperatorBan) => void;
   removeBan: (banId: string) => void;
 
-  // --- Strat Config ---
   stratConfig: StratConfig;
   setStratConfig: (config: Partial<StratConfig>) => void;
 
-  // --- Operator Slots ---
   operatorSlots: StratOperatorSlot[];
   activeOperatorSlotId: string | null;
   setOperatorSlots: (slots: StratOperatorSlot[]) => void;
   setActiveOperatorSlotId: (id: string | null) => void;
   updateOperatorSlot: (slotId: string, data: Partial<StratOperatorSlot>) => void;
 
-  // --- Visibility ---
   landscapeColor: string;
   landscapeVisible: boolean;
   setLandscapeColor: (color: string) => void;
   setLandscapeVisible: (visible: boolean) => void;
 
-  // --- SVG Layer Visibility ---
   svgLayerVisibility: Record<string, boolean>;
   setSvgLayerVisibility: (code: string, visible: boolean) => void;
   resetSvgLayerVisibility: () => void;
 
-  // --- View Mode ---
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
 
-  // --- Derived helpers ---
   getActiveColor: () => string;
   getAttackerSlots: () => StratOperatorSlot[];
   getDefenderSlots: () => StratOperatorSlot[];
   getVisibleSlotIds: () => Set<string>;
   getBannedOperatorNames: () => Set<string>;
 
-  // --- Reset ---
   reset: () => void;
 }
 
-const defaultConfig: StratConfig = {
-  side: 'Unknown',
-  mode: 'Unknown',
-  site: 'Unknown',
-};
+function buildDefaultLayerVisibility(): Record<string, boolean> {
+  const vis: Record<string, boolean> = {};
+  for (const layer of mapLayers) {
+    vis[layer.short] = layer.default;
+  }
+  return vis;
+}
+
+const DEFAULT_CONFIG: StratConfig = { side: 'Unknown' as StratSide, mode: 'Unknown' as StratMode, site: 'Unknown' as StratSite };
 
 export const useStratStore = create<StratStoreState>((set, get) => ({
-  // --- Phases ---
   phases: [],
   activePhaseId: null,
   setPhases: (phases) => set({ phases }),
-  setActivePhaseId: (activePhaseId) => set({ activePhaseId }),
+  setActivePhaseId: (id) => set({ activePhaseId: id }),
   addPhase: (phase) => set((s) => ({ phases: [...s.phases, phase] })),
   updatePhase: (phaseId, data) => set((s) => ({
-    phases: s.phases.map((p) =>
-      p.id === phaseId ? { ...p, ...data } : p,
-    ),
+    phases: s.phases.map(p => p.id === phaseId ? { ...p, ...data } : p),
   })),
-  removePhase: (phaseId) => set((s) => {
-    const filtered = s.phases.filter((p) => p.id !== phaseId);
-    const activePhaseId = s.activePhaseId === phaseId
-      ? (filtered[0]?.id ?? null)
-      : s.activePhaseId;
-    return { phases: filtered, activePhaseId };
-  }),
+  removePhase: (phaseId) => set((s) => ({
+    phases: s.phases.filter(p => p.id !== phaseId),
+    activePhaseId: s.activePhaseId === phaseId ? (s.phases[0]?.id ?? null) : s.activePhaseId,
+  })),
 
-  // --- Bans ---
   bans: [],
   setBans: (bans) => set({ bans }),
   setBan: (ban) => set((s) => {
-    // Upsert — replace existing ban for same side+slotIndex
-    const filtered = s.bans.filter(
-      (b) => !(b.side === ban.side && b.slotIndex === ban.slotIndex),
-    );
-    return { bans: [...filtered, ban] };
+    const existing = s.bans.findIndex(b => b.side === ban.side && b.slotIndex === ban.slotIndex);
+    if (existing >= 0) {
+      const next = [...s.bans];
+      next[existing] = ban;
+      return { bans: next };
+    }
+    return { bans: [...s.bans, ban] };
   }),
-  removeBan: (banId) => set((s) => ({
-    bans: s.bans.filter((b) => b.id !== banId),
-  })),
+  removeBan: (banId) => set((s) => ({ bans: s.bans.filter(b => b.id !== banId) })),
 
-  // --- Strat Config ---
-  stratConfig: { ...defaultConfig },
-  setStratConfig: (config) => set((s) => ({
-    stratConfig: { ...s.stratConfig, ...config },
-  })),
+  stratConfig: { ...DEFAULT_CONFIG },
+  setStratConfig: (config) => set((s) => ({ stratConfig: { ...s.stratConfig, ...config } })),
 
-  // --- Operator Slots ---
   operatorSlots: [],
   activeOperatorSlotId: null,
-  setOperatorSlots: (operatorSlots) => set({ operatorSlots }),
-  setActiveOperatorSlotId: (activeOperatorSlotId) => set({ activeOperatorSlotId }),
+  setOperatorSlots: (slots) => set({ operatorSlots: slots }),
+  setActiveOperatorSlotId: (id) => set({ activeOperatorSlotId: id }),
   updateOperatorSlot: (slotId, data) => set((s) => ({
-    operatorSlots: s.operatorSlots.map((slot) =>
-      slot.id === slotId ? { ...slot, ...data } : slot,
-    ),
+    operatorSlots: s.operatorSlots.map(slot => slot.id === slotId ? { ...slot, ...data } : slot),
   })),
 
-  // --- Visibility ---
-  landscapeColor: '#FFFFFF',
+  landscapeColor: '#00FF00',
   landscapeVisible: true,
-  setLandscapeColor: (landscapeColor) => set({ landscapeColor }),
-  setLandscapeVisible: (landscapeVisible) => set({ landscapeVisible }),
+  setLandscapeColor: (color) => set({ landscapeColor: color }),
+  setLandscapeVisible: (visible) => set({ landscapeVisible: visible }),
 
-  // --- SVG Layer Visibility ---
-  svgLayerVisibility: getDefaultLayerVisibility(),
+  svgLayerVisibility: buildDefaultLayerVisibility(),
   setSvgLayerVisibility: (code, visible) => set((s) => ({
     svgLayerVisibility: { ...s.svgLayerVisibility, [code]: visible },
   })),
-  resetSvgLayerVisibility: () => set({ svgLayerVisibility: getDefaultLayerVisibility() }),
+  resetSvgLayerVisibility: () => set({ svgLayerVisibility: buildDefaultLayerVisibility() }),
 
-  // --- View Mode ---
-  viewMode: 'blueprint',
-  setViewMode: (viewMode) => set({ viewMode }),
+  viewMode: 'blueprint' as ViewMode,
+  setViewMode: (mode) => set({ viewMode: mode }),
 
-  // --- Derived helpers ---
   getActiveColor: () => {
-    const s = get();
-    if (!s.activeOperatorSlotId) return s.landscapeColor;
-    const slot = s.operatorSlots.find((sl) => sl.id === s.activeOperatorSlotId);
-    return slot?.color ?? s.landscapeColor;
+    const { activeOperatorSlotId, operatorSlots, landscapeColor } = get();
+    if (!activeOperatorSlotId) return landscapeColor;
+    const slot = operatorSlots.find(s => s.id === activeOperatorSlotId);
+    return slot?.color ?? landscapeColor;
   },
+
   getAttackerSlots: () => {
     return get().operatorSlots
-      .filter((s) => s.side === 'attacker')
+      .filter(s => s.side === 'attacker')
       .sort((a, b) => a.slotNumber - b.slotNumber);
-  },
-  getDefenderSlots: () => {
-    return get().operatorSlots
-      .filter((s) => s.side === 'defender')
-      .sort((a, b) => a.slotNumber - b.slotNumber);
-  },
-  getVisibleSlotIds: () => {
-    const s = get();
-    const ids = new Set<string>();
-    for (const slot of s.operatorSlots) {
-      if (slot.visible) ids.add(slot.id);
-    }
-    return ids;
-  },
-  getBannedOperatorNames: () => {
-    return new Set(get().bans.map((b) => b.operatorName));
   },
 
-  // --- Reset ---
+  getDefenderSlots: () => {
+    return get().operatorSlots
+      .filter(s => s.side === 'defender')
+      .sort((a, b) => a.slotNumber - b.slotNumber);
+  },
+
+  getVisibleSlotIds: () => {
+    return new Set(get().operatorSlots.filter(s => s.visible).map(s => s.id));
+  },
+
+  getBannedOperatorNames: () => {
+    return new Set(get().bans.map(b => b.operatorName));
+  },
+
   reset: () => set({
     phases: [],
     activePhaseId: null,
     bans: [],
-    stratConfig: { ...defaultConfig },
+    stratConfig: { ...DEFAULT_CONFIG },
     operatorSlots: [],
     activeOperatorSlotId: null,
-    landscapeColor: '#FFFFFF',
+    landscapeColor: '#00FF00',
     landscapeVisible: true,
-    svgLayerVisibility: getDefaultLayerVisibility(),
+    svgLayerVisibility: buildDefaultLayerVisibility(),
     viewMode: 'blueprint',
   }),
 }));

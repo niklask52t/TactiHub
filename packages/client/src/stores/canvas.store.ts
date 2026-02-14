@@ -10,7 +10,6 @@ export interface DrawHistoryEntry {
 }
 
 interface CanvasStoreState {
-  // Drawing tools
   tool: Tool;
   color: string;
   lineWidth: number;
@@ -22,7 +21,6 @@ interface CanvasStoreState {
   setFontSize: (size: number) => void;
   setSelectedIcon: (icon: { type: 'operator' | 'gadget'; id: string; url: string; name?: string; color?: string } | null) => void;
 
-  // Viewport (zoom + pan)
   offsetX: number;
   offsetY: number;
   scale: number;
@@ -35,7 +33,6 @@ interface CanvasStoreState {
   setDimensions: (imgW: number, imgH: number, contW: number, contH: number) => void;
   resetViewport: () => void;
 
-  // Selection & interaction
   selectedDrawId: string | null;
   setSelectedDrawId: (id: string | null) => void;
   interactionMode: 'none' | 'move' | 'resize' | 'rotate';
@@ -43,7 +40,6 @@ interface CanvasStoreState {
   setInteractionMode: (mode: 'none' | 'move' | 'resize' | 'rotate') => void;
   setActiveResizeHandle: (handle: string | null) => void;
 
-  // Undo/Redo history
   myDrawHistory: DrawHistoryEntry[];
   undoStack: DrawHistoryEntry[];
   pushMyDraw: (entry: Omit<DrawHistoryEntry, 'action'>) => void;
@@ -55,7 +51,6 @@ interface CanvasStoreState {
 }
 
 export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
-  // Drawing tools
   tool: Tool.Pen,
   color: DEFAULT_COLOR,
   lineWidth: DEFAULT_LINE_WIDTH,
@@ -67,7 +62,6 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
   setFontSize: (fontSize) => set({ fontSize }),
   setSelectedIcon: (selectedIcon) => set({ selectedIcon }),
 
-  // Viewport
   offsetX: 0,
   offsetY: 0,
   scale: 1,
@@ -75,6 +69,7 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
   imageHeight: 0,
   containerWidth: 0,
   containerHeight: 0,
+
   zoomTo: (newScale, pivotX, pivotY) => {
     const s = get();
     const clamped = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newScale));
@@ -85,13 +80,16 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
       offsetY: pivotY - (pivotY - s.offsetY) * ratio,
     });
   },
+
   panBy: (dx, dy) => set((s) => ({ offsetX: s.offsetX + dx, offsetY: s.offsetY + dy })),
+
   setDimensions: (imgW, imgH, contW, contH) => set({
     imageWidth: imgW,
     imageHeight: imgH,
     containerWidth: contW,
     containerHeight: contH,
   }),
+
   resetViewport: () => {
     const { imageWidth, imageHeight, containerWidth, containerHeight } = get();
     if (!imageWidth || !imageHeight || !containerWidth || !containerHeight) {
@@ -107,7 +105,6 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
     });
   },
 
-  // Selection & interaction
   selectedDrawId: null,
   setSelectedDrawId: (id) => set({ selectedDrawId: id }),
   interactionMode: 'none' as const,
@@ -115,17 +112,19 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
   setInteractionMode: (mode) => set({ interactionMode: mode }),
   setActiveResizeHandle: (handle) => set({ activeResizeHandle: handle }),
 
-  // Undo/Redo
   myDrawHistory: [],
   undoStack: [],
+
   pushMyDraw: (entry) => set((s) => ({
     myDrawHistory: [...s.myDrawHistory, { ...entry, action: 'create' as const }],
     undoStack: [],
   })),
+
   pushMyUpdate: (entry) => set((s) => ({
     myDrawHistory: [...s.myDrawHistory, { ...entry, action: 'update' as const }],
     undoStack: [],
   })),
+
   popUndo: () => {
     const s = get();
     if (s.myDrawHistory.length === 0) return null;
@@ -136,6 +135,7 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
     });
     return entry;
   },
+
   popRedo: () => {
     const s = get();
     if (s.undoStack.length === 0) return null;
@@ -146,9 +146,11 @@ export const useCanvasStore = create<CanvasStoreState>((set, get) => ({
     });
     return entry;
   },
+
   updateDrawId: (oldId, newId) => set((s) => ({
     myDrawHistory: s.myDrawHistory.map(e => e.id === oldId ? { ...e, id: newId } : e),
     undoStack: s.undoStack.map(e => e.id === oldId ? { ...e, id: newId } : e),
   })),
+
   clearHistory: () => set({ myDrawHistory: [], undoStack: [] }),
 }));
