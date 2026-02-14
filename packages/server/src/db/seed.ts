@@ -62,6 +62,14 @@ async function seed() {
       { name: 'Plane', slug: 'plane', isCompetitive: false, floors: [{ name: 'Bottom Floor', variants: 'bd' }, { name: 'Middle Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
       { name: 'Tower', slug: 'tower', isCompetitive: false, floors: [{ name: 'Bottom Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
       { name: 'Yacht', slug: 'yacht', isCompetitive: false, floors: [{ name: 'Basement', variants: 'bd' }, { name: 'First Floor', variants: 'bd' }, { name: 'Second Floor', variants: 'bd' }, { name: 'Top Floor', variants: 'bd' }] },
+      // New maps (SVG Real View available, no WebP blueprint images)
+      { name: 'Bartlett University', slug: 'bartlett', isCompetitive: false, floors: [{ name: '1st Floor', variants: 'b' }, { name: '2nd Floor', variants: 'b' }, { name: '3rd Floor', variants: 'b' }] },
+      { name: 'Close Quarters', slug: 'close-quarters', isCompetitive: false, floors: [{ name: '1st Floor', variants: 'b' }, { name: '2nd Floor', variants: 'b' }] },
+      { name: 'District', slug: 'district', isCompetitive: false, floors: [{ name: '1st Floor', variants: 'b' }] },
+      { name: 'Emerald Plains', slug: 'emerald-plains', isCompetitive: true, floors: [{ name: '1st Floor', variants: 'b' }, { name: '2nd Floor', variants: 'b' }, { name: '3rd Floor', variants: 'b' }] },
+      { name: 'Lair', slug: 'lair', isCompetitive: true, floors: [{ name: 'Basement', variants: 'b' }, { name: '1st Floor', variants: 'b' }, { name: '2nd Floor', variants: 'b' }, { name: '3rd Floor', variants: 'b' }] },
+      { name: 'Stadium Alpha', slug: 'stadium-alpha', isCompetitive: false, floors: [{ name: 'Basement', variants: 'b' }, { name: '1st Floor', variants: 'b' }, { name: '2nd Floor', variants: 'b' }, { name: '3rd Floor', variants: 'b' }] },
+      { name: 'Stadium Bravo', slug: 'stadium-bravo', isCompetitive: false, floors: [{ name: 'Basement', variants: 'b' }, { name: '1st Floor', variants: 'b' }, { name: '2nd Floor', variants: 'b' }, { name: '3rd Floor', variants: 'b' }] },
     ];
 
     for (const map of r6Maps) {
@@ -187,11 +195,15 @@ async function seed() {
     ];
 
     for (const op of r6Operators) {
+      const iconName = op.name.toLowerCase()
+        .replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u')
+        .replace(/[^a-z0-9]/g, '');
       await db.insert(operators).values({
         gameId: r6Game.id,
         name: op.name,
         color: op.color,
         isAttacker: op.isAttacker,
+        icon: `/operators/${iconName}.webp`,
       });
     }
     console.log(`Created ${r6Operators.length} R6 operators`);
