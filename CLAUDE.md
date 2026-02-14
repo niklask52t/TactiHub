@@ -114,7 +114,8 @@ packages/
 6. Token refresh → POST /api/auth/refresh returns new access token (App.tsx session restore on mount uses `apiPost`, not `apiGet` — the server endpoint is POST-only)
 7. Admin can toggle public registration and create invite tokens
 8. **Admin manual verification**: POST /api/admin/users/:id/verify — verifies a user without email, sends notification email
-9. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side. Client-side guests have full toolbar/icon access and can draw locally (stored in React state, not persisted or synced)
+9. **Admin resend verification**: POST /api/admin/users/:id/resend-verification — generates new token, sends verification email
+10. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side. Client-side guests have full toolbar/icon access and can draw locally (stored in React state, not persisted or synced)
 
 ### Account Deletion Flow
 1. User → Account Settings → Delete Account → two confirmation dialogs (type username)
@@ -290,6 +291,7 @@ docker compose down         # Stop containers (data stays in volumes)
 docker compose down -v      # Stop + delete ALL data (pgdata + redisdata volumes)
 bash update.sh              # Interactive: dev (full reset) or prod (update only)
 tactihub-update             # Same, if symlinked: sudo ln -sf /opt/tactihub/update.sh /usr/local/bin/tactihub-update
+bash test-smtp.sh           # Test SMTP email delivery with .env settings
 ```
 
 ---
@@ -375,7 +377,7 @@ POST register, login, logout, refresh, forgot-password, reset-password, change-c
 GET verify-email, confirm-deletion, magic-login, me, registration-status (public), recaptcha-key (public)
 
 ### Admin Users: `/api/admin/users/`
-GET (paginated), POST/:id/role, POST/:id/verify (manual email verification + notification), POST/:id/reactivate, POST/:id/delete
+GET (paginated), POST/:id/role, POST/:id/verify (manual email verification + notification), POST/:id/resend-verification, POST/:id/reactivate, POST/:id/delete
 
 ### Public: `/api/`
 GET games, games/:slug, games/:slug/maps/:mapSlug, games/:slug/operators, games/:slug/gadgets

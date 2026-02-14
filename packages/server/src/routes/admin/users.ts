@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { db } from '../../db/connection.js';
 import { users } from '../../db/schema/index.js';
 import { requireAdmin } from '../../middleware/auth.js';
-import { sendAdminVerifiedEmail } from '../../services/email.service.js';
+import { sendAdminVerifiedEmail, sendVerificationEmail } from '../../services/email.service.js';
+import { generateEmailToken, storeEmailVerificationToken } from '../../services/auth.service.js';
 
 export default async function adminUsersRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAdmin);
@@ -80,6 +81,24 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     }
 
     return { data: { id: updated.id, username: updated.username, email: updated.email, emailVerifiedAt: updated.emailVerifiedAt } };
+  });
+
+  // POST /api/admin/users/:id/resend-verification
+  fastify.post('/:id/resend-verification', async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    if (!user) return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+
+    if (user.emailVerifiedAt) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'User is already verified', statusCode: 400 });
+    }
+
+    const token = generateEmailToken();
+    await storeEmailVerificationToken(user.id, token);
+    await sendVerificationEmail(user.email, token);
+
+    return { message: 'Verification email sent' };
   });
 
   // POST /api/admin/users/:id/reactivate

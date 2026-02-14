@@ -2,20 +2,32 @@ import { useAuthStore } from '@/stores/auth.store';
 
 const API_BASE = '/api';
 
+// Deduplication: only one refresh request at a time.
+// Concurrent callers share the same in-flight promise.
+let refreshPromise: Promise<string | null> | null = null;
+
 async function refreshAccessToken(): Promise<string | null> {
-  try {
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const { accessToken, user } = data.data;
-    useAuthStore.getState().setAuth(user, accessToken);
-    return accessToken;
-  } catch {
-    return null;
-  }
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const { accessToken, user } = data.data;
+      useAuthStore.getState().setAuth(user, accessToken);
+      return accessToken;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 export async function apiFetch<T>(

@@ -18,9 +18,12 @@ const releases: Release[] = [
     date: '2026-02-14',
     tag: 'Latest',
     changes: [
+      { type: 'feature', text: 'Admin can resend verification email to unverified users (mail icon in admin user table)' },
+      { type: 'feature', text: 'SMTP test script (bash test-smtp.sh) for troubleshooting email delivery' },
       { type: 'improvement', text: 'All auth tokens moved from Redis to database \u2014 refresh tokens, password reset, deletion, and magic link tokens now survive Redis restarts' },
       { type: 'improvement', text: 'Toast close button moved to top-right of notification' },
       { type: 'improvement', text: 'Removed unused Redis dependency from socket module' },
+      { type: 'fix', text: 'Random logouts fixed \u2014 concurrent token refresh requests no longer cause race condition' },
     ],
   },
   {

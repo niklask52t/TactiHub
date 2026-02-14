@@ -2,9 +2,12 @@
 
 ## v1.8.6 — 2026-02-14
 
+- [feature] Admin can resend verification email to unverified users (mail icon button in admin user table)
+- [feature] SMTP test script (`bash test-smtp.sh`) for troubleshooting email delivery
 - [improvement] All auth tokens moved from Redis to database — refresh tokens, password reset, deletion, and magic link tokens now survive Redis restarts
 - [improvement] Toast close button moved to top-right of notification (was top-left)
 - [improvement] Removed unused Redis dependency from socket module
+- [fix] Random logouts fixed — concurrent token refresh requests no longer cause race condition (client-side deduplication)
 
 ## v1.8.5 — 2026-02-14
 

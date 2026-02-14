@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Shield, Trash2, CheckCircle, RotateCcw } from 'lucide-react';
+import { Shield, Trash2, CheckCircle, RotateCcw, Mail } from 'lucide-react';
 import { useState } from 'react';
 
 interface UserData {
@@ -43,6 +43,12 @@ export default function UsersPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiDelete(`/admin/users/${id}`),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }); toast.success('User deleted'); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const resendVerificationMutation = useMutation({
+    mutationFn: (id: string) => apiPost(`/admin/users/${id}/resend-verification`, {}),
+    onSuccess: () => toast.success('Verification email sent'),
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -105,9 +111,14 @@ export default function UsersPage() {
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-1">
                       {!user.emailVerifiedAt && !user.deactivatedAt && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Verify user" onClick={() => setVerifyUser(user)}>
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        </Button>
+                        <>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Resend verification email" onClick={() => resendVerificationMutation.mutate(user.id)} disabled={resendVerificationMutation.isPending}>
+                            <Mail className="h-4 w-4 text-blue-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Verify user manually" onClick={() => setVerifyUser(user)}>
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          </Button>
+                        </>
                       )}
                       {user.deactivatedAt && (
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="Reactivate user" onClick={() => reactivateMutation.mutate(user.id)}>
