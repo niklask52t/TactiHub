@@ -27,11 +27,11 @@ export default function BattleplanViewer() {
   // Fetch battleplan
   const { data: planData, isLoading } = useQuery({
     queryKey: ['battleplan', planId],
-    queryFn: () => apiGet<any>(`/battleplans/${planId}`),
+    queryFn: () => apiGet<any>(`/battleplans/${planId}`).then(r => r.data),
     enabled: !!planId,
   });
 
-  const isOwner = !!user && !!planData && planData.userId === user.id;
+  const isOwner = !!user && !!planData && planData.ownerId === user.id;
   const mapSlug = planData?.map?.slug;
 
   // Floor management
@@ -61,10 +61,16 @@ export default function BattleplanViewer() {
   useEffect(() => {
     if (!planData) return;
     const store = stratStore.getState();
-    store.setOperatorSlots(planData.stratSlots || []);
+    store.setOperatorSlots(planData.operatorSlots || []);
     store.setPhases(planData.phases || []);
     store.setBans(planData.bans || []);
-    if (planData.stratConfig) store.setStratConfig(planData.stratConfig);
+    if (planData.stratSide || planData.stratMode || planData.stratSite) {
+      store.setStratConfig({
+        side: planData.stratSide || 'Unknown',
+        mode: planData.stratMode || 'Unknown',
+        site: planData.stratSite || 'Unknown',
+      });
+    }
     if (planData.phases?.length > 0 && !store.activePhaseId) {
       store.setActivePhaseId(planData.phases[0].id);
     }
@@ -174,12 +180,12 @@ export default function BattleplanViewer() {
             <h1 className="text-sm font-semibold truncate">{planData.title}</h1>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <span>{planData.map?.name}</span>
-              <span>by {planData.user?.username || 'Unknown'}</span>
-              {planData.stratConfig?.side && planData.stratConfig.side !== 'Unknown' && (
-                <span className="px-1 py-0.5 rounded bg-muted text-[10px]">{planData.stratConfig.side}</span>
+              <span>by {planData.owner?.username || 'Unknown'}</span>
+              {planData.stratSide && planData.stratSide !== 'Unknown' && (
+                <span className="px-1 py-0.5 rounded bg-muted text-[10px]">{planData.stratSide}</span>
               )}
-              {planData.stratConfig?.mode && planData.stratConfig.mode !== 'Unknown' && (
-                <span className="px-1 py-0.5 rounded bg-muted text-[10px]">{planData.stratConfig.mode}</span>
+              {planData.stratMode && planData.stratMode !== 'Unknown' && (
+                <span className="px-1 py-0.5 rounded bg-muted text-[10px]">{planData.stratMode}</span>
               )}
             </div>
           </div>

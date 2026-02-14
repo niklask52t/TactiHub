@@ -37,22 +37,23 @@ export default function RoomPage() {
   const stratStore = useStratStore;
   const roomStore = useRoomStore;
 
-  // Room query
+  // Room query (server wraps in { data: ... })
   const { data: roomData } = useQuery({
     queryKey: ['room', connectionString],
-    queryFn: () => apiGet<any>(`/rooms/${connectionString}`),
+    queryFn: () => apiGet<any>(`/rooms/${connectionString}`).then(r => r.data),
     enabled: !!connectionString,
   });
 
-  const battleplanId = roomData?.battleplanId || roomData?.battleplan?.id;
-  const gameSlug = roomData?.game?.slug || roomData?.battleplan?.game?.slug || 'r6-siege';
+  const battleplanId = roomData?.battleplanId;
 
-  // Battleplan query
+  // Battleplan query (server wraps in { data: ... })
   const { data: planData, refetch: refetchPlan } = useQuery({
     queryKey: ['battleplan', battleplanId],
-    queryFn: () => apiGet<any>(`/battleplans/${battleplanId}`),
+    queryFn: () => apiGet<any>(`/battleplans/${battleplanId}`).then(r => r.data),
     enabled: !!battleplanId,
   });
+
+  const gameSlug = planData?.game?.slug || 'r6-siege';
 
   // Floor management
   const sortedFloors = useMemo(() => {
@@ -86,10 +87,16 @@ export default function RoomPage() {
   useEffect(() => {
     if (!planData) return;
     const store = stratStore.getState();
-    store.setOperatorSlots(planData.stratSlots || []);
+    store.setOperatorSlots(planData.operatorSlots || []);
     store.setPhases(planData.phases || []);
     store.setBans(planData.bans || []);
-    if (planData.stratConfig) store.setStratConfig(planData.stratConfig);
+    if (planData.stratSide || planData.stratMode || planData.stratSite) {
+      store.setStratConfig({
+        side: planData.stratSide || 'Unknown',
+        mode: planData.stratMode || 'Unknown',
+        site: planData.stratSite || 'Unknown',
+      });
+    }
     if (planData.phases?.length > 0 && !store.activePhaseId) {
       store.setActivePhaseId(planData.phases[0].id);
     }
@@ -253,9 +260,10 @@ export default function RoomPage() {
     // Broadcast
     getSocket()?.emit('draw:create', { battleplanFloorId: floorId, draws: enrichedDraws });
 
-    // Persist
-    apiPost<any>(`/battleplan-floors/${floorId}/draws`, { draws: enrichedDraws }).then(res => {
-      const serverIds: string[] = res.ids || res.data?.map((d: any) => d.id) || [];
+    // Persist (server expects { items })
+    apiPost<any>(`/battleplan-floors/${floorId}/draws`, { items: enrichedDraws }).then(res => {
+      const resData = res.data || res;
+      const serverIds: string[] = Array.isArray(resData) ? resData.map((d: any) => d.id) : [];
       // Replace temp IDs
       setLocalDraws(prev => {
         const floorDraws = prev[floorId] || [];
@@ -434,7 +442,7 @@ export default function RoomPage() {
   return (
     <div className="h-screen flex flex-col">
       <EditorShell
-        mapName={planData.map?.name || roomData.map?.name}
+        mapName={planData?.map?.name}
         gameSlug={gameSlug}
         floors={floorInfo}
         currentFloorIndex={currentFloorIndex}

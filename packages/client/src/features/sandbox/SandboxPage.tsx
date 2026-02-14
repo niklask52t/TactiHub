@@ -53,23 +53,23 @@ export default function SandboxPage() {
   const [selectedGameSlug, setSelectedGameSlug] = useState<string | null>(null);
   const [selectedMapSlug, setSelectedMapSlug] = useState<string | null>(null);
 
-  // Fetch games
+  // Fetch games (server wraps in { data: ... })
   const { data: games } = useQuery({
     queryKey: ['games'],
-    queryFn: () => apiGet<any>('/games'),
+    queryFn: () => apiGet<any>('/games').then(r => r.data),
   });
 
   // Fetch maps for selected game
   const { data: gameData } = useQuery({
     queryKey: ['game', selectedGameSlug],
-    queryFn: () => apiGet<any>(`/games/${selectedGameSlug}`),
+    queryFn: () => apiGet<any>(`/games/${selectedGameSlug}`).then(r => r.data),
     enabled: !!selectedGameSlug,
   });
 
   // Fetch map details (floors)
   const { data: mapData } = useQuery({
     queryKey: ['map', selectedGameSlug, selectedMapSlug],
-    queryFn: () => apiGet<any>(`/games/${selectedGameSlug}/maps/${selectedMapSlug}`),
+    queryFn: () => apiGet<any>(`/games/${selectedGameSlug}/maps/${selectedMapSlug}`).then(r => r.data),
     enabled: !!selectedGameSlug && !!selectedMapSlug,
   });
 
@@ -284,7 +284,7 @@ export default function SandboxPage() {
 
   // --- Selection UI ---
   if (!selectedMapSlug || sortedFloors.length === 0) {
-    const gameList = Array.isArray(games) ? games : games?.data || [];
+    const gameList = Array.isArray(games) ? games : [];
     const mapList = gameData?.maps || [];
 
     return (
