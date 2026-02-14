@@ -6,6 +6,7 @@ import { setupRoomHandlers } from './handlers/room.js';
 import { setupDrawingHandlers } from './handlers/drawing.js';
 import { setupCursorHandlers } from './handlers/cursor.js';
 import { setupChatHandlers } from './handlers/chat.js';
+import { setupStratHandlers } from './handlers/strat.js';
 import { db } from '../db/connection.js';
 import { users } from '../db/schema/index.js';
 import { eq } from 'drizzle-orm';
@@ -70,6 +71,7 @@ export function setupSocket(io: Server) {
     setupDrawingHandlers(io, socket, userId);
     setupCursorHandlers(io, socket, userId);
     setupChatHandlers(io, socket, userId, username);
+    setupStratHandlers(io, socket, userId);
 
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${username} (${socket.id})`);
