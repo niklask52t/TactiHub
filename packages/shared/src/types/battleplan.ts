@@ -1,5 +1,6 @@
 import type { MapFloor, Operator } from './game.js';
 import type { User } from './auth.js';
+import type { BattleplanPhase, OperatorBan, StratSide, StratMode, StratSite, StratOperatorSlot } from './strat.js';
 
 export interface Battleplan {
   id: string;
@@ -12,6 +13,9 @@ export interface Battleplan {
   tags: string[];
   isPublic: boolean;
   isSaved: boolean;
+  stratSide: StratSide;
+  stratMode: StratMode;
+  stratSite: StratSite;
   createdAt: string;
   updatedAt: string;
   owner?: User;
@@ -19,6 +23,9 @@ export interface Battleplan {
   map?: { id: string; name: string; slug: string } | null;
   floors?: BattleplanFloor[];
   operatorSlots?: OperatorSlot[];
+  stratSlots?: StratOperatorSlot[];
+  phases?: BattleplanPhase[];
+  bans?: OperatorBan[];
   voteCount?: number;
   userVote?: number | null;
 }
@@ -33,7 +40,7 @@ export interface BattleplanFloor {
   draws?: Draw[];
 }
 
-export type DrawType = 'path' | 'line' | 'rectangle' | 'text' | 'icon';
+export type DrawType = 'path' | 'line' | 'arrow' | 'rectangle' | 'ellipse' | 'text' | 'icon';
 
 export interface Draw {
   id: string;
@@ -45,12 +52,14 @@ export interface Draw {
   destinationX: number | null;
   destinationY: number | null;
   data: DrawData;
+  phaseId: string | null;
+  operatorSlotId: string | null;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export type DrawData = PathData | LineData | RectangleData | TextData | IconData;
+export type DrawData = PathData | LineData | ArrowData | RectangleData | EllipseData | TextData | IconData;
 
 export interface PathData {
   points: Array<{ x: number; y: number }>;
@@ -61,6 +70,19 @@ export interface PathData {
 export interface LineData {
   color: string;
   lineWidth: number;
+}
+
+export interface ArrowData {
+  color: string;
+  lineWidth: number;
+}
+
+export interface EllipseData {
+  radiusX: number;
+  radiusY: number;
+  color: string;
+  lineWidth: number;
+  filled: boolean;
 }
 
 export interface RectangleData {

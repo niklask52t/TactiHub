@@ -3,7 +3,9 @@ import type { Draw } from './battleplan.js';
 export enum Tool {
   Pen = 'pen',
   Line = 'line',
+  Arrow = 'arrow',
   Rectangle = 'rectangle',
+  Ellipse = 'ellipse',
   Text = 'text',
   Icon = 'icon',
   Eraser = 'eraser',

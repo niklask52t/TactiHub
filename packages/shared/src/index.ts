@@ -6,6 +6,7 @@ export type * from './types/room.js';
 export type * from './types/admin.js';
 export type * from './types/api.js';
 export type * from './types/canvas.js';
+export type * from './types/strat.js';
 
 // Enums & Constants
 export { Tool } from './types/canvas.js';
