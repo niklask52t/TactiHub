@@ -1,6 +1,8 @@
+import { useState, useMemo } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { LogOut, User, Shield, Settings } from 'lucide-react';
 import { APP_VERSION } from '@tactihub/shared';
@@ -9,6 +11,16 @@ import { apiPost } from '@/lib/api';
 export function AppLayout() {
   const { user, isAdmin, logout, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const [aboutOpen, setAboutOpen] = useState(false);
+
+  const age = useMemo(() => {
+    const birthday = new Date('2005-05-05');
+    const today = new Date();
+    let a = today.getFullYear() - birthday.getFullYear();
+    const m = today.getMonth() - birthday.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) a--;
+    return a;
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -79,7 +91,14 @@ export function AppLayout() {
 
       <footer className="border-t py-4">
         <div className="container flex items-center justify-between px-4 text-xs text-muted-foreground">
-          <span>TactiHub v{APP_VERSION} &mdash; by Niklas Kronig</span>
+          <span>TactiHub v{APP_VERSION} &mdash; by{' '}
+            <button
+              onClick={() => setAboutOpen(true)}
+              className="text-foreground font-medium underline decoration-primary/50 underline-offset-2 hover:decoration-primary hover:text-primary transition-colors cursor-pointer"
+            >
+              Niklas Kronig
+            </button>
+          </span>
           <div className="flex items-center gap-4">
             <Link to="/help" className="hover:text-primary transition-colors">Help</Link>
             <Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link>
@@ -88,6 +107,40 @@ export function AppLayout() {
           </div>
         </div>
       </footer>
+
+      <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex flex-col items-center gap-3 pt-2">
+              <div className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center">
+                <span className="text-2xl font-black text-primary">NK</span>
+              </div>
+              <DialogTitle className="text-xl">Niklas Kronig</DialogTitle>
+              <p className="text-sm text-muted-foreground">Developer & Creator of TactiHub</p>
+            </div>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-muted-foreground leading-relaxed mt-2">
+            <div className="flex items-center gap-3">
+              <span className="text-primary font-semibold min-w-[60px]">Age</span>
+              <span className="text-foreground">{age} years old</span>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-primary font-semibold min-w-[60px]">About</span>
+              <p>
+                Lifelong passion for technology and IT.
+                Currently working in the IT field, combining professional experience with a drive for creative side projects.
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-primary font-semibold min-w-[60px]">Gaming</span>
+              <p>
+                Passionate gamer and active in the Rainbow Six Siege esports scene.
+                TactiHub is a heart project — built to help his team and other esports teams plan and coordinate strategies more effectively.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

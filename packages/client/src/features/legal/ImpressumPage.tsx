@@ -19,10 +19,15 @@ export default function ImpressumPage() {
           <CardHeader>
             <CardTitle>Developer</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             <p className="text-lg font-medium">Niklas Kronig</p>
             <p className="text-muted-foreground">
-              TactiHub is a personal project developed and maintained by Niklas Kronig.
+              Lifelong passion for technology and IT.
+              Currently working in the IT field, combining professional experience with a drive for creative side projects.
+            </p>
+            <p className="text-muted-foreground">
+              Passionate gamer and active in the Rainbow Six Siege esports scene.
+              TactiHub is a heart project — built to help his team and other esports teams plan and coordinate strategies more effectively.
             </p>
           </CardContent>
         </Card>
