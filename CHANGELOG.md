@@ -2,41 +2,41 @@
 
 ## v1.8.4 — 2026-02-14
 
+- [feature] Map name displayed in room and sandbox header bar
+- [improvement] Map name included in battleplan API response
+- [improvement] Sandbox header: Exit button, sandbox warning, Login/Register buttons
 - [fix] PDF export now generates pages top-to-bottom (highest floor first)
 - [fix] Laser line persists while fading — new lines no longer clear old fading lines
 - [fix] Sandbox mode layout matches logged-in room layout (single header bar, no scrollbar)
-- [feature] Map name displayed in room and sandbox header bar
-- [feature] Map name included in battleplan API response
 - [fix] Sandbox warning text now matches game selection banner with "Log in" link
 - [fix] Sandbox game/map selection pages now show grid background like other pages
-- [improvement] Sandbox header: Exit button, sandbox warning, Login/Register buttons
 
 ## v1.8.3 — 2026-02-14
 
+- [feature] Undo/redo now covers move and resize operations
+- [feature] Rainbow Six Siege game logo added
+- [improvement] Auto-switch to Select only for shapes (Line, Rectangle), not Pen/freehand
 - [fix] Sandbox lineup — operator slot selection now works in sandbox mode
 - [fix] Logout redirects to homepage instead of login page
 - [fix] Sandbox scrollbar removed — info banner merged into toolbar row
 - [fix] Move/resize ghost eliminated — original draw hidden during drag
 - [fix] Laser line no longer jumps when restarting during fade
-- [fix] Auto-switch to Select only for shapes (Line, Rectangle), not Pen/freehand
-- [feature] Undo/redo now covers move and resize operations
-- [feature] Rainbow Six Siege game logo added
 
 ## v1.8.2 — 2026-02-14
 
-- [removed] Valorant game data removed from seed — TactiHub now focuses exclusively on Rainbow Six Siege
 - [improvement] Updated all documentation to reflect R6 Siege-only focus
+- [removed] Valorant game data removed from seed — TactiHub now focuses exclusively on Rainbow Six Siege
 
 ## v1.8.1 — 2026-02-13
 
 - [feature] Visual operator lineup picker — clickable image grid replaces dropdown selectors
-- [feature] Sandbox mode matches room layout — full-screen canvas with icon sidebar and toolbar
+- [improvement] Sandbox mode matches room layout — full-screen canvas with icon sidebar and toolbar
+- [improvement] Server-side admin deletion guard — request-deletion endpoint rejects admin-role users
 - [fix] Session persistence — sessions now survive page reload (was using GET instead of POST for refresh)
 - [fix] Admin self-deletion protection — admin role users can no longer see or trigger account deletion
 - [fix] Eraser tool now works immediately — optimistic draw tracking makes draws erasable before API response
 - [fix] Select/Move tool works immediately — draws are selectable and movable right after creation
 - [fix] Draws persist on floor switch — optimistic draws stay visible while awaiting server confirmation
-- [improvement] Server-side admin deletion guard — request-deletion endpoint rejects admin-role users
 
 ## v1.8.0 — 2026-02-13
 
@@ -56,10 +56,10 @@
 - [feature] All R6 Siege operators added (~78 total) — complete roster through Year 10 including Skopos, Denari, Striker, Rauora
 - [feature] All gadgets now visible in sidebar — text fallback for gadgets without icons, grouped by category (Unique/Secondary/General)
 - [feature] Auto-switch to Select tool after drawing — immediately shows resize/rotate handles on the new drawing
+- [improvement] Sticky footer — footer stays at bottom of viewport even when page content is short
 - [fix] Fixed undo/redo system — corrected payload indexing, prevented redo from clearing undo stack, eliminated double-push to history
 - [fix] Fixed z-index overlaps — chat panel no longer hidden behind compass, icon sidebar toggle, or operator icons
 - [fix] Added missing draw:updated socket listener — peer draw updates now sync correctly across room participants
-- [improvement] Sticky footer — footer stays at bottom of viewport even when page content is short
 
 ## v1.6.0 — 2026-02-13
 
@@ -80,8 +80,8 @@
 - [feature] Guests can now draw locally in rooms (full toolbar, icons, undo/redo — drawings not persisted or shared)
 - [feature] PNG export (current floor) and PDF export (all floors as multi-page landscape) for all users including guests
 - [feature] Icon sidebar with vertical "Icons" label and pulse animation for first-visit discoverability
-- [fix] Improved map centering with ResizeObserver (fixes top-flush/bottom-gap issue)
 - [improvement] Icon image cache to prevent flicker on re-renders
+- [fix] Improved map centering with ResizeObserver (fixes top-flush/bottom-gap issue)
 
 ## v1.5.1 — 2026-02-12
 
@@ -91,9 +91,9 @@
 - [feature] Admin: reactivate deactivated users, self-delete protection
 - [feature] Admin: deactivated user status and days-left countdown in user table
 - [feature] Complete production deployment guide in README (Nginx, SSL, systemd, ufw)
-- [fix] Fixed DELETE request Content-Type bug (Fastify empty body error)
 - [improvement] Removed redundant admin username bar in admin panel
 - [improvement] User menu moved to far right in navbar
+- [fix] Fixed DELETE request Content-Type bug (Fastify empty body error)
 
 ## v1.5.0 — 2026-02-12
 
@@ -101,11 +101,11 @@
 - [feature] Operator and gadget icon placement on canvas via Icon tool
 - [feature] Map cover images for all 21 R6 maps
 - [improvement] Drawings now stay permanent after releasing the mouse button
+- [improvement] README table of contents with anchor links
 - [fix] Fixed Settings link in Tokens page causing logout
 - [fix] Removed grey loading bar at bottom of page
 - [fix] Fixed infinite horizontal scroll bug
 - [fix] Fixed black canvas on initial plan load
-- [improvement] README table of contents with anchor links
 
 ## v1.4.0 — 2026-02-12
 
@@ -113,10 +113,10 @@
 - [feature] View mode switcher on canvas (top-left, only visible when floor has multiple variants)
 - [feature] Batch image import script for floor images and gadget icons
 - [feature] Added 3 new R6 maps: Fortress, Nighthaven Labs, Outback
-- [improvement] Correct floor names and counts per map (was generic 4-floor placeholder)
-- [improvement] Admin floor upload now supports dark and white image variants
-- [improvement] Removed Bartlett map (no image data available)
 - [feature] Gadget icon import from source folder
+- [improvement] Admin floor upload now supports dark and white image variants
+- [fix] Correct floor names and counts per map (was generic 4-floor placeholder)
+- [removed] Removed Bartlett map (no image data available)
 
 ## v1.3.0 — 2026-02-12
 
@@ -125,11 +125,11 @@
 - [feature] Gaming-style design across all pages (HUD corners, particles, glow effects)
 - [feature] Styled HTML email templates with dark theme, logo, and branded buttons
 - [feature] New APP_URL env variable for correct email link generation
+- [improvement] Improved settings page layout clarity
+- [improvement] Admin username moved to top-right corner
 - [fix] Fixed "Input Buffer is empty" crash when toggling game/map status without file upload
 - [fix] Fixed gadget category dropdown visibility in dark mode
 - [fix] Fixed Radix Switch form values not correctly sent as "true"/"false"
-- [improvement] Improved settings page layout clarity
-- [improvement] Admin username moved to top-right corner
 
 ## v1.2.2 — 2026-02-12
 
