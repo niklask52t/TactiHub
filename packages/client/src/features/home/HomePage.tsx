@@ -18,7 +18,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="relative overflow-hidden min-h-[calc(100vh-3.5rem-3rem)] flex flex-col">
+    <div className="relative overflow-hidden">
       {/* Floating particles */}
       <span className="gaming-particle" style={{ left: '5%', bottom: '30%', animationDelay: '0s' }} />
       <span className="gaming-particle" style={{ left: '15%', bottom: '10%', animationDelay: '1.5s' }} />
@@ -27,13 +27,13 @@ export default function HomePage() {
       <span className="gaming-particle" style={{ left: '50%', bottom: '15%', animationDelay: '2s' }} />
       <span className="gaming-particle" style={{ left: '70%', bottom: '35%', animationDelay: '5s' }} />
 
-      <div className="container mx-auto px-4 py-8 relative z-10 flex-1 flex flex-col justify-center">
+      <div className="container mx-auto px-4 py-16 relative z-10">
         {/* Hero */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <img src="/tactihub_logo.png" alt="TactiHub" className="h-16 drop-shadow-[0_0_20px_oklch(0.68_0.19_45/0.4)]" />
+        <div className="text-center mb-20">
+          <div className="flex items-center justify-center mb-6">
+            <img src="/tactihub_logo.png" alt="TactiHub" className="h-20 drop-shadow-[0_0_20px_oklch(0.68_0.19_45/0.4)]" />
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
             Collaborative strategy planning for Rainbow Six Siege. Draw tactics, share plans, and coordinate with your team in real-time.
           </p>
           <div className="flex items-center justify-center gap-4">
@@ -58,7 +58,7 @@ export default function HomePage() {
         </div>
 
         {/* Games Grid */}
-        <h2 className="text-2xl font-bold mb-4 tracking-wide uppercase text-sm text-muted-foreground text-center">Choose a Game</h2>
+        <h2 className="text-2xl font-bold mb-6 tracking-wide uppercase text-sm text-muted-foreground text-center">Choose a Game</h2>
         {isLoading ? (
           <div className="flex flex-wrap justify-center gap-6">
             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]" />)}
