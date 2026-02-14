@@ -1,4 +1,5 @@
 CREATE TYPE "public"."draw_type" AS ENUM('path', 'line', 'rectangle', 'text', 'icon');--> statement-breakpoint
+CREATE TYPE "public"."slot_side" AS ENUM('defender', 'attacker');--> statement-breakpoint
 CREATE TYPE "public"."gadget_category" AS ENUM('unique', 'secondary', 'general');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('admin', 'user');--> statement-breakpoint
 CREATE TABLE "battleplan_floors" (
@@ -17,6 +18,7 @@ CREATE TABLE "battleplans" (
 	"name" varchar(255) NOT NULL,
 	"description" text,
 	"notes" text,
+	"tags" text[] DEFAULT '{}',
 	"is_public" boolean DEFAULT false NOT NULL,
 	"is_saved" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -43,6 +45,7 @@ CREATE TABLE "operator_slots" (
 	"battleplan_id" uuid NOT NULL,
 	"slot_number" integer NOT NULL,
 	"operator_id" uuid,
+	"side" "slot_side" DEFAULT 'defender' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );

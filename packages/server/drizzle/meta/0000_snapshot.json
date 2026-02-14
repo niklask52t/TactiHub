@@ -1,5 +1,5 @@
 {
-  "id": "24a87dee-6d2d-4af7-b219-68805bada5b8",
+  "id": "f3ea9480-3692-4a9b-ba9b-fe63a48d8c77",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -123,6 +123,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
         },
         "is_public": {
           "name": "is_public",
@@ -347,6 +354,14 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "side": {
+          "name": "side",
+          "type": "slot_side",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'defender'"
         },
         "created_at": {
           "name": "created_at",
@@ -1245,6 +1260,14 @@
         "rectangle",
         "text",
         "icon"
+      ]
+    },
+    "public.slot_side": {
+      "name": "slot_side",
+      "schema": "public",
+      "values": [
+        "defender",
+        "attacker"
       ]
     },
     "public.gadget_category": {

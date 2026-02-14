@@ -161,7 +161,6 @@ elif [ "$MODE" = "prod" ]; then
 
   echo ""
   echo "--- Applying database migrations ---"
-  run_as_tactihub pnpm db:generate
   run_as_tactihub pnpm db:migrate
 
   echo ""
