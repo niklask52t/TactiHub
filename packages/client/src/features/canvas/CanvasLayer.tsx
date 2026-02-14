@@ -472,16 +472,24 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
 
     // Draw current path preview
     if (isDrawing && currentPath.length > 1) {
-      ctx.beginPath();
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
+      if (tool === Tool.LaserLine) {
+        ctx.lineWidth = 3;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+      } else {
+        ctx.lineWidth = lineWidth;
+      }
+      ctx.beginPath();
       ctx.moveTo(currentPath[0]!.x, currentPath[0]!.y);
       for (let i = 1; i < currentPath.length; i++) {
         ctx.lineTo(currentPath[i]!.x, currentPath[i]!.y);
       }
       ctx.stroke();
+      ctx.restore();
     }
 
     // Draw local laser dot
@@ -845,28 +853,8 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
         laserThrottleRef.current = now;
         onLaserLine?.(laserPointsRef.current, color);
       }
-      // Draw laser line preview on active canvas
-      const canvas = activeCanvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx && laserPointsRef.current.length > 1) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.save();
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 3;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.shadowColor = color;
-          ctx.shadowBlur = 8;
-          ctx.beginPath();
-          ctx.moveTo(laserPointsRef.current[0]!.x, laserPointsRef.current[0]!.y);
-          for (let i = 1; i < laserPointsRef.current.length; i++) {
-            ctx.lineTo(laserPointsRef.current[i]!.x, laserPointsRef.current[i]!.y);
-          }
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
+      // Update currentPath to trigger render useEffect (draws preview + fading lines together)
+      setCurrentPath([...laserPointsRef.current]);
       return;
     }
 

@@ -1,6 +1,3 @@
-import { Badge } from '@/components/ui/badge';
-import { APP_VERSION } from '@tactihub/shared';
-
 type ChangeType = 'feature' | 'improvement' | 'fix' | 'removed';
 
 interface Change {
@@ -29,6 +26,8 @@ const releases: Release[] = [
       { type: 'fix', text: 'Sandbox mode layout matches logged-in room layout (single header bar, no scrollbar)' },
       { type: 'fix', text: 'Sandbox warning text now matches game selection banner with "Log in" link' },
       { type: 'fix', text: 'Sandbox game/map selection pages now show grid background like other pages' },
+      { type: 'fix', text: 'Laser line flickering when drawing new line while old one is fading' },
+      { type: 'fix', text: 'Removed redundant version badge from Changelog page header' },
     ],
   },
   {
@@ -263,9 +262,8 @@ function summaryParts(counts: { feature: number; improvement: number; fix: numbe
 export default function ChangelogPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">Changelog</h1>
-        <Badge variant="outline" className="text-xs">v{APP_VERSION}</Badge>
       </div>
 
       <div className="relative">

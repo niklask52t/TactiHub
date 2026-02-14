@@ -10,6 +10,8 @@
 - [fix] Sandbox mode layout matches logged-in room layout (single header bar, no scrollbar)
 - [fix] Sandbox warning text now matches game selection banner with "Log in" link
 - [fix] Sandbox game/map selection pages now show grid background like other pages
+- [fix] Laser line flickering when drawing new line while old one is fading
+- [fix] Removed redundant version badge from Changelog page header
 
 ## v1.8.3 — 2026-02-14
 
