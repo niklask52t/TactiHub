@@ -113,7 +113,7 @@ async function start() {
     },
   });
 
-  setupSocket(io, fastify.redis);
+  setupSocket(io);
 
   // Start cleanup scheduler
   startCleanupScheduler();

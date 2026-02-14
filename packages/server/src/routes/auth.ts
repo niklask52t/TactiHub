@@ -20,10 +20,13 @@ import {
   getEmailVerificationUserId,
   storePasswordResetToken,
   getPasswordResetEmail,
+  clearPasswordResetToken,
   storeDeletionToken,
   getDeletionTokenUserId,
+  clearDeletionToken,
   storeMagicLinkToken,
   getMagicLinkUserId,
+  clearMagicLinkToken,
   verifyRecaptcha,
 } from '../services/auth.service.js';
 import { sendVerificationEmail, sendPasswordResetEmail, sendDeletionConfirmationEmail, sendAccountDeactivatedEmail, sendMagicLinkEmail } from '../services/email.service.js';
@@ -162,7 +165,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     const accessToken = generateAccessToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id, user.role);
-    await storeRefreshToken(fastify.redis, user.id, refreshToken);
+    await storeRefreshToken(user.id, refreshToken);
 
     reply.setCookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -192,7 +195,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
   // POST /api/auth/logout
   fastify.post('/logout', { preHandler: [requireAuth] }, async (request, reply) => {
-    await revokeRefreshToken(fastify.redis, request.user!.userId);
+    await revokeRefreshToken(request.user!.userId);
     reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return { message: 'Logged out successfully' };
   });
@@ -211,7 +214,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid refresh token', statusCode: 401 });
     }
 
-    const valid = await verifyRefreshToken(fastify.redis, payload.userId, refreshToken);
+    const valid = await verifyRefreshToken(payload.userId, refreshToken);
     if (!valid) {
       return reply.status(401).send({ error: 'Unauthorized', message: 'Refresh token revoked', statusCode: 401 });
     }
@@ -223,14 +226,14 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     if (user.deactivatedAt) {
-      await revokeRefreshToken(fastify.redis, user.id);
+      await revokeRefreshToken(user.id);
       reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
       return reply.status(403).send({ error: 'Forbidden', message: 'Account deactivated', statusCode: 403 });
     }
 
     const accessToken = generateAccessToken(user.id, user.role);
     const newRefreshToken = generateRefreshToken(user.id, user.role);
-    await storeRefreshToken(fastify.redis, user.id, newRefreshToken);
+    await storeRefreshToken(user.id, newRefreshToken);
 
     reply.setCookie('refreshToken', newRefreshToken, {
       httpOnly: true,
@@ -269,7 +272,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     const token = generateEmailToken();
-    await storePasswordResetToken(fastify.redis, email, token);
+    await storePasswordResetToken(email, token);
     await sendPasswordResetEmail(email, token);
 
     return { message: 'If an account with that email exists, a password reset link has been sent.' };
@@ -292,7 +295,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     const token = generateEmailToken();
-    await storeMagicLinkToken(fastify.redis, user.id, token);
+    await storeMagicLinkToken(user.id, token);
     await sendMagicLinkEmail(user.email, token);
 
     return { message: successMessage };
@@ -302,7 +305,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/magic-login', async (request, reply) => {
     const { token } = z.object({ token: z.string() }).parse(request.query);
 
-    const userId = await getMagicLinkUserId(fastify.redis, token);
+    const userId = await getMagicLinkUserId(token);
     if (!userId) {
       return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired magic link', statusCode: 400 });
     }
@@ -321,11 +324,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     // Consume the token (single-use)
-    await fastify.redis.del(`magic-link:${token}`);
+    await clearMagicLinkToken(userId);
 
     const accessToken = generateAccessToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id, user.role);
-    await storeRefreshToken(fastify.redis, user.id, refreshToken);
+    await storeRefreshToken(user.id, refreshToken);
 
     reply.setCookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -360,7 +363,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       password: z.string().min(8),
     }).parse(request.body);
 
-    const email = await getPasswordResetEmail(fastify.redis, token);
+    const email = await getPasswordResetEmail(token);
     if (!email) {
       return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired reset token', statusCode: 400 });
     }
@@ -369,7 +372,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.email, email));
 
     // Remove the used token
-    await fastify.redis.del(`password-reset:${token}`);
+    await clearPasswordResetToken(email);
 
     return { message: 'Password reset successfully' };
   });
@@ -498,7 +501,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     const token = generateEmailToken();
-    await storeDeletionToken(fastify.redis, user.id, token);
+    await storeDeletionToken(user.id, token);
     await sendDeletionConfirmationEmail(user.email, user.username, token);
 
     return { message: 'A confirmation email has been sent. Please check your inbox.' };
@@ -508,7 +511,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/confirm-deletion', async (request, reply) => {
     const { token } = z.object({ token: z.string() }).parse(request.query);
 
-    const userId = await getDeletionTokenUserId(fastify.redis, token);
+    const userId = await getDeletionTokenUserId(token);
     if (!userId) {
       return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired deletion token', statusCode: 400 });
     }
@@ -532,10 +535,10 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }).where(eq(users.id, userId));
 
     // Revoke refresh token to force logout
-    await revokeRefreshToken(fastify.redis, userId);
+    await revokeRefreshToken(userId);
 
     // Consume the deletion token
-    await fastify.redis.del(`deletion:${token}`);
+    await clearDeletionToken(userId);
 
     // Send deactivation notification
     try {

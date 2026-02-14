@@ -14,9 +14,18 @@ interface Release {
 
 const releases: Release[] = [
   {
-    version: '1.8.5',
+    version: '1.8.6',
     date: '2026-02-14',
     tag: 'Latest',
+    changes: [
+      { type: 'improvement', text: 'All auth tokens moved from Redis to database \u2014 refresh tokens, password reset, deletion, and magic link tokens now survive Redis restarts' },
+      { type: 'improvement', text: 'Toast close button moved to top-right of notification' },
+      { type: 'improvement', text: 'Removed unused Redis dependency from socket module' },
+    ],
+  },
+  {
+    version: '1.8.5',
+    date: '2026-02-14',
     changes: [
       { type: 'feature', text: 'Plan settings dialog in room view \u2014 edit name, description, notes, tags, and public toggle with manual save' },
       { type: 'feature', text: 'Resend verification email option on login page when email is not yet verified' },

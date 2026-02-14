@@ -6,7 +6,6 @@ import { db } from '../db/connection.js';
 import { users, registrationTokens, settings } from '../db/schema/index.js';
 import type { TokenPayload, UserRole } from '@tactihub/shared';
 import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY_SECONDS, DELETION_GRACE_PERIOD_DAYS } from '@tactihub/shared';
-import type Redis from 'ioredis';
 
 export function generateAccessToken(userId: string, role: UserRole): string {
   return jwt.sign({ userId, role } satisfies TokenPayload, process.env.JWT_SECRET!, {
@@ -20,18 +19,153 @@ export function generateRefreshToken(userId: string, role: UserRole): string {
   });
 }
 
-export async function storeRefreshToken(redis: Redis, userId: string, refreshToken: string) {
-  await redis.set(`refresh:${userId}`, refreshToken, 'EX', REFRESH_TOKEN_EXPIRY_SECONDS);
+// --- Refresh tokens (DB) ---
+
+export async function storeRefreshToken(userId: string, refreshToken: string) {
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_SECONDS * 1000);
+  await db.update(users).set({
+    refreshToken,
+    refreshTokenExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
 }
 
-export async function revokeRefreshToken(redis: Redis, userId: string) {
-  await redis.del(`refresh:${userId}`);
+export async function revokeRefreshToken(userId: string) {
+  await db.update(users).set({
+    refreshToken: null,
+    refreshTokenExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
 }
 
-export async function verifyRefreshToken(redis: Redis, userId: string, token: string): Promise<boolean> {
-  const stored = await redis.get(`refresh:${userId}`);
-  return stored === token;
+export async function verifyRefreshToken(userId: string, token: string): Promise<boolean> {
+  const [user] = await db.select({
+    refreshToken: users.refreshToken,
+    refreshTokenExpiresAt: users.refreshTokenExpiresAt,
+  }).from(users).where(eq(users.id, userId));
+  if (!user || !user.refreshToken) return false;
+  if (user.refreshTokenExpiresAt && user.refreshTokenExpiresAt < new Date()) return false;
+  return user.refreshToken === token;
 }
+
+// --- Password reset tokens (DB) ---
+
+export async function storePasswordResetToken(email: string, token: string) {
+  const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour
+  await db.update(users).set({
+    passwordResetToken: token,
+    passwordResetExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.email, email));
+}
+
+export async function getPasswordResetEmail(token: string): Promise<string | null> {
+  const [user] = await db.select({
+    email: users.email,
+    passwordResetExpiresAt: users.passwordResetExpiresAt,
+  }).from(users).where(eq(users.passwordResetToken, token));
+  if (!user) return null;
+  if (user.passwordResetExpiresAt && user.passwordResetExpiresAt < new Date()) return null;
+  return user.email;
+}
+
+export async function clearPasswordResetToken(email: string) {
+  await db.update(users).set({
+    passwordResetToken: null,
+    passwordResetExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.email, email));
+}
+
+// --- Deletion tokens (DB) ---
+
+export async function storeDeletionToken(userId: string, token: string) {
+  const expiresAt = new Date(Date.now() + 86400 * 1000); // 24 hours
+  await db.update(users).set({
+    deletionToken: token,
+    deletionTokenExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+export async function getDeletionTokenUserId(token: string): Promise<string | null> {
+  const [user] = await db.select({
+    id: users.id,
+    deletionTokenExpiresAt: users.deletionTokenExpiresAt,
+  }).from(users).where(eq(users.deletionToken, token));
+  if (!user) return null;
+  if (user.deletionTokenExpiresAt && user.deletionTokenExpiresAt < new Date()) return null;
+  return user.id;
+}
+
+export async function clearDeletionToken(userId: string) {
+  await db.update(users).set({
+    deletionToken: null,
+    deletionTokenExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+// --- Magic link tokens (DB) ---
+
+const MAGIC_LINK_EXPIRY_SECONDS = 900; // 15 minutes
+
+export async function storeMagicLinkToken(userId: string, token: string) {
+  const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_SECONDS * 1000);
+  await db.update(users).set({
+    magicLinkToken: token,
+    magicLinkTokenExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+export async function getMagicLinkUserId(token: string): Promise<string | null> {
+  const [user] = await db.select({
+    id: users.id,
+    magicLinkTokenExpiresAt: users.magicLinkTokenExpiresAt,
+  }).from(users).where(eq(users.magicLinkToken, token));
+  if (!user) return null;
+  if (user.magicLinkTokenExpiresAt && user.magicLinkTokenExpiresAt < new Date()) return null;
+  return user.id;
+}
+
+export async function clearMagicLinkToken(userId: string) {
+  await db.update(users).set({
+    magicLinkToken: null,
+    magicLinkTokenExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+// --- Email verification tokens (DB, already migrated) ---
+
+export async function storeEmailVerificationToken(userId: string, token: string) {
+  const expiresAt = new Date(Date.now() + 86400 * 1000); // 24 hours
+  await db.update(users).set({
+    emailVerificationToken: token,
+    emailVerificationExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+export async function getEmailVerificationUserId(token: string): Promise<string | null> {
+  const [user] = await db.select({ id: users.id, emailVerificationExpiresAt: users.emailVerificationExpiresAt })
+    .from(users)
+    .where(eq(users.emailVerificationToken, token));
+  if (!user) return null;
+  if (user.emailVerificationExpiresAt && user.emailVerificationExpiresAt < new Date()) return null;
+  return user.id;
+}
+
+export async function clearEmailVerificationToken(userId: string) {
+  await db.update(users).set({
+    emailVerificationToken: null,
+    emailVerificationExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+// --- Helpers ---
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -75,40 +209,6 @@ export function generateEmailToken(): string {
   return nanoid(32);
 }
 
-export async function storeEmailVerificationToken(userId: string, token: string) {
-  const expiresAt = new Date(Date.now() + 86400 * 1000); // 24 hours
-  await db.update(users).set({
-    emailVerificationToken: token,
-    emailVerificationExpiresAt: expiresAt,
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId));
-}
-
-export async function getEmailVerificationUserId(token: string): Promise<string | null> {
-  const [user] = await db.select({ id: users.id, emailVerificationExpiresAt: users.emailVerificationExpiresAt })
-    .from(users)
-    .where(eq(users.emailVerificationToken, token));
-  if (!user) return null;
-  if (user.emailVerificationExpiresAt && user.emailVerificationExpiresAt < new Date()) return null;
-  return user.id;
-}
-
-export async function clearEmailVerificationToken(userId: string) {
-  await db.update(users).set({
-    emailVerificationToken: null,
-    emailVerificationExpiresAt: null,
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId));
-}
-
-export async function storePasswordResetToken(redis: Redis, email: string, token: string) {
-  await redis.set(`password-reset:${token}`, email, 'EX', 3600); // 1 hour
-}
-
-export async function getPasswordResetEmail(redis: Redis, token: string): Promise<string | null> {
-  return redis.get(`password-reset:${token}`);
-}
-
 export async function cleanupUnverifiedUsers() {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -119,24 +219,6 @@ export async function cleanupUnverifiedUsers() {
       lt(users.createdAt, oneMonthAgo),
     )
   );
-}
-
-export async function storeDeletionToken(redis: Redis, userId: string, token: string) {
-  await redis.set(`deletion:${token}`, userId, 'EX', 86400); // 24 hours
-}
-
-export async function getDeletionTokenUserId(redis: Redis, token: string): Promise<string | null> {
-  return redis.get(`deletion:${token}`);
-}
-
-const MAGIC_LINK_EXPIRY_SECONDS = 900; // 15 minutes
-
-export async function storeMagicLinkToken(redis: Redis, userId: string, token: string) {
-  await redis.set(`magic-link:${token}`, userId, 'EX', MAGIC_LINK_EXPIRY_SECONDS);
-}
-
-export async function getMagicLinkUserId(redis: Redis, token: string): Promise<string | null> {
-  return redis.get(`magic-link:${token}`);
 }
 
 export async function cleanupDeactivatedUsers(): Promise<{ id: string; email: string }[]> {

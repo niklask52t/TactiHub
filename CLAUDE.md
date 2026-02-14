@@ -9,7 +9,7 @@ This file provides context for AI assistants working on the TactiHub codebase.
 TactiHub is a real-time collaborative strategy planning tool for Rainbow Six Siege. Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.8.5
+**Version**: 1.8.6
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -42,9 +42,9 @@ packages/
 - **Frontend**: React 19, Vite 6, Tailwind CSS v4 (CSS-based config, NOT tailwind.config.js), shadcn/ui, Zustand, TanStack Query, React Router 7, react-hook-form + zod
 - **Backend**: Fastify 5 with plugins (@fastify/cors, @fastify/cookie, @fastify/multipart, @fastify/rate-limit, @fastify/static)
 - **Database**: PostgreSQL 16 via Drizzle ORM (drizzle-kit for migrations)
-- **Cache/Sessions**: Redis 7 via ioredis
+- **Cache**: Redis 7 via ioredis (infrastructure only — no auth tokens stored in Redis)
 - **Realtime**: Socket.IO 4.8 (JWT auth at handshake, guests allowed without token)
-- **Auth**: JWT access tokens (15min) + refresh tokens (7d, httpOnly cookie, stored in Redis), email verification tokens stored in DB (users table)
+- **Auth**: JWT access tokens (15min) + refresh tokens (7d, httpOnly cookie, stored in DB). All tokens (email verification, password reset, deletion, magic link) stored in users table
 - **Email**: Nodemailer (best-effort — SMTP failures do not block registration)
 - **Images**: Sharp (resize + WebP conversion)
 - **Infrastructure**: Docker Compose (postgres:16-alpine + redis:7-alpine)
@@ -109,7 +109,7 @@ packages/
 2. Registration flow adapts: if public reg is ON, no token needed; if OFF, user must enter a single-use registration token first
 3. Optional Google reCAPTCHA v2 on registration (if `RECAPTCHA_SITE_KEY` + `RECAPTCHA_SECRET_KEY` set in `.env`)
 4. **Magic Link Login**: POST /request-magic-link sends email with login link (15min TTL), GET /magic-login consumes token and returns access+refresh tokens (same as login)
-5. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + Redis)
+5. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + DB)
 5. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
 6. Token refresh → POST /api/auth/refresh returns new access token (App.tsx session restore on mount uses `apiPost`, not `apiGet` — the server endpoint is POST-only)
 7. Admin can toggle public registration and create invite tokens
@@ -118,7 +118,7 @@ packages/
 
 ### Account Deletion Flow
 1. User → Account Settings → Delete Account → two confirmation dialogs (type username)
-2. Server sends deletion confirmation email with token link (24h TTL in Redis)
+2. Server sends deletion confirmation email with token link (24h TTL in DB)
 3. User clicks email link → `GET /api/auth/confirm-deletion?token=...`
 4. Account is **deactivated** (`deactivatedAt` set, `deletionScheduledAt` = now + 30 days)
 5. Refresh token revoked → user logged out
@@ -337,7 +337,7 @@ Do NOT use `import 'dotenv/config'` — it loads `.env` from cwd which is wrong.
 ### docker compose down -v deletes everything
 `-v` removes named volumes. This deletes:
 - `pgdata` — the entire PostgreSQL database (users, games, maps, battleplans, everything)
-- `redisdata` — Redis persistence (sessions, refresh tokens)
+- `redisdata` — Redis persistence (currently unused for auth, available for future caching)
 
 Code, `.env`, and upload files on disk are NOT affected. After `down -v` you must re-run `db:generate`, `db:migrate`, `db:seed`.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.6 — 2026-02-14
+
+- [improvement] All auth tokens moved from Redis to database — refresh tokens, password reset, deletion, and magic link tokens now survive Redis restarts
+- [improvement] Toast close button moved to top-right of notification (was top-left)
+- [improvement] Removed unused Redis dependency from socket module
+
 ## v1.8.5 — 2026-02-14
 
 - [feature] Plan settings dialog in room view — edit name, description, notes, tags, and public toggle with manual save

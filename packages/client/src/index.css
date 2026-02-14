@@ -176,6 +176,12 @@ html, body {
   background-size: 40px 40px;
 }
 
+/* Toast close button: move to top-right */
+[data-sonner-toast] [data-close-button] {
+  left: unset !important;
+  right: 0 !important;
+}
+
 @theme {
   /* Dark theme with orange/red primary matching TactiHub logo */
   /* Logo colors: #fd7100 -> #da2c00 (orange/red), #c3c9cc -> #3c4653 (grays) */

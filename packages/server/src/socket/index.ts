@@ -1,5 +1,4 @@
 import type { Server } from 'socket.io';
-import type Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
 import type { TokenPayload } from '@tactihub/shared';
 import { COLORS_ARRAY } from '@tactihub/shared';
@@ -33,7 +32,7 @@ export function assignColor(state: RoomState): string {
   return color;
 }
 
-export function setupSocket(io: Server, _redis: Redis) {
+export function setupSocket(io: Server) {
   // Auth middleware — allow guests when no token is provided
   io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
