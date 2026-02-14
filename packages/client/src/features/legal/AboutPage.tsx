@@ -1,16 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { APP_VERSION } from '@tactihub/shared';
 
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">About</h1>
-        <Badge variant="outline" className="text-xs">v{APP_VERSION}</Badge>
       </div>
 
       <div className="space-y-8">
