@@ -8,6 +8,8 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   emailVerifiedAt: timestamp('email_verified_at'),
+  emailVerificationToken: varchar('email_verification_token', { length: 64 }),
+  emailVerificationExpiresAt: timestamp('email_verification_expires_at'),
   role: userRoleEnum('role').notNull().default('user'),
   deactivatedAt: timestamp('deactivated_at'),
   deletionScheduledAt: timestamp('deletion_scheduled_at'),

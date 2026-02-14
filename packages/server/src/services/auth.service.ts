@@ -75,12 +75,30 @@ export function generateEmailToken(): string {
   return nanoid(32);
 }
 
-export async function storeEmailVerificationToken(redis: Redis, userId: string, token: string) {
-  await redis.set(`email-verify:${token}`, userId, 'EX', 86400); // 24 hours
+export async function storeEmailVerificationToken(userId: string, token: string) {
+  const expiresAt = new Date(Date.now() + 86400 * 1000); // 24 hours
+  await db.update(users).set({
+    emailVerificationToken: token,
+    emailVerificationExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
 }
 
-export async function getEmailVerificationUserId(redis: Redis, token: string): Promise<string | null> {
-  return redis.get(`email-verify:${token}`);
+export async function getEmailVerificationUserId(token: string): Promise<string | null> {
+  const [user] = await db.select({ id: users.id, emailVerificationExpiresAt: users.emailVerificationExpiresAt })
+    .from(users)
+    .where(eq(users.emailVerificationToken, token));
+  if (!user) return null;
+  if (user.emailVerificationExpiresAt && user.emailVerificationExpiresAt < new Date()) return null;
+  return user.id;
+}
+
+export async function clearEmailVerificationToken(userId: string) {
+  await db.update(users).set({
+    emailVerificationToken: null,
+    emailVerificationExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
 }
 
 export async function storePasswordResetToken(redis: Redis, email: string, token: string) {

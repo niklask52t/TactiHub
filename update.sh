@@ -31,16 +31,18 @@ run_as_tactihub() {
 echo "=== TactiHub Update ==="
 echo ""
 echo "Select mode:"
-echo "  [1] dev  — Full reset: delete ALL data, rebuild from scratch"
-echo "  [2] prod — Update only: pull, install, migrate, rebuild (keeps data)"
+echo "  [1] dev      — Full reset: delete ALL data, rebuild from scratch"
+echo "  [2] prod     — Update only: pull main, install, migrate, rebuild (keeps data)"
+echo "  [3] prod-dev — Update only: pull dev, install, migrate, rebuild (keeps data)"
 echo ""
 
 while true; do
-  read -p "Enter mode (1 or 2): " mode
+  read -p "Enter mode (1, 2 or 3): " mode
   case "$mode" in
     1) MODE="dev"; break ;;
-    2) MODE="prod"; break ;;
-    *) echo "Please enter 1 or 2." ;;
+    2) MODE="prod"; BRANCH="main"; break ;;
+    3) MODE="prod"; BRANCH="dev"; break ;;
+    *) echo "Please enter 1, 2 or 3." ;;
   esac
 done
 
@@ -122,8 +124,8 @@ if [ "$MODE" = "dev" ]; then
   fi
 
 elif [ "$MODE" = "prod" ]; then
-  echo "=== PRODUCTION UPDATE ==="
-  echo "This will pull the latest changes, install dependencies,"
+  echo "=== PRODUCTION UPDATE (branch: $BRANCH) ==="
+  echo "This will pull the latest changes from '$BRANCH', install dependencies,"
   echo "apply database migrations, and rebuild the project."
   echo "Your existing data will be preserved."
   echo ""
@@ -147,9 +149,9 @@ elif [ "$MODE" = "prod" ]; then
   fi
 
   echo ""
-  echo "--- Pulling latest main branch ---"
-  run_as_tactihub git checkout main
-  run_as_tactihub git pull origin main
+  echo "--- Pulling latest $BRANCH branch ---"
+  run_as_tactihub git checkout "$BRANCH"
+  run_as_tactihub git pull origin "$BRANCH"
 
   echo ""
   echo "--- Installing dependencies ---"
@@ -158,6 +160,10 @@ elif [ "$MODE" = "prod" ]; then
   echo ""
   echo "--- Building shared package ---"
   run_as_tactihub pnpm --filter @tactihub/shared build
+
+  echo ""
+  echo "--- Generating database migrations ---"
+  run_as_tactihub pnpm db:generate
 
   echo ""
   echo "--- Applying database migrations ---"

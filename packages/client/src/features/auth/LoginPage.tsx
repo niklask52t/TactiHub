@@ -25,6 +25,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showForceChange, setShowForceChange] = useState(false);
   const [loginPassword, setLoginPassword] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -32,6 +35,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
+    setNeedsVerification(false);
     try {
       const res = await apiPost<{ data: { user: any; accessToken: string } }>('/auth/login', data);
       setAuth(res.data.user, res.data.accessToken);
@@ -45,9 +49,31 @@ export default function LoginPage() {
         navigate('/');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Login failed');
+      const msg: string = err.message || 'Login failed';
+      if (msg.toLowerCase().includes('verify your email')) {
+        setNeedsVerification(true);
+        setResendEmail(data.identifier);
+      }
+      toast.error(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      const email = resendEmail.includes('@') ? resendEmail : '';
+      if (!email) {
+        toast.error('Please log in with your email address to resend verification.');
+        return;
+      }
+      await apiPost('/auth/resend-verification', { email });
+      toast.success('Verification email sent! Please check your inbox.');
+    } catch {
+      toast.error('Could not send verification email. Please try again later.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -91,6 +117,21 @@ export default function LoginPage() {
                 Login with Magic Link
               </Link>
             </div>
+            {needsVerification && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Your email is not yet verified.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  className="text-sm text-primary hover:underline disabled:opacity-50"
+                >
+                  {resendLoading ? 'Sending...' : 'Resend verification email'}
+                </button>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

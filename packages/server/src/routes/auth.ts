@@ -113,7 +113,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
 
     // Send verification email
     const emailToken = generateEmailToken();
-    await storeEmailVerificationToken(fastify.redis, user.id, emailToken);
+    await storeEmailVerificationToken(user.id, emailToken);
     await sendVerificationEmail(user.email, emailToken);
 
     return reply.status(201).send({
@@ -371,20 +371,39 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.get('/verify-email', async (request, reply) => {
     const { token } = z.object({ token: z.string() }).parse(request.query);
 
-    const userId = await getEmailVerificationUserId(fastify.redis, token);
+    const userId = await getEmailVerificationUserId(token);
     if (!userId) {
       return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired verification token', statusCode: 400 });
     }
 
+    // Mark as verified and clear the used token in one operation
     await db.update(users).set({
       emailVerifiedAt: new Date(),
+      emailVerificationToken: null,
+      emailVerificationExpiresAt: null,
       updatedAt: new Date(),
     }).where(eq(users.id, userId));
 
-    // Remove the used token
-    await fastify.redis.del(`email-verify:${token}`);
-
     return { message: 'Email verified successfully. You can now log in.' };
+  });
+
+  // POST /api/auth/resend-verification
+  fastify.post('/resend-verification', async (request, reply) => {
+    const { email } = z.object({ email: z.string().email() }).parse(request.body);
+
+    // Always return success to prevent email enumeration
+    const successMessage = 'If an unverified account with that email exists, a new verification link has been sent.';
+
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user || user.emailVerifiedAt) {
+      return { message: successMessage };
+    }
+
+    const emailToken = generateEmailToken();
+    await storeEmailVerificationToken(user.id, emailToken);
+    await sendVerificationEmail(user.email, emailToken);
+
+    return { message: successMessage };
   });
 
   // POST /api/auth/change-credentials
