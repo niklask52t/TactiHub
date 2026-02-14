@@ -7,6 +7,8 @@ import { useCanvasStore } from '@/stores/canvas.store';
 import { ZOOM_STEP } from '@tactihub/shared';
 import type { ViewMode } from '@tactihub/shared';
 import { exportFloorAsPng, exportAllFloorsAsPdf } from './utils/exportCanvas';
+import { hasSvgMap } from '@/data/svgMapIndex';
+import LayerTogglePanel from '@/features/strat/components/LayerTogglePanel';
 
 interface MapFloor {
   id: string;
@@ -40,6 +42,8 @@ interface CanvasViewProps {
   activePhaseId?: string | null;
   visibleSlotIds?: Set<string> | null;
   landscapeVisible?: boolean;
+  // Map slug for SVG real view support
+  mapSlug?: string;
 }
 
 const VIEW_MODE_LABELS: Record<ViewMode, string> = {
@@ -49,7 +53,7 @@ const VIEW_MODE_LABELS: Record<ViewMode, string> = {
   realview: 'Real View',
 };
 
-export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onDrawUpdate, onLaserLine, onCursorMove, peerLaserLines, cursors, localDraws, currentUserId, activePhaseId, visibleSlotIds, landscapeVisible }: CanvasViewProps) {
+export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelete, onDrawUpdate, onLaserLine, onCursorMove, peerLaserLines, cursors, localDraws, currentUserId, activePhaseId, visibleSlotIds, landscapeVisible, mapSlug }: CanvasViewProps) {
   const { scale, zoomTo, resetViewport, containerWidth, containerHeight } = useCanvasStore();
 
   const sortedFloors = useMemo(() =>
@@ -62,14 +66,16 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
   const currentFloor = sortedFloors[currentFloorIndex];
 
   // Check which view modes are available for the current floor
+  const svgAvailable = !!mapSlug && hasSvgMap(mapSlug);
   const availableModes = useMemo<ViewMode[]>(() => {
     const mf = currentFloor?.mapFloor;
-    if (!mf) return ['blueprint'];
+    if (!mf) return svgAvailable ? ['realview'] : ['blueprint'];
     const modes: ViewMode[] = ['blueprint'];
     if (mf.darkImagePath) modes.push('dark');
     if (mf.whiteImagePath) modes.push('white');
+    if (svgAvailable) modes.push('realview');
     return modes;
-  }, [currentFloor?.mapFloor]);
+  }, [currentFloor?.mapFloor, svgAvailable]);
 
   // Get the image path for the current view mode
   const activeImagePath = useMemo(() => {
@@ -233,6 +239,13 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
       {/* Compass — bottom left */}
       <Compass />
 
+      {/* Layer toggle panel — visible in real view mode */}
+      {viewMode === 'realview' && (
+        <div className="absolute bottom-4 left-4 z-10">
+          <LayerTogglePanel />
+        </div>
+      )}
+
       {/* Canvas */}
       <CanvasLayer
         floor={currentFloor!}
@@ -250,6 +263,9 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
         activePhaseId={activePhaseId}
         visibleSlotIds={visibleSlotIds}
         landscapeVisible={landscapeVisible}
+        isRealView={viewMode === 'realview'}
+        mapSlug={mapSlug}
+        floorNumber={currentFloor?.mapFloor?.floorNumber}
       />
     </div>
   );

@@ -384,6 +384,7 @@ export default function SandboxPage() {
                   activePhaseId={activePhaseId}
                   visibleSlotIds={getVisibleSlotIds()}
                   landscapeVisible={landscapeVisible}
+                  mapSlug={selectedMap?.slug}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">

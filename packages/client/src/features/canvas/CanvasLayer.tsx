@@ -1,7 +1,9 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { Tool, ZOOM_STEP } from '@tactihub/shared';
 import { hitTestDraw } from './utils/hitTest';
+
+const SvgMapView = lazy(() => import('@/features/strat/components/SvgMapView'));
 
 // Module-level icon image cache — survives re-renders and component remounts
 const iconImageCache = new Map<string, HTMLImageElement>();
@@ -49,6 +51,10 @@ interface CanvasLayerProps {
   activePhaseId?: string | null;
   visibleSlotIds?: Set<string> | null;
   landscapeVisible?: boolean;
+  // Real view SVG props
+  isRealView?: boolean;
+  mapSlug?: string;
+  floorNumber?: number;
 }
 
 /** Render a single draw onto a canvas context. Exported for use in export utilities. */
@@ -248,7 +254,7 @@ export function getDrawBounds(draw: any): { x: number; y: number; width: number;
   }
 }
 
-export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, onDrawUpdate, onLaserLine, onCursorMove, peerDraws, peerLaserLines, cursors, activeImagePath, currentUserId, activePhaseId, visibleSlotIds, landscapeVisible = true }: CanvasLayerProps) {
+export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelete, onDrawUpdate, onLaserLine, onCursorMove, peerDraws, peerLaserLines, cursors, activeImagePath, currentUserId, activePhaseId, visibleSlotIds, landscapeVisible = true, isRealView = false, mapSlug, floorNumber }: CanvasLayerProps) {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1145,9 +1151,15 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
           transformOrigin: '0 0',
         }}
       >
+        {/* SVG real view layer — renders behind canvases when in real view mode */}
+        {isRealView && mapSlug && floorNumber != null && (
+          <Suspense fallback={null}>
+            <SvgMapView mapSlug={mapSlug} floorNumber={floorNumber} />
+          </Suspense>
+        )}
         <canvas
           ref={bgCanvasRef}
-          style={{ imageRendering: 'auto', position: 'absolute', inset: 0 }}
+          style={{ imageRendering: 'auto', position: 'absolute', inset: 0, display: isRealView ? 'none' : undefined }}
         />
         <canvas
           ref={drawCanvasRef}

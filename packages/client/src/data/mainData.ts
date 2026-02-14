@@ -71,6 +71,7 @@ export const tacticalLayerCodes = ['cam', 'dt', 'ld', 'ip'] as const;
 
 export const mapData: Record<string, MapMeta> = {
   bank: { revision: 8, name: 'Bank', imgUrlPrefix: 'bank', minFloor: 0, maxFloor: 3, scaleFactor: 2 },
+  bartlett: { revision: 2, name: 'Bartlett University', imgUrlPrefix: 'bartlett', minFloor: 1, maxFloor: 3, scaleFactor: 2 },
   border: { revision: 8, name: 'Border', imgUrlPrefix: 'border', minFloor: 1, maxFloor: 3, scaleFactor: 2 },
   chalet: { revision: 8, name: 'Chalet', imgUrlPrefix: 'chalet', minFloor: 0, maxFloor: 3, scaleFactor: 2 },
   closequarters: { revision: 2, name: 'Close Quarters', imgUrlPrefix: 'closequarters', minFloor: 1, maxFloor: 2, scaleFactor: 2 },

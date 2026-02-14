@@ -781,6 +781,7 @@ export default function RoomPage() {
                 activePhaseId={activePhaseId}
                 visibleSlotIds={getVisibleSlotIds()}
                 landscapeVisible={landscapeVisible}
+                mapSlug={battleplan?.map?.slug}
               />
             </div>
           </StratLayout>

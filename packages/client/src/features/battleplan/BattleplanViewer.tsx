@@ -22,6 +22,7 @@ interface BattleplanFull {
   id: string; name: string; description: string | null; notes: string | null; tags: string[];
   isPublic: boolean; gameId: string; mapId: string; ownerId: string;
   owner?: { id: string; username: string };
+  map?: { id: string; name: string; slug: string };
   floors?: Array<{
     id: string; mapFloorId: string;
     mapFloor?: { id: string; name: string; floorNumber: number; imagePath: string; darkImagePath?: string | null; whiteImagePath?: string | null };
@@ -329,12 +330,14 @@ export default function BattleplanViewer() {
               activePhaseId={activePhaseId}
               visibleSlotIds={getVisibleSlotIds()}
               landscapeVisible={landscapeVisible}
+              mapSlug={plan.map?.slug}
             />
           </StratLayout>
         ) : (
           <CanvasView
             floors={plan.floors || []}
             readOnly
+            mapSlug={plan.map?.slug}
           />
         )}
       </div>
