@@ -68,11 +68,11 @@ export function apiPost<T>(path: string, body?: unknown) {
 
 export function apiPut<T>(path: string, body?: unknown) {
   return apiFetch<T>(path, {
-    method: 'PUT',
+    method: 'POST',
     body: body instanceof FormData ? body : JSON.stringify(body ?? {}),
   });
 }
 
 export function apiDelete<T>(path: string) {
-  return apiFetch<T>(path, { method: 'DELETE' });
+  return apiFetch<T>(path + '/delete', { method: 'POST', body: JSON.stringify({}) });
 }

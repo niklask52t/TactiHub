@@ -58,8 +58,8 @@ export default async function adminMapFloorsRoutes(fastify: FastifyInstance) {
     return reply.status(201).send({ data: floor });
   });
 
-  // PUT /api/admin/maps/:mapId/floors/:id
-  fastify.put('/maps/:mapId/floors/:id', async (request, reply) => {
+  // POST /api/admin/maps/:mapId/floors/:id (update)
+  fastify.post('/maps/:mapId/floors/:id', async (request, reply) => {
     const { id } = z.object({ mapId: z.string().uuid(), id: z.string().uuid() }).parse(request.params);
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -95,8 +95,8 @@ export default async function adminMapFloorsRoutes(fastify: FastifyInstance) {
     return { data: floor };
   });
 
-  // PUT /api/admin/maps/:mapId/floors/reorder
-  fastify.put('/maps/:mapId/floors/reorder', async (request) => {
+  // POST /api/admin/maps/:mapId/floors/reorder
+  fastify.post('/maps/:mapId/floors/reorder', async (request) => {
     const { mapId } = z.object({ mapId: z.string().uuid() }).parse(request.params);
     const { order } = z.object({ order: z.array(z.object({ id: z.string().uuid(), floorNumber: z.number() })) }).parse(request.body);
 
@@ -108,8 +108,8 @@ export default async function adminMapFloorsRoutes(fastify: FastifyInstance) {
     return { data: result };
   });
 
-  // DELETE /api/admin/maps/:mapId/floors/:id
-  fastify.delete('/maps/:mapId/floors/:id', async (request, reply) => {
+  // POST /api/admin/maps/:mapId/floors/:id/delete
+  fastify.post('/maps/:mapId/floors/:id/delete', async (request, reply) => {
     const { id } = z.object({ mapId: z.string().uuid(), id: z.string().uuid() }).parse(request.params);
     const [floor] = await db.select().from(mapFloors).where(eq(mapFloors.id, id));
     if (!floor) return reply.status(404).send({ error: 'Not Found', message: 'Floor not found', statusCode: 404 });

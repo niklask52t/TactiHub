@@ -6,8 +6,8 @@ import { operatorSlots, operators } from '../db/schema/index.js';
 import { requireAuth } from '../middleware/auth.js';
 
 export default async function operatorSlotsRoutes(fastify: FastifyInstance) {
-  // PUT /api/operator-slots/:id
-  fastify.put('/operator-slots/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/operator-slots/:id (update)
+  fastify.post('/operator-slots/:id', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const { operatorId } = z.object({ operatorId: z.string().uuid().nullable() }).parse(request.body);
 

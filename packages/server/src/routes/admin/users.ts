@@ -40,8 +40,8 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     };
   });
 
-  // PUT /api/admin/users/:id/role
-  fastify.put('/:id/role', async (request, reply) => {
+  // POST /api/admin/users/:id/role
+  fastify.post('/:id/role', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const { role } = z.object({ role: z.enum(['admin', 'user']) }).parse(request.body);
 
@@ -82,8 +82,8 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     return { data: { id: updated.id, username: updated.username, email: updated.email, emailVerifiedAt: updated.emailVerifiedAt } };
   });
 
-  // PUT /api/admin/users/:id/reactivate
-  fastify.put('/:id/reactivate', async (request, reply) => {
+  // POST /api/admin/users/:id/reactivate
+  fastify.post('/:id/reactivate', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
 
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -102,8 +102,8 @@ export default async function adminUsersRoutes(fastify: FastifyInstance) {
     return { data: { id: updated.id, username: updated.username, email: updated.email }, message: 'User reactivated' };
   });
 
-  // DELETE /api/admin/users/:id
-  fastify.delete('/:id', async (request, reply) => {
+  // POST /api/admin/users/:id/delete
+  fastify.post('/:id/delete', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
 
     if (id === request.user!.userId) {

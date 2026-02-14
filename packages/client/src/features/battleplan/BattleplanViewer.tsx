@@ -35,9 +35,10 @@ export default function BattleplanViewer() {
   const userId = useAuthStore((s) => s.user?.id);
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['battleplan', planId],
     queryFn: () => apiGet<{ data: BattleplanFull }>(`/battleplans/${planId}`),
+    retry: false,
   });
 
   const plan = data?.data;
@@ -108,7 +109,15 @@ export default function BattleplanViewer() {
     toast.success('Link copied to clipboard!');
   };
 
-  if (!plan) return <div className="container mx-auto p-8">Loading...</div>;
+  if (isLoading) return <div className="container mx-auto p-8">Loading...</div>;
+
+  if (error || !plan) return (
+    <div className="container mx-auto p-8 text-center">
+      <h2 className="text-2xl font-bold mb-2">Battleplan not found</h2>
+      <p className="text-muted-foreground mb-4">This plan does not exist or is not publicly available.</p>
+      <Button variant="outline" asChild><Link to={`/${gameSlug}`}>Back to game</Link></Button>
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">

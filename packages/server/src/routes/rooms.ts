@@ -65,8 +65,8 @@ export default async function roomsRoutes(fastify: FastifyInstance) {
     return { data: room };
   });
 
-  // PUT /api/rooms/:connString/battleplan
-  fastify.put('/:connString/battleplan', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/rooms/:connString/battleplan (update)
+  fastify.post('/:connString/battleplan', { preHandler: [requireAuth] }, async (request, reply) => {
     const { connString } = z.object({ connString: z.string() }).parse(request.params);
     const { battleplanId } = z.object({ battleplanId: z.string().uuid().nullable() }).parse(request.body);
 
@@ -83,8 +83,8 @@ export default async function roomsRoutes(fastify: FastifyInstance) {
     return { data: updated };
   });
 
-  // DELETE /api/rooms/:connString
-  fastify.delete('/:connString', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/rooms/:connString/delete
+  fastify.post('/:connString/delete', { preHandler: [requireAuth] }, async (request, reply) => {
     const { connString } = z.object({ connString: z.string() }).parse(request.params);
     const [room] = await db.select().from(rooms).where(eq(rooms.connectionString, connString));
     if (!room) return reply.status(404).send({ error: 'Not Found', message: 'Room not found', statusCode: 404 });

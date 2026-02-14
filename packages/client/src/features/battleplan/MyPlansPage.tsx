@@ -66,6 +66,7 @@ export default function MyPlansPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiDelete(`/battleplans/${id}`),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['battleplans'] }); toast.success('Battleplan deleted'); },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {

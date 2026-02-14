@@ -23,8 +23,8 @@ export default async function adminSettingsRoutes(fastify: FastifyInstance) {
     };
   });
 
-  // PUT /api/admin/settings
-  fastify.put('/', async (request) => {
+  // POST /api/admin/settings (update)
+  fastify.post('/', async (request) => {
     const body = z.object({
       registrationEnabled: z.boolean().optional(),
     }).parse(request.body);

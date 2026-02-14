@@ -38,8 +38,8 @@ export default async function adminTokensRoutes(fastify: FastifyInstance) {
     return reply.status(201).send({ data: tokens });
   });
 
-  // DELETE /api/admin/tokens/:id
-  fastify.delete('/:id', async (request, reply) => {
+  // POST /api/admin/tokens/:id/delete
+  fastify.post('/:id/delete', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     await db.delete(registrationTokens).where(eq(registrationTokens.id, id));
     return { message: 'Token deleted' };

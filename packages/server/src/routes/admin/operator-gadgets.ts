@@ -34,8 +34,8 @@ export default async function adminOperatorGadgetsRoutes(fastify: FastifyInstanc
     return reply.status(201).send({ message: 'Gadget linked to operator' });
   });
 
-  // DELETE /api/admin/operators/:id/gadgets/:gadgetId
-  fastify.delete('/operators/:id/gadgets/:gadgetId', async (request) => {
+  // POST /api/admin/operators/:id/gadgets/:gadgetId/delete
+  fastify.post('/operators/:id/gadgets/:gadgetId/delete', async (request) => {
     const { id, gadgetId } = z.object({ id: z.string().uuid(), gadgetId: z.string().uuid() }).parse(request.params);
 
     await db.delete(operatorGadgets).where(
@@ -45,8 +45,8 @@ export default async function adminOperatorGadgetsRoutes(fastify: FastifyInstanc
     return { message: 'Gadget unlinked from operator' };
   });
 
-  // PUT /api/admin/operators/:id/gadgets - Replace all gadgets
-  fastify.put('/operators/:id/gadgets', async (request) => {
+  // POST /api/admin/operators/:id/gadgets/bulk - Replace all gadgets
+  fastify.post('/operators/:id/gadgets/bulk', async (request) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const { gadgetIds } = z.object({ gadgetIds: z.array(z.string().uuid()) }).parse(request.body);
 

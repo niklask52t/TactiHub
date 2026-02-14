@@ -54,8 +54,8 @@ export default async function adminGadgetsRoutes(fastify: FastifyInstance) {
     return reply.status(201).send({ data: gadget });
   });
 
-  // PUT /api/admin/games/:gameId/gadgets/:id
-  fastify.put('/games/:gameId/gadgets/:id', async (request, reply) => {
+  // POST /api/admin/games/:gameId/gadgets/:id (update)
+  fastify.post('/games/:gameId/gadgets/:id', async (request, reply) => {
     const { id } = z.object({ gameId: z.string().uuid(), id: z.string().uuid() }).parse(request.params);
 
     let body: Partial<z.infer<typeof gadgetSchema>>;
@@ -86,8 +86,8 @@ export default async function adminGadgetsRoutes(fastify: FastifyInstance) {
     return { data: gadget };
   });
 
-  // DELETE /api/admin/games/:gameId/gadgets/:id
-  fastify.delete('/games/:gameId/gadgets/:id', async (request, reply) => {
+  // POST /api/admin/games/:gameId/gadgets/:id/delete
+  fastify.post('/games/:gameId/gadgets/:id/delete', async (request, reply) => {
     const { id } = z.object({ gameId: z.string().uuid(), id: z.string().uuid() }).parse(request.params);
     const [gadget] = await db.select().from(gadgets).where(eq(gadgets.id, id));
     if (!gadget) return reply.status(404).send({ error: 'Not Found', message: 'Gadget not found', statusCode: 404 });

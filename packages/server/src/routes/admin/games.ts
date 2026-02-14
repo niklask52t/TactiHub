@@ -65,8 +65,8 @@ export default async function adminGamesRoutes(fastify: FastifyInstance) {
     return reply.status(201).send({ data: game });
   });
 
-  // PUT /api/admin/games/:id
-  fastify.put('/:id', async (request, reply) => {
+  // POST /api/admin/games/:id (update)
+  fastify.post('/:id', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
 
     let body: Partial<z.infer<typeof gameSchema>>;
@@ -100,8 +100,8 @@ export default async function adminGamesRoutes(fastify: FastifyInstance) {
     return { data: game };
   });
 
-  // DELETE /api/admin/games/:id
-  fastify.delete('/:id', async (request, reply) => {
+  // POST /api/admin/games/:id/delete
+  fastify.post('/:id/delete', async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const [game] = await db.select().from(games).where(eq(games.id, id));
     if (!game) return reply.status(404).send({ error: 'Not Found', message: 'Game not found', statusCode: 404 });

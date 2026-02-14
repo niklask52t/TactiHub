@@ -11,13 +11,20 @@ import { Toolbar } from '@/features/canvas/tools/Toolbar';
 import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, Copy, Users, Info } from 'lucide-react';
+import { ArrowLeft, Copy, Users, Info, Settings, X } from 'lucide-react';
 import type { CursorPosition } from '@tactihub/shared';
 import { CURSOR_THROTTLE_MS } from '@tactihub/shared';
 import type { LaserLineData } from '@/features/canvas/CanvasLayer';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from '@tactihub/shared';
+
+const SUGGESTED_TAGS = ['Aggressive', 'Default', 'Retake', 'Rush', 'Anchor', 'Roam', 'Site A', 'Site B'];
 
 export default function RoomPage() {
   const { connectionString } = useParams<{ connectionString: string }>();
@@ -40,6 +47,14 @@ export default function RoomPage() {
   const isRedoingRef = useRef(false);
 
   const [chatOpen, setChatOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editPublic, setEditPublic] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Local draws: guest draws (local-*) + authenticated optimistic draws (optimistic-* → server UUIDs)
   const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
@@ -454,6 +469,48 @@ export default function RoomPage() {
     toast.success('Invite link copied!');
   };
 
+  const isOwner = battleplan && userId && battleplan.ownerId === userId;
+
+  const openSettings = useCallback(() => {
+    if (!battleplan) return;
+    setEditName(battleplan.name || '');
+    setEditDesc(battleplan.description || '');
+    setEditNotes(battleplan.notes || '');
+    setEditTags(battleplan.tags || []);
+    setEditPublic(battleplan.isPublic || false);
+    setTagInput('');
+    setSettingsOpen(true);
+  }, [battleplan]);
+
+  const handleSaveSettings = useCallback(async () => {
+    if (!battleplan) return;
+    setSaving(true);
+    try {
+      await apiPut(`/battleplans/${battleplan.id}`, {
+        name: editName,
+        description: editDesc,
+        notes: editNotes,
+        tags: editTags,
+        isPublic: editPublic,
+      });
+      toast.success('Plan saved');
+      setSettingsOpen(false);
+      refetchPlan();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }, [battleplan, editName, editDesc, editNotes, editTags, editPublic, refetchPlan]);
+
+  const addTag = (tag: string) => {
+    const trimmed = tag.trim();
+    if (trimmed && !editTags.includes(trimmed) && editTags.length < 10) {
+      setEditTags(prev => [...prev, trimmed]);
+    }
+    setTagInput('');
+  };
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Guest info banner */}
@@ -478,6 +535,11 @@ export default function RoomPage() {
           </Button>
           {battleplan?.map?.name && (
             <span className="ml-4 text-sm font-medium text-white">{battleplan.map.name}</span>
+          )}
+          {isOwner && (
+            <Button variant="ghost" size="sm" onClick={openSettings}>
+              <Settings className="h-4 w-4 mr-1" /> Plan Settings
+            </Button>
           )}
         </div>
 
@@ -536,6 +598,64 @@ export default function RoomPage() {
           )}
         </div>
       </div>
+
+      {/* Plan settings dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Plan Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={3} placeholder="Brief description..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} placeholder="Strategy notes..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              {editTags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {editTags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => setEditTags(t => t.filter(x => x !== tag))}>
+                      {tag} <X className="h-2 w-2 ml-1" />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && tagInput.trim()) { e.preventDefault(); addTag(tagInput); } }}
+                placeholder="Add tag and press Enter"
+              />
+              <div className="flex flex-wrap gap-1">
+                {SUGGESTED_TAGS.filter(t => !editTags.includes(t)).map((tag) => (
+                  <Badge key={tag} variant="outline" className="cursor-pointer text-xs" onClick={() => addTag(tag)}>
+                    + {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="plan-public" checked={editPublic} onCheckedChange={setEditPublic} />
+              <Label htmlFor="plan-public">Public</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveSettings} disabled={saving || !editName.trim()}>
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

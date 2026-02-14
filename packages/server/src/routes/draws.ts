@@ -42,8 +42,8 @@ export default async function drawsRoutes(fastify: FastifyInstance) {
     return reply.status(201).send({ data: created });
   });
 
-  // PUT /api/draws/:id
-  fastify.put('/draws/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/draws/:id (update)
+  fastify.post('/draws/:id', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const body = z.object({
       originX: z.number().optional(),
@@ -64,8 +64,8 @@ export default async function drawsRoutes(fastify: FastifyInstance) {
     return { data: draw };
   });
 
-  // DELETE /api/draws/:id
-  fastify.delete('/draws/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/draws/:id/delete
+  fastify.post('/draws/:id/delete', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
 
     // Ownership check

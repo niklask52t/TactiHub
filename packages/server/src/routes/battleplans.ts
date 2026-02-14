@@ -169,8 +169,8 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
     return { data: plan };
   });
 
-  // PUT /api/battleplans/:id
-  fastify.put('/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/battleplans/:id (update)
+  fastify.post('/:id', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const body = z.object({
       name: z.string().min(1).max(255).optional(),
@@ -191,8 +191,8 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
     return { data: plan };
   });
 
-  // DELETE /api/battleplans/:id
-  fastify.delete('/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/battleplans/:id/delete
+  fastify.post('/:id/delete', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const [existing] = await db.select().from(battleplans).where(eq(battleplans.id, id));
     if (!existing) return reply.status(404).send({ error: 'Not Found', message: 'Battleplan not found', statusCode: 404 });
@@ -290,8 +290,8 @@ export default async function battleplansRoutes(fastify: FastifyInstance) {
     return reply.status(201).send({ data: fullPlan });
   });
 
-  // DELETE /api/battleplans/:id/attacker-lineup
-  fastify.delete('/:id/attacker-lineup', { preHandler: [requireAuth] }, async (request, reply) => {
+  // POST /api/battleplans/:id/attacker-lineup/delete
+  fastify.post('/:id/attacker-lineup/delete', { preHandler: [requireAuth] }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const [existing] = await db.select().from(battleplans).where(eq(battleplans.id, id));
     if (!existing) return reply.status(404).send({ error: 'Not Found', message: 'Battleplan not found', statusCode: 404 });
