@@ -18,6 +18,7 @@ import { exportFloorAsPng, exportAllFloorsAsPdf } from '@/features/canvas/utils/
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
+console.log('[SandboxPage] module loaded');
 let drawCounter = 0;
 
 /** Generate 5 operator slots for one side */

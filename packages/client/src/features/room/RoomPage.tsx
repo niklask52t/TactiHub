@@ -23,6 +23,7 @@ import type { LaserLineData, CursorData } from '@/features/canvas/types';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+console.log('[RoomPage] module loaded');
 let drawCounter = 0;
 
 export default function RoomPage() {
