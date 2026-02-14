@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/auth.store';
-import { apiPost } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DEFAULT_ADMIN_EMAIL } from '@tactihub/shared';
 import ForceCredentialsModal from './ForceCredentialsModal';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const schema = z.object({
   identifier: z.string().min(1, 'Email or username is required'),
@@ -28,6 +29,15 @@ export default function LoginPage() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resendEmail, setResendEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  useEffect(() => {
+    apiGet<{ data: { siteKey: string | null } }>('/auth/recaptcha-key')
+      .then((res) => { if (res.data.siteKey) setRecaptchaSiteKey(res.data.siteKey); })
+      .catch(() => {});
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -37,7 +47,10 @@ export default function LoginPage() {
     setLoading(true);
     setNeedsVerification(false);
     try {
-      const res = await apiPost<{ data: { user: any; accessToken: string } }>('/auth/login', data);
+      const res = await apiPost<{ data: { user: any; accessToken: string } }>('/auth/login', {
+        ...data,
+        captchaToken: captchaToken || undefined,
+      });
       setAuth(res.data.user, res.data.accessToken);
 
       // Check if using default credentials
@@ -55,6 +68,8 @@ export default function LoginPage() {
         setResendEmail(data.identifier);
       }
       toast.error(msg);
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -101,7 +116,18 @@ export default function LoginPage() {
               <Input id="password" type="password" className="gaming-input bg-background/50 border-primary/20 focus:border-primary/50 transition-all" {...register('password')} />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
-            <button type="submit" disabled={loading} className="gaming-btn w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold tracking-wide uppercase text-sm hover:brightness-110 disabled:opacity-50 transition-all">
+            {recaptchaSiteKey && (
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={recaptchaSiteKey}
+                  theme="dark"
+                  onChange={(token) => setCaptchaToken(token)}
+                  onExpired={() => setCaptchaToken(null)}
+                />
+              </div>
+            )}
+            <button type="submit" disabled={loading || (!!recaptchaSiteKey && !captchaToken)} className="gaming-btn w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold tracking-wide uppercase text-sm hover:brightness-110 disabled:opacity-50 transition-all">
               {loading ? 'Logging in...' : 'Login'}
             </button>
             <div className="flex justify-between text-sm">

@@ -18,6 +18,8 @@ const releases: Release[] = [
     date: '2026-02-14',
     tag: 'Latest',
     changes: [
+      { type: 'feature', text: 'Email address change \u2014 all users (including admin) can change their email via Account Settings with password confirmation and new-email verification' },
+      { type: 'feature', text: 'reCAPTCHA on login page (optional, same as registration \u2014 only active when RECAPTCHA keys are configured)' },
       { type: 'feature', text: 'Admin can resend verification email to unverified users (mail icon in admin user table)' },
       { type: 'feature', text: 'SMTP test script (bash test-smtp.sh) for troubleshooting email delivery' },
       { type: 'improvement', text: 'All auth tokens moved from Redis to database \u2014 refresh tokens, password reset, deletion, and magic link tokens now survive Redis restarts' },

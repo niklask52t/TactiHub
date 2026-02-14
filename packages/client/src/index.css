@@ -179,7 +179,9 @@ html, body {
 /* Toast close button: move to top-right */
 [data-sonner-toast] [data-close-button] {
   left: unset !important;
-  right: 0 !important;
+  right: 6px !important;
+  top: 6px !important;
+  transform: none !important;
 }
 
 @theme {

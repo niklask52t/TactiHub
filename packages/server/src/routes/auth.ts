@@ -27,9 +27,12 @@ import {
   storeMagicLinkToken,
   getMagicLinkUserId,
   clearMagicLinkToken,
+  storeEmailChangeToken,
+  getEmailChangeData,
+  clearEmailChangeToken,
   verifyRecaptcha,
 } from '../services/auth.service.js';
-import { sendVerificationEmail, sendPasswordResetEmail, sendDeletionConfirmationEmail, sendAccountDeactivatedEmail, sendMagicLinkEmail } from '../services/email.service.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendDeletionConfirmationEmail, sendAccountDeactivatedEmail, sendMagicLinkEmail, sendEmailChangeVerification } from '../services/email.service.js';
 import { DELETION_GRACE_PERIOD_DAYS } from '@tactihub/shared';
 import jwt from 'jsonwebtoken';
 import type { TokenPayload } from '@tactihub/shared';
@@ -46,6 +49,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   identifier: z.string().min(1),
   password: z.string(),
+  captchaToken: z.string().optional(),
 });
 
 export default async function authRoutes(fastify: FastifyInstance) {
@@ -140,6 +144,17 @@ export default async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/login
   fastify.post('/login', async (request, reply) => {
     const body = loginSchema.parse(request.body);
+
+    // Verify reCAPTCHA (skip if not configured)
+    if (process.env.RECAPTCHA_SECRET_KEY) {
+      if (!body.captchaToken) {
+        return reply.status(400).send({ error: 'Bad Request', message: 'CAPTCHA verification required', statusCode: 400 });
+      }
+      const captchaValid = await verifyRecaptcha(body.captchaToken);
+      if (!captchaValid) {
+        return reply.status(400).send({ error: 'Bad Request', message: 'CAPTCHA verification failed', statusCode: 400 });
+      }
+    }
 
     // Support login by email or username
     const isEmail = body.identifier.includes('@');
@@ -414,6 +429,77 @@ export default async function authRoutes(fastify: FastifyInstance) {
     await sendVerificationEmail(user.email, emailToken);
 
     return { message: successMessage };
+  });
+
+  // POST /api/auth/request-email-change
+  fastify.post('/request-email-change', { preHandler: [requireAuth] }, async (request, reply) => {
+    const body = z.object({
+      currentEmail: z.string().email(),
+      newEmail: z.string().email(),
+      password: z.string().min(1),
+    }).parse(request.body);
+
+    const [user] = await db.select().from(users).where(eq(users.id, request.user!.userId));
+    if (!user) {
+      return reply.status(404).send({ error: 'Not Found', message: 'User not found', statusCode: 404 });
+    }
+
+    // Verify current email matches
+    if (user.email !== body.currentEmail) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Current email does not match', statusCode: 400 });
+    }
+
+    // Verify password
+    const validPassword = await verifyPassword(body.password, user.passwordHash);
+    if (!validPassword) {
+      return reply.status(401).send({ error: 'Unauthorized', message: 'Password is incorrect', statusCode: 401 });
+    }
+
+    // Check that new email is different
+    if (user.email === body.newEmail) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'New email is the same as the current email', statusCode: 400 });
+    }
+
+    // Check that new email is not already taken
+    const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, body.newEmail));
+    if (existingUser) {
+      return reply.status(409).send({ error: 'Conflict', message: 'This email address is already in use', statusCode: 409 });
+    }
+
+    // Generate token, store pending email change, send verification to new email
+    const token = generateEmailToken();
+    await storeEmailChangeToken(user.id, body.newEmail, token);
+    await sendEmailChangeVerification(body.newEmail, token);
+
+    return { message: 'A verification email has been sent to your new email address. Please click the link to confirm the change.' };
+  });
+
+  // GET /api/auth/confirm-email-change
+  fastify.get('/confirm-email-change', async (request, reply) => {
+    const { token } = z.object({ token: z.string() }).parse(request.query);
+
+    const data = await getEmailChangeData(token);
+    if (!data) {
+      return reply.status(400).send({ error: 'Bad Request', message: 'Invalid or expired email change token', statusCode: 400 });
+    }
+
+    // Check that the new email is still not taken
+    const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, data.newEmail));
+    if (existingUser) {
+      await clearEmailChangeToken(data.userId);
+      return reply.status(409).send({ error: 'Conflict', message: 'This email address is already in use', statusCode: 409 });
+    }
+
+    // Apply the email change
+    await db.update(users).set({
+      email: data.newEmail,
+      pendingEmail: null,
+      pendingEmailToken: null,
+      pendingEmailTokenExpiresAt: null,
+      updatedAt: new Date(),
+    }).where(eq(users.id, data.userId));
+
+    return { message: 'Email address changed successfully. Please log in again with your new email.' };
   });
 
   // POST /api/auth/change-credentials

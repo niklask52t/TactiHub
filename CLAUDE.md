@@ -107,15 +107,16 @@ packages/
 ### Auth Flow
 1. Register → email verification sent → **must verify before login** (without SMTP, admin must manually verify each user)
 2. Registration flow adapts: if public reg is ON, no token needed; if OFF, user must enter a single-use registration token first
-3. Optional Google reCAPTCHA v2 on registration (if `RECAPTCHA_SITE_KEY` + `RECAPTCHA_SECRET_KEY` set in `.env`)
+3. Optional Google reCAPTCHA v2 on registration and login (if `RECAPTCHA_SITE_KEY` + `RECAPTCHA_SECRET_KEY` set in `.env`)
 4. **Magic Link Login**: POST /request-magic-link sends email with login link (15min TTL), GET /magic-login consumes token and returns access+refresh tokens (same as login)
 5. Login → accepts username OR email via `identifier` field → access token (15min) + refresh token (7d httpOnly cookie + DB)
-5. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
-6. Token refresh → POST /api/auth/refresh returns new access token (App.tsx session restore on mount uses `apiPost`, not `apiGet` — the server endpoint is POST-only)
-7. Admin can toggle public registration and create invite tokens
-8. **Admin manual verification**: POST /api/admin/users/:id/verify — verifies a user without email, sends notification email
-9. **Admin resend verification**: POST /api/admin/users/:id/resend-verification — generates new token, sends verification email
-10. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side. Client-side guests have full toolbar/icon access and can draw locally (stored in React state, not persisted or synced)
+6. First login with default admin email (`admin@tactihub.local`) forces credential change (gaming-style modal)
+7. Token refresh → POST /api/auth/refresh returns new access token (App.tsx session restore on mount uses `apiPost`, not `apiGet` — the server endpoint is POST-only)
+8. Admin can toggle public registration and create invite tokens
+9. **Admin manual verification**: POST /api/admin/users/:id/verify — verifies a user without email, sends notification email
+10. **Admin resend verification**: POST /api/admin/users/:id/resend-verification — generates new token, sends verification email
+11. **Email change**: POST /api/auth/request-email-change (requires auth, old email, new email, password) → sends verification to new email → GET /api/auth/confirm-email-change?token=... applies the change
+12. **Guests**: Socket connects without token → userId = `guest-{socketId}`, drawing events blocked server-side. Client-side guests have full toolbar/icon access and can draw locally (stored in React state, not persisted or synced)
 
 ### Account Deletion Flow
 1. User → Account Settings → Delete Account → two confirmation dialogs (type username)
@@ -373,8 +374,8 @@ The Vite dev client proxies all `/api/*` and `/socket.io` requests to `localhost
 ## API Endpoints Overview
 
 ### Auth: `/api/auth/`
-POST register, login, logout, refresh, forgot-password, reset-password, change-credentials, request-deletion, request-magic-link, resend-verification
-GET verify-email, confirm-deletion, magic-login, me, registration-status (public), recaptcha-key (public)
+POST register, login, logout, refresh, forgot-password, reset-password, change-credentials, request-deletion, request-magic-link, resend-verification, request-email-change
+GET verify-email, confirm-deletion, magic-login, confirm-email-change, me, registration-status (public), recaptcha-key (public)
 
 ### Admin Users: `/api/admin/users/`
 GET (paginated), POST/:id/role, POST/:id/verify (manual email verification + notification), POST/:id/resend-verification, POST/:id/reactivate, POST/:id/delete
@@ -421,5 +422,6 @@ All mutating endpoints use POST only (no PUT or DELETE). This ensures compatibil
 | `/auth/confirm-deletion/:token` | ConfirmDeletionPage | Public |
 | `/auth/magic-link` | MagicLinkRequestPage | Public |
 | `/auth/magic-login/:token` | MagicLinkLoginPage | Public |
+| `/auth/confirm-email-change/:token` | ConfirmEmailChangePage | Public |
 | `/admin/maps/:mapId/floors` | FloorsPage | Admin only |
 | `/admin/*` | Admin pages | Admin only |

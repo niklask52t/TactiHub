@@ -6,13 +6,32 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Mail } from 'lucide-react';
 export default function AccountSettingsPage() {
   const { user } = useAuthStore();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmUsername, setConfirmUsername] = useState('');
+  const [currentEmail, setCurrentEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailChangePassword, setEmailChangePassword] = useState('');
+
+  const emailChangeMutation = useMutation({
+    mutationFn: () => apiPost('/auth/request-email-change', {
+      currentEmail,
+      newEmail,
+      password: emailChangePassword,
+    }),
+    onSuccess: (res: any) => {
+      toast.success(res.message || 'Verification email sent to your new address.');
+      setCurrentEmail('');
+      setNewEmail('');
+      setEmailChangePassword('');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const deletionMutation = useMutation({
     mutationFn: () => apiPost('/auth/request-deletion', { username: confirmUsername }),
@@ -51,6 +70,65 @@ export default function AccountSettingsPage() {
             <span className="text-muted-foreground">Member since</span>
             <span className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            Change Email Address
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            A verification email will be sent to the new address. Your email will only change after you click the confirmation link.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              emailChangeMutation.mutate();
+            }}
+            className="space-y-3"
+          >
+            <div className="space-y-1">
+              <Label htmlFor="current-email" className="text-xs uppercase tracking-wider text-muted-foreground">Current Email</Label>
+              <Input
+                id="current-email"
+                type="email"
+                value={currentEmail}
+                onChange={(e) => setCurrentEmail(e.target.value)}
+                placeholder={user.email}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="new-email" className="text-xs uppercase tracking-wider text-muted-foreground">New Email</Label>
+              <Input
+                id="new-email"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="email-change-password" className="text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
+              <Input
+                id="email-change-password"
+                type="password"
+                value={emailChangePassword}
+                onChange={(e) => setEmailChangePassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={emailChangeMutation.isPending || !currentEmail || !newEmail || !emailChangePassword}
+            >
+              {emailChangeMutation.isPending ? 'Sending...' : 'Request Email Change'}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 

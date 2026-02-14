@@ -2,6 +2,8 @@
 
 ## v1.8.6 — 2026-02-14
 
+- [feature] Email address change — all users (including admin) can change their email via Account Settings with password confirmation and new-email verification
+- [feature] reCAPTCHA on login page (optional, same as registration — only active when RECAPTCHA keys are configured)
 - [feature] Admin can resend verification email to unverified users (mail icon button in admin user table)
 - [feature] SMTP test script (`bash test-smtp.sh`) for troubleshooting email delivery
 - [improvement] All auth tokens moved from Redis to database — refresh tokens, password reset, deletion, and magic link tokens now survive Redis restarts

@@ -206,6 +206,27 @@ export async function sendMagicLinkEmail(email: string, token: string) {
   });
 }
 
+export async function sendEmailChangeVerification(newEmail: string, token: string) {
+  const confirmUrl = `${APP_URL}/auth/confirm-email-change/${token}`;
+
+  await getTransporter().sendMail({
+    from: FROM,
+    to: newEmail,
+    subject: 'Confirm your new TactiHub email address',
+    html: emailTemplate(`
+      <h1 style="color:#c3c9cc;font-size:22px;margin:0 0 16px 0;">Confirm Email Change</h1>
+      <p style="color:#9ca3af;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+        You requested to change your TactiHub email address to this address. Click the button below to confirm:
+      </p>
+      ${buttonHtml('Confirm New Email', confirmUrl)}
+      <p style="color:#6b7280;font-size:12px;line-height:1.6;margin:0;">
+        Or copy this link: <a href="${confirmUrl}" style="color:#fd7100;word-break:break-all;">${confirmUrl}</a>
+      </p>
+      <p style="color:#6b7280;font-size:12px;margin:16px 0 0 0;">This link expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
+    `),
+  });
+}
+
 export async function sendAccountDeletedEmail(email: string) {
   await getTransporter().sendMail({
     from: FROM,

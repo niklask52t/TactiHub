@@ -17,6 +17,7 @@ const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage
 const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('@/features/auth/VerifyEmailPage'));
 const ConfirmDeletionPage = lazy(() => import('@/features/auth/ConfirmDeletionPage'));
+const ConfirmEmailChangePage = lazy(() => import('@/features/auth/ConfirmEmailChangePage'));
 const MagicLinkRequestPage = lazy(() => import('@/features/auth/MagicLinkRequestPage'));
 const MagicLinkLoginPage = lazy(() => import('@/features/auth/MagicLinkLoginPage'));
 const GameDashboard = lazy(() => import('@/features/game/GameDashboard'));
@@ -83,6 +84,7 @@ export function App() {
           <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/auth/verify-email/:token" element={<VerifyEmailPage />} />
           <Route path="/auth/confirm-deletion/:token" element={<ConfirmDeletionPage />} />
+          <Route path="/auth/confirm-email-change/:token" element={<ConfirmEmailChangePage />} />
           <Route path="/auth/magic-link" element={<MagicLinkRequestPage />} />
           <Route path="/auth/magic-login/:token" element={<MagicLinkLoginPage />} />
         </Route>

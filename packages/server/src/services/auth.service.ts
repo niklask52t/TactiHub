@@ -137,6 +137,38 @@ export async function clearMagicLinkToken(userId: string) {
   }).where(eq(users.id, userId));
 }
 
+// --- Email change tokens (DB) ---
+
+export async function storeEmailChangeToken(userId: string, newEmail: string, token: string) {
+  const expiresAt = new Date(Date.now() + 86400 * 1000); // 24 hours
+  await db.update(users).set({
+    pendingEmail: newEmail,
+    pendingEmailToken: token,
+    pendingEmailTokenExpiresAt: expiresAt,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
+export async function getEmailChangeData(token: string): Promise<{ userId: string; newEmail: string } | null> {
+  const [user] = await db.select({
+    id: users.id,
+    pendingEmail: users.pendingEmail,
+    pendingEmailTokenExpiresAt: users.pendingEmailTokenExpiresAt,
+  }).from(users).where(eq(users.pendingEmailToken, token));
+  if (!user || !user.pendingEmail) return null;
+  if (user.pendingEmailTokenExpiresAt && user.pendingEmailTokenExpiresAt < new Date()) return null;
+  return { userId: user.id, newEmail: user.pendingEmail };
+}
+
+export async function clearEmailChangeToken(userId: string) {
+  await db.update(users).set({
+    pendingEmail: null,
+    pendingEmailToken: null,
+    pendingEmailTokenExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, userId));
+}
+
 // --- Email verification tokens (DB, already migrated) ---
 
 export async function storeEmailVerificationToken(userId: string, token: string) {
