@@ -18,6 +18,16 @@ ask_yn() {
   done
 }
 
+# Run a command as the tactihub user (production only)
+# Falls back to direct execution if tactihub user doesn't exist
+run_as_tactihub() {
+  if id "tactihub" &>/dev/null; then
+    sudo -u tactihub bash -c "cd $SCRIPT_DIR && $*"
+  else
+    eval "$@"
+  fi
+}
+
 echo "=== TactiHub Update ==="
 echo ""
 echo "Select mode:"
@@ -117,6 +127,8 @@ elif [ "$MODE" = "prod" ]; then
   echo "apply database migrations, and rebuild the project."
   echo "Your existing data will be preserved."
   echo ""
+  echo "All build operations run as the 'tactihub' user."
+  echo ""
 
   if ! ask_yn "Continue with production update?"; then
     echo "Aborted."
@@ -128,46 +140,47 @@ elif [ "$MODE" = "prod" ]; then
   sudo systemctl stop tactihub 2>/dev/null || true
 
   echo ""
+  echo "--- Fixing file ownership ---"
+  if id "tactihub" &>/dev/null; then
+    sudo chown -R tactihub:tactihub "$SCRIPT_DIR"
+    echo "Ownership set to tactihub:tactihub"
+  fi
+
+  echo ""
   echo "--- Pulling latest main branch ---"
-  git checkout main
-  git pull origin main
+  run_as_tactihub git checkout main
+  run_as_tactihub git pull origin main
 
   echo ""
   echo "--- Installing dependencies ---"
-  pnpm install
+  run_as_tactihub pnpm install
 
   echo ""
   echo "--- Building shared package ---"
-  pnpm --filter @tactihub/shared build
+  run_as_tactihub pnpm --filter @tactihub/shared build
 
   echo ""
   echo "--- Cleaning old migration files ---"
-  rm -rf packages/server/drizzle/*
+  run_as_tactihub rm -rf packages/server/drizzle/*
 
   echo ""
   echo "--- Generating migrations ---"
-  pnpm db:generate
+  run_as_tactihub pnpm db:generate
 
   echo ""
   echo "--- Applying migrations ---"
-  pnpm db:migrate
+  run_as_tactihub pnpm db:migrate
 
   echo ""
   echo "--- Building all packages ---"
-  pnpm build
-
-  echo ""
-  echo "--- Fixing file ownership ---"
-  if id "tactihub" &>/dev/null; then
-    sudo chown -R tactihub:tactihub /opt/TactiHub
-    echo "Ownership set to tactihub:tactihub"
-  fi
+  run_as_tactihub pnpm build
 
   echo ""
   echo "=== Production update complete! ==="
 
   if ask_yn "Restart TactiHub service now?"; then
     sudo systemctl restart tactihub
+    sleep 2
     echo ""
     echo "--- Service status ---"
     sudo systemctl status tactihub --no-pager -l
