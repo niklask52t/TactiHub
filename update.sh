@@ -124,6 +124,10 @@ elif [ "$MODE" = "prod" ]; then
   fi
 
   echo ""
+  echo "--- Stopping TactiHub service ---"
+  sudo systemctl stop tactihub 2>/dev/null || true
+
+  echo ""
   echo "--- Pulling latest main branch ---"
   git checkout main
   git pull origin main
@@ -135,6 +139,10 @@ elif [ "$MODE" = "prod" ]; then
   echo ""
   echo "--- Building shared package ---"
   pnpm --filter @tactihub/shared build
+
+  echo ""
+  echo "--- Cleaning old migration files ---"
+  rm -rf packages/server/drizzle/*
 
   echo ""
   echo "--- Generating migrations ---"
@@ -149,7 +157,21 @@ elif [ "$MODE" = "prod" ]; then
   pnpm build
 
   echo ""
+  echo "--- Fixing file ownership ---"
+  if id "tactihub" &>/dev/null; then
+    sudo chown -R tactihub:tactihub /opt/TactiHub
+    echo "Ownership set to tactihub:tactihub"
+  fi
+
+  echo ""
   echo "=== Production update complete! ==="
-  echo "Restart the server to apply changes:"
-  echo "  sudo systemctl restart tactihub"
+
+  if ask_yn "Restart TactiHub service now?"; then
+    sudo systemctl restart tactihub
+    echo ""
+    echo "--- Service status ---"
+    sudo systemctl status tactihub --no-pager -l
+  else
+    echo "Run 'sudo systemctl restart tactihub' to apply changes."
+  fi
 fi
