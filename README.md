@@ -758,19 +758,20 @@ sudo ufw status
 
 ### 9. reCAPTCHA Setup (Optional)
 
-TactiHub supports Google reCAPTCHA v2 ("I'm not a robot" checkbox) on the registration form. If not configured, registration works without CAPTCHA.
+TactiHub supports Google reCAPTCHA v2 on the registration form. If not configured, registration works without CAPTCHA.
 
 1. Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin)
 2. Click **+** to create a new site
-3. Choose **reCAPTCHA v2** → **"I'm not a robot" Checkbox**
-4. Add your domain(s) (e.g. `yourdomain.com`)
-5. Copy the **Site Key** and **Secret Key**
-6. Add to your `.env`:
+3. Choose **Challenge (v2)** (German: "Aufgabe (v2)")
+4. Choose **"I'm not a robot" Checkbox** (German: "Kästchen: Ich bin kein Roboter")
+5. Add your domain(s) (e.g. `yourdomain.com`)
+6. Copy the **Site Key** and **Secret Key**
+7. Add to your `.env`:
    ```env
    RECAPTCHA_SITE_KEY=6Lc...your-site-key...
    RECAPTCHA_SECRET_KEY=6Lc...your-secret-key...
    ```
-7. Rebuild the client (the site key is fetched from the server at runtime, no rebuild needed for key changes):
+8. Rebuild the client (the site key is fetched from the server at runtime, no rebuild needed for key changes):
    ```bash
    pnpm build
    ```

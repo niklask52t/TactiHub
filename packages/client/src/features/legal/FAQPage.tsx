@@ -91,7 +91,7 @@ const faqs = [
   },
   {
     q: 'What is reCAPTCHA?',
-    a: 'reCAPTCHA is a Google service that helps protect the registration form from bots and spam. If the server admin has configured it, you\'ll see an "I\'m not a robot" checkbox during registration. Simply check the box to verify you\'re human. If reCAPTCHA is not configured, registration works without it.',
+    a: 'reCAPTCHA is a Google service that helps protect the registration form from bots and spam. TactiHub uses reCAPTCHA v2 with the "I\'m not a robot" checkbox. If the server admin has configured it, you\'ll see this checkbox during registration. Simply check the box to verify you\'re human. If reCAPTCHA is not configured, registration works without it.',
   },
   {
     q: 'How do I export my drawings?',
