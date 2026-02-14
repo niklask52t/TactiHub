@@ -6,10 +6,10 @@ This file provides context for AI assistants working on the TactiHub codebase.
 
 ## What is TactiHub?
 
-TactiHub is a real-time collaborative strategy planning tool for competitive games (Rainbow Six Siege, Valorant, etc.). Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
+TactiHub is a real-time collaborative strategy planning tool for Rainbow Six Siege. Users can draw tactics on game maps, save/share battle plans, and collaborate in rooms with live cursors and drawing sync.
 
 **Author**: Niklas Kronig
-**Version**: 1.8.1
+**Version**: 1.9.0
 **Repo**: https://github.com/niklask52t/TactiHub
 **Based on**: [r6-map-planner](https://github.com/prayansh/r6-map-planner) (Node/Express/Socket.IO) and [r6-maps](https://github.com/jayfoe/r6-maps) (Laravel/Vue)
 
@@ -298,7 +298,7 @@ tactihub-update             # Same, if symlinked: sudo ln -sf /opt/tactihub/upda
 - The client uses `tsc -b` (project references) for build — `shared` must have `composite: true`
 - `tsconfig.node.json` in client is for vite.config.ts only
 - `noUnusedLocals` and `noUnusedParameters` are enabled in client — remove unused imports
-- Seed data includes: 1 admin user, 2 games (R6 + Valorant), 21 R6 maps with correct floor counts + cover thumbnails, ~78 R6 operators (complete Y1-Y10 roster), ~87 gadgets (23 with pre-seeded icons), 11 Valorant agents, 40 abilities
+- Seed data includes: 1 admin user, 1 game (R6 Siege), 21 maps with correct floor counts + cover thumbnails, ~78 operators (complete Y1-Y10 roster), ~87 gadgets (23 with pre-seeded icons)
 - Admin login after seed: `admin` / `admin@tactihub.local` / `changeme` (forced credential change on first login)
 - Upload directory structure: `uploads/{games,maps,operators,gadgets}/` — maps/ and gadgets/ are tracked in git (pre-seeded), games/ and operators/ are gitignored
 - Pre-seeded images: 165 map floor WebP + 23 gadget icon WebP + 21 map cover WebP committed to repo, referenced by seed via deterministic names (`{slug}-{num}-{variant}.webp`, `{slug}-cover.webp`)

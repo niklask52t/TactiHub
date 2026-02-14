@@ -34,7 +34,7 @@ export default function ImpressumPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              TactiHub is a modern, collaborative strategy planning tool for competitive games.
+              TactiHub is a modern, collaborative strategy planning tool for Rainbow Six Siege.
               It allows teams to draw tactics on game maps, share battle plans, and coordinate
               strategies in real-time.
             </p>
@@ -187,11 +187,11 @@ export default function ImpressumPage() {
           <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>
               TactiHub is a fan-made tool and is not affiliated with, endorsed by, or connected
-              to Ubisoft, Riot Games, or any other game publisher. All game names, logos, and
+              to Ubisoft or any other game publisher. All game names, logos, and
               related assets are trademarks of their respective owners.
             </p>
             <p>
-              Map images and operator/agent icons used in this application are property of their
+              Map images and operator icons used in this application are property of their
               respective game publishers and are used for informational and educational purposes only.
             </p>
           </CardContent>

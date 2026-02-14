@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const faqs = [
   {
     q: 'What is TactiHub?',
-    a: 'TactiHub is a collaborative strategy planning tool for competitive games. It lets teams draw tactics on game maps, save and share battle plans, and coordinate strategies in real-time.',
+    a: 'TactiHub is a collaborative strategy planning tool for Rainbow Six Siege. It lets teams draw tactics on game maps, save and share battle plans, and coordinate strategies in real-time.',
   },
   {
     q: 'Which games are supported?',
-    a: 'Currently Rainbow Six Siege and Valorant are included with full map and operator/agent data. Any game with top-down maps can be added through the admin panel.',
+    a: 'TactiHub currently focuses on Rainbow Six Siege with full map, operator, and gadget data. The platform supports adding additional games through the admin panel — any game with top-down maps can be added.',
   },
   {
     q: 'Do I need an account to use TactiHub?',

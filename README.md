@@ -1,10 +1,10 @@
 # TactiHub
 
-**Collaborative tactical strategy planning for competitive games.**
+**Collaborative tactical strategy planning for Rainbow Six Siege.**
 
-TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. It supports multiple games (Rainbow Six Siege, Valorant, and more) with a powerful canvas drawing system, live cursors, and persistent battle plan management.
+TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. Built for Rainbow Six Siege with full map and operator data, it features a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.8.0-orange)
+![Version](https://img.shields.io/badge/version-1.9.0-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
@@ -35,7 +35,7 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 
 ## Features
 
-- **Multi-Game Support** — Built as a generic platform. Ships with Rainbow Six Siege and Valorant data, but any game with top-down maps can be added through the admin panel.
+- **Rainbow Six Siege** — Ships with full R6 Siege data: 21 maps with Blueprint/Darkprint/Whiteprint floor images, ~78 operators, and ~87 gadgets. Additional games can be added through the admin panel.
 - **Real-Time Collaboration** — Create rooms and draw together in real-time with Socket.IO. See teammates' cursors and drawings appear instantly.
 - **Canvas Drawing System** — 3-layer canvas with tools for freehand pen, straight lines, rectangles, text (adjustable font size), and operator/gadget icons.
 - **Zoom + Pan** — Mouse wheel zoom centered on cursor (25%-400%), pan tool, middle-click pan, and reset button.
@@ -48,8 +48,7 @@ TactiHub is a real-time collaboration tool that lets teams draw tactics on game 
 - **Battleplan Description & Notes** — Add descriptions and notes to plans, inline-editable for owners.
 - **Share by Link** — Public toggle + share button copies a direct link. Public plans are viewable without login.
 - **Voting System** — Upvote/downvote public battle plans to surface the best strategies.
-- **Operator Lineup System** — Select 5 defenders per battleplan, optionally add 5 attackers. Sidebar auto-filters operators and gadgets to lineup members. "Show all" toggle reveals hidden items with warning.
-- **Operator/Agent Slots** — Assign operators (R6) or agents (Valorant) to 5 slots per plan, synced in real-time.
+- **Operator Lineup** — Assign operators to 5 defender slots per plan (optional 5 attacker slots), synced in real-time. Sidebar auto-filters operators and gadgets to lineup members. "Show all" toggle reveals hidden items with warning.
 - **Floor Switching** — Navigate multi-floor maps with keyboard shortcuts (J/K) or buttons.
 - **View Mode Switcher** — Toggle between Blueprint, Darkprint, and Whiteprint floor views (when available). Default is always Blueprint.
 - **Compass** — SVG north indicator overlay on every canvas.
@@ -141,7 +140,7 @@ TactiHub/
 │   │       ├── db/
 │   │       │   ├── schema/     # 11 Drizzle schema files (15 tables)
 │   │       │   ├── connection.ts
-│   │       │   └── seed.ts     # R6 Siege + Valorant seed data
+│   │       │   └── seed.ts     # R6 Siege seed data
 │   │       ├── plugins/        # Fastify plugins (Redis, Auth)
 │   │       ├── middleware/      # Auth middleware (requireAuth, optionalAuth, requireAdmin)
 │   │       ├── routes/         # REST API routes
@@ -294,7 +293,7 @@ pnpm db:generate
 # Apply migrations to create tables
 pnpm db:migrate
 
-# Seed with initial data (admin user + R6 Siege + Valorant)
+# Seed with initial data (admin user + R6 Siege)
 pnpm db:seed
 
 # Start dev server
@@ -308,7 +307,6 @@ Docker Compose starts:
 The seed creates:
 - **Admin account**: `admin` / `admin@tactihub.local` / `changeme`
 - **Rainbow Six Siege**: 21 maps (correct per-map floor counts with Blueprint/Darkprint/Whiteprint image paths), ~78 operators, ~87 gadgets (23 with pre-seeded icons)
-- **Valorant**: 4 maps (2 floors each), 11 agents, 40 abilities
 
 All R6 map floor images (165 WebP files) and gadget icons (23 WebP files) are included in the repository under `packages/server/uploads/`. They're available immediately after seeding — no extra import step needed.
 
@@ -821,7 +819,7 @@ TactiHub is developed by **Niklas Kronig**.
 This project is based on and inspired by two original open-source projects:
 
 ### [r6-map-planner](https://github.com/prayansh/r6-map-planner) by prayansh
-A real-time collaborative map planning tool built with Node.js, Express and Socket.IO. It provided the foundation for the real-time collaboration features, live cursor tracking, color assignment, and the multi-game canvas drawing system.
+A real-time collaborative map planning tool built with Node.js, Express and Socket.IO. It provided the foundation for the real-time collaboration features, live cursor tracking, color assignment, and the canvas drawing system.
 
 ### [r6-maps](https://github.com/jayfoe/r6-maps) by jayfoe
 A battle plan management system built with Laravel and Vue.js. It provided the blueprint for user authentication, database persistence, battle plan CRUD, the voting system, operator management, and the admin panel architecture.
@@ -832,4 +830,4 @@ Both projects have been inactive for several years. TactiHub merges their best c
 
 ## Disclaimer
 
-TactiHub is a fan-made tool and is not affiliated with, endorsed by, or connected to Ubisoft, Riot Games, or any other game publisher. All game names, logos, and related assets are trademarks of their respective owners. Map images and operator/agent icons are property of their respective game publishers and are used for informational and educational purposes only.
+TactiHub is a fan-made tool and is not affiliated with, endorsed by, or connected to Ubisoft or any other game publisher. All game names, logos, and related assets are trademarks of their respective owners. Map images and operator icons are property of their respective game publishers and are used for informational and educational purposes only.

@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { APP_VERSION } from '@tactihub/shared';
 
-type ChangeType = 'feature' | 'improvement' | 'fix';
+type ChangeType = 'feature' | 'improvement' | 'fix' | 'removed';
 
 interface Change {
   type: ChangeType;
@@ -17,9 +17,19 @@ interface Release {
 
 const releases: Release[] = [
   {
+    version: '1.9.0',
+    date: '2026-02-14',
+    tag: 'Latest',
+    changes: [
+      { type: 'removed', text: 'Valorant game data removed from seed \u2014 TactiHub now focuses exclusively on Rainbow Six Siege' },
+      { type: 'feature', text: 'Screenshot slideshow on Homepage preview section \u2014 themed groups with auto-rotate and navigation' },
+      { type: 'fix', text: 'Homepage hero viewport gap on Windows \u2014 changed to full-screen height' },
+      { type: 'improvement', text: 'Updated all documentation to reflect R6 Siege-only focus' },
+    ],
+  },
+  {
     version: '1.8.1',
     date: '2026-02-13',
-    tag: 'Latest',
     changes: [
       { type: 'feature', text: 'Visual operator lineup picker \u2014 clickable image grid replaces dropdown selectors' },
       { type: 'feature', text: 'Sandbox mode matches room layout \u2014 full-screen canvas with icon sidebar and toolbar' },
@@ -190,7 +200,7 @@ const releases: Release[] = [
     date: '2026-02-11',
     changes: [
       { type: 'feature', text: 'Initial release' },
-      { type: 'feature', text: 'Multi-game support (R6 Siege, Valorant)' },
+      { type: 'feature', text: 'Rainbow Six Siege support with full map and operator data' },
       { type: 'feature', text: 'Real-time collaboration rooms with Socket.IO' },
       { type: 'feature', text: 'Canvas drawing (pen, line, rectangle, text, icons)' },
       { type: 'feature', text: 'Battle plan CRUD with voting system' },
@@ -205,20 +215,22 @@ function getTypeBadge(type: ChangeType) {
     case 'feature': return { label: 'New', cls: 'bg-primary/20 text-primary border-primary/30' };
     case 'improvement': return { label: 'Improved', cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
     case 'fix': return { label: 'Fix', cls: 'bg-green-500/20 text-green-400 border-green-500/30' };
+    case 'removed': return { label: 'Removed', cls: 'bg-red-500/20 text-red-400 border-red-500/30' };
   }
 }
 
 function countByType(changes: Change[]) {
-  const counts = { feature: 0, improvement: 0, fix: 0 };
+  const counts = { feature: 0, improvement: 0, fix: 0, removed: 0 };
   for (const c of changes) counts[c.type]++;
   return counts;
 }
 
-function summaryParts(counts: { feature: number; improvement: number; fix: number }) {
+function summaryParts(counts: { feature: number; improvement: number; fix: number; removed: number }) {
   const parts: { text: string; cls: string }[] = [];
   if (counts.feature > 0) parts.push({ text: `${counts.feature} new`, cls: 'bg-primary/15 text-primary border-primary/30' });
   if (counts.improvement > 0) parts.push({ text: `${counts.improvement} improved`, cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30' });
   if (counts.fix > 0) parts.push({ text: `${counts.fix} fixed`, cls: 'bg-green-500/15 text-green-400 border-green-500/30' });
+  if (counts.removed > 0) parts.push({ text: `${counts.removed} removed`, cls: 'bg-red-500/15 text-red-400 border-red-500/30' });
   return parts;
 }
 

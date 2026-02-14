@@ -34,7 +34,7 @@ export default function HomePage() {
             <img src="/tactihub_logo.png" alt="TactiHub" className="h-20 drop-shadow-[0_0_20px_oklch(0.68_0.19_45/0.4)]" />
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            Collaborative strategy planning for competitive games. Draw tactics, share plans, and coordinate with your team in real-time.
+            Collaborative strategy planning for Rainbow Six Siege. Draw tactics, share plans, and coordinate with your team in real-time.
           </p>
           <div className="flex items-center justify-center gap-4">
             {isAuthenticated ? (
