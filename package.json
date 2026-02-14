@@ -1,6 +1,6 @@
 {
   "name": "tactihub",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "private": true,
   "description": "Tactical strategy planning for competitive games",
   "scripts": {

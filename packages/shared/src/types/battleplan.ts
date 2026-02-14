@@ -15,6 +15,8 @@ export interface Battleplan {
   createdAt: string;
   updatedAt: string;
   owner?: User;
+  game?: { id: string; slug: string; name: string } | null;
+  map?: { id: string; name: string; slug: string } | null;
   floors?: BattleplanFloor[];
   operatorSlots?: OperatorSlot[];
   voteCount?: number;

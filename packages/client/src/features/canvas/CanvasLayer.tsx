@@ -518,30 +518,27 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
       }
     }
 
-    // Draw fading laser lines (local) — skip while actively drawing laser to avoid flicker
+    // Draw fading laser lines (local)
     const now = Date.now();
-    const skipLocalFade = isDrawing && tool === Tool.LaserLine;
-    if (!skipLocalFade) {
-      for (const line of laserFadeLines) {
-        const elapsed = now - line.fadeStart;
-        const alpha = Math.max(0, 1 - elapsed / 3000);
-        if (alpha <= 0 || line.points.length < 2) continue;
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = line.color;
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.shadowColor = line.color;
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.moveTo(line.points[0]!.x, line.points[0]!.y);
-        for (let i = 1; i < line.points.length; i++) {
-          ctx.lineTo(line.points[i]!.x, line.points[i]!.y);
-        }
-        ctx.stroke();
-        ctx.restore();
+    for (const line of laserFadeLines) {
+      const elapsed = now - line.fadeStart;
+      const alpha = Math.max(0, 1 - elapsed / 3000);
+      if (alpha <= 0 || line.points.length < 2) continue;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = line.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = line.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(line.points[0]!.x, line.points[0]!.y);
+      for (let i = 1; i < line.points.length; i++) {
+        ctx.lineTo(line.points[i]!.x, line.points[i]!.y);
       }
+      ctx.stroke();
+      ctx.restore();
     }
 
     // Draw fading peer laser lines
@@ -729,8 +726,6 @@ export function CanvasLayer({ floor, readOnly = false, onDrawCreate, onDrawDelet
     if (tool === Tool.LaserLine) {
       const pos = getCanvasCoords(e);
       laserPointsRef.current = [pos];
-      // Clear old fading lines to prevent visual interference
-      setLaserFadeLines([]);
       setIsDrawing(true);
       return;
     }

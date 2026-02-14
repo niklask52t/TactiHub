@@ -476,6 +476,9 @@ export default function RoomPage() {
           <Button variant="ghost" size="sm" onClick={copyInviteLink}>
             <Copy className="h-3 w-3 mr-1" /> Copy Link
           </Button>
+          {battleplan?.map?.name && (
+            <span className="ml-4 text-sm font-medium text-muted-foreground">{battleplan.map.name}</span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

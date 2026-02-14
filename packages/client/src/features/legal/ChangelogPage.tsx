@@ -17,9 +17,20 @@ interface Release {
 
 const releases: Release[] = [
   {
-    version: '1.8.3',
+    version: '1.8.4',
     date: '2026-02-14',
     tag: 'Latest',
+    changes: [
+      { type: 'fix', text: 'PDF export now generates pages top-to-bottom (highest floor first)' },
+      { type: 'fix', text: 'Laser line persists while fading \u2014 new lines no longer clear old fading lines' },
+      { type: 'fix', text: 'Sandbox mode layout matches logged-in room layout (single header bar, no scrollbar)' },
+      { type: 'feature', text: 'Map name displayed in room and sandbox header bar' },
+      { type: 'improvement', text: 'Sandbox header: Exit button, yellow sandbox warning, Login/Register buttons' },
+    ],
+  },
+  {
+    version: '1.8.3',
+    date: '2026-02-14',
     changes: [
       { type: 'fix', text: 'Sandbox lineup \u2014 operator slot selection now works in sandbox mode' },
       { type: 'fix', text: 'Logout redirects to homepage instead of login page' },

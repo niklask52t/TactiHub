@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.8.4 — 2026-02-14
+
+- [fix] PDF export now generates pages top-to-bottom (highest floor first)
+- [fix] Laser line persists while fading — new lines no longer clear old fading lines
+- [fix] Sandbox mode layout matches logged-in room layout (single header bar, no scrollbar)
+- [feature] Map name displayed in room and sandbox header bar
+- [feature] Map name included in battleplan API response
+- [improvement] Sandbox header: Exit button, yellow sandbox warning, Login/Register buttons
+
 ## v1.8.3 — 2026-02-14
 
 - [fix] Sandbox lineup — operator slot selection now works in sandbox mode

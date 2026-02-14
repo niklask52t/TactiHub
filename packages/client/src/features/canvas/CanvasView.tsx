@@ -204,7 +204,7 @@ export function CanvasView({ floors, readOnly = false, onDrawCreate, onDrawDelet
             variant="ghost"
             size="sm"
             title="Export all floors as PDF"
-            onClick={() => exportAllFloorsAsPdf(sortedFloors, localDraws || {}, currentFloor?.mapFloor?.name?.split(' ')[0] || 'strategy')}
+            onClick={() => exportAllFloorsAsPdf([...sortedFloors].reverse(), localDraws || {}, currentFloor?.mapFloor?.name?.split(' ')[0] || 'strategy')}
           >
             <FileDown className="h-4 w-4" />
           </Button>

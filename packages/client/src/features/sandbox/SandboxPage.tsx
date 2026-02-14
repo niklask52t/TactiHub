@@ -8,8 +8,7 @@ import { IconSidebar } from '@/features/canvas/tools/IconSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, AlertTriangle, Gamepad2, Info } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Gamepad2 } from 'lucide-react';
 import { useCanvasStore } from '@/stores/canvas.store';
 import type { OperatorSlot } from '@tactihub/shared';
 
@@ -194,13 +193,10 @@ export default function SandboxPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [step, handleUndo, handleRedo]);
 
-  // Clear history when leaving canvas
-  const handleBackToMaps = () => {
-    setStep('map');
-    setSelectedMap(null);
-    setLocalDraws({});
-    clearHistory();
-  };
+  // Clear canvas history on unmount
+  useEffect(() => {
+    return () => clearHistory();
+  }, [clearHistory]);
 
   // Build floors for CanvasView (draws are empty — local draws passed via localDraws prop)
   const floors = (mapDetailData?.data?.floors || []).map((floor) => ({
@@ -213,22 +209,29 @@ export default function SandboxPage() {
   if (step === 'canvas' && selectedMap) {
     return (
       <div className="h-screen flex flex-col bg-background">
-        {/* Top bar */}
+        {/* Top bar — matches logged-in room layout */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={handleBackToMaps}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back to Maps
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" /> Exit</Link>
             </Button>
-            <span className="text-sm font-medium">{selectedMap.name}</span>
+            <span className="text-sm font-semibold text-yellow-400">
+              Sandbox — drawings are not saved
+            </span>
+            <span className="ml-4 text-sm font-medium text-muted-foreground">{selectedMap.name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/auth/login">Log in</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/auth/register">Register</Link>
+            </Button>
           </div>
         </div>
 
-        {/* Toolbar + sandbox hint */}
-        <div className="flex items-center justify-center gap-2 py-2 border-b">
-          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Info className="h-3 w-3" /> Sandbox &mdash; <Link to="/auth/login" className="underline text-primary">Log in</Link> to save
-          </span>
-          <Separator orientation="vertical" className="mx-2 h-6" />
+        {/* Toolbar */}
+        <div className="flex justify-center py-2 border-b">
           <Toolbar onUndo={handleUndo} onRedo={handleRedo} />
         </div>
 

@@ -4,7 +4,7 @@
 
 TactiHub is a real-time collaboration tool that lets teams draw tactics on game maps, create and share battle plans, and coordinate strategies together. Built for Rainbow Six Siege with full map and operator data, it features a powerful canvas drawing system, live cursors, and persistent battle plan management.
 
-![Version](https://img.shields.io/badge/version-1.8.2-orange)
+![Version](https://img.shields.io/badge/version-1.8.4-orange)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![Node](https://img.shields.io/badge/Node.js-20+-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
