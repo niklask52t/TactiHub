@@ -18,7 +18,8 @@ interface StratConfigPopoverProps {
 }
 
 export function StratConfigPopover({ onConfigChange, readOnly }: StratConfigPopoverProps) {
-  const { stratConfig, setStratConfig } = useStratStore();
+  const stratConfig = useStratStore(s => s.stratConfig);
+  const setStratConfig = useStratStore(s => s.setStratConfig);
 
   const handleChange = (key: string, value: string) => {
     const update = { [key]: value };

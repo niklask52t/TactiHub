@@ -51,7 +51,13 @@ export function TopNavBar({
   onPhaseCreate, onPhaseUpdate, onPhaseDelete, onPhaseSwitch,
   onConfigChange, headerRight, readOnly,
 }: TopNavBarProps) {
-  const { scale, zoomTo, resetViewport, containerWidth, containerHeight, setTool, tool: activeTool } = useCanvasStore();
+  const scale = useCanvasStore(s => s.scale);
+  const zoomTo = useCanvasStore(s => s.zoomTo);
+  const resetViewport = useCanvasStore(s => s.resetViewport);
+  const containerWidth = useCanvasStore(s => s.containerWidth);
+  const containerHeight = useCanvasStore(s => s.containerHeight);
+  const setTool = useCanvasStore(s => s.setTool);
+  const activeTool = useCanvasStore(s => s.tool);
 
   const zoomIn = () => {
     const cx = (containerWidth || 1200) / 2;

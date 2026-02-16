@@ -28,7 +28,9 @@ const GROUPS: LayerGroup[] = [
 ];
 
 export function LayerTogglePopover() {
-  const { svgLayerVisibility, setSvgLayerVisibility, resetSvgLayerVisibility } = useStratStore();
+  const svgLayerVisibility = useStratStore(s => s.svgLayerVisibility);
+  const setSvgLayerVisibility = useStratStore(s => s.setSvgLayerVisibility);
+  const resetSvgLayerVisibility = useStratStore(s => s.resetSvgLayerVisibility);
 
   const getLayerName = (code: string) => mapLayers.find(l => l.short === code)?.full ?? code;
 

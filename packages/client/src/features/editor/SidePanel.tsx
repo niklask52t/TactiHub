@@ -34,10 +34,15 @@ export function SidePanel({ side, readOnly, onVisibilityToggle, onColorChange }:
     [operatorSlots, side],
   );
   const activeSlotId = useStratStore(s => s.activeOperatorSlotId);
-  const { landscapeColor, landscapeVisible, setLandscapeColor, setLandscapeVisible } = useStratStore();
-  const { tool: activeTool, setTool, setColor } = useCanvasStore();
+  const landscapeColor = useStratStore(s => s.landscapeColor);
+  const landscapeVisible = useStratStore(s => s.landscapeVisible);
+  const setLandscapeColor = useStratStore(s => s.setLandscapeColor);
+  const setLandscapeVisible = useStratStore(s => s.setLandscapeVisible);
   const setActiveSlotId = useStratStore(s => s.setActiveOperatorSlotId);
   const updateSlot = useStratStore(s => s.updateOperatorSlot);
+  const activeTool = useCanvasStore(s => s.tool);
+  const setTool = useCanvasStore(s => s.setTool);
+  const setColor = useCanvasStore(s => s.setColor);
 
   const accentColor = side === 'attacker' ? '#1a8fe3' : '#e33a3a';
 

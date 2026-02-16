@@ -21,7 +21,9 @@ interface PhaseDropdownProps {
 export function PhaseDropdown({
   onPhaseCreate, onPhaseUpdate, onPhaseDelete, onPhaseSwitch, readOnly,
 }: PhaseDropdownProps) {
-  const { phases, activePhaseId, setActivePhaseId } = useStratStore();
+  const phases = useStratStore(s => s.phases);
+  const activePhaseId = useStratStore(s => s.activePhaseId);
+  const setActivePhaseId = useStratStore(s => s.setActivePhaseId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 

@@ -46,7 +46,10 @@ export default function MapCanvas({
 }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement>(null);
-  const { offsetX, offsetY, scale, selectedDrawId } = useCanvasStore();
+  const offsetX = useCanvasStore(s => s.offsetX);
+  const offsetY = useCanvasStore(s => s.offsetY);
+  const scale = useCanvasStore(s => s.scale);
+  const selectedDrawId = useCanvasStore(s => s.selectedDrawId);
 
   const svgAvailable = !!mapSlug && hasSvgMap(mapSlug);
   const isRealView = viewMode === 'realview' && svgAvailable;

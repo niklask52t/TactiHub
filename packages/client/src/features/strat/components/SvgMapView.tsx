@@ -15,7 +15,7 @@ export default function SvgMapView({ mapSlug, floorNumber }: SvgMapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { svgLayerVisibility } = useStratStore();
+  const svgLayerVisibility = useStratStore(s => s.svgLayerVisibility);
 
   // Fetch and inject SVG
   useEffect(() => {
