@@ -101,7 +101,7 @@ export default function SandboxPage() {
   useEffect(() => { setCurrentFloorIndex(0); }, [selectedMapSlug]);
 
   // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('blueprint');
+  const [viewMode, setViewMode] = useState<ViewMode>('realview');
   const svgAvailable = !!selectedMapSlug && hasSvgMap(selectedMapSlug);
 
   const availableModes = useMemo<ViewMode[]>(() => {

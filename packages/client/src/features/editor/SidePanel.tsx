@@ -1,11 +1,13 @@
 /**
  * Side panel — operator tool panel for one side (ATK or DEF).
- * Contains: visibility row, landscape section, tool grid, operator avatars.
+ * Contains: visibility row, landscape section, tool grid with gadgets, operator avatars.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Tool } from '@tactihub/shared';
-import type { StratOperatorSlot } from '@tactihub/shared';
+import type { StratOperatorSlot, Operator, Gadget } from '@tactihub/shared';
+import { apiGet } from '@/lib/api';
 import { useStratStore } from '@/stores/strat.store';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { SidePanelToolGrid } from './SidePanelToolGrid';
@@ -15,6 +17,7 @@ import { Pencil, Minus, Square, Type } from 'lucide-react';
 
 interface SidePanelProps {
   side: 'attacker' | 'defender';
+  gameSlug: string;
   readOnly?: boolean;
   onVisibilityToggle?: (slotId: string, visible: boolean) => void;
   onColorChange?: (slotId: string, color: string) => void;
@@ -27,7 +30,9 @@ const LANDSCAPE_TOOLS: Array<{ tool: Tool; icon: typeof Pencil; label: string }>
   { tool: Tool.Text, icon: Type, label: 'Text' },
 ];
 
-export function SidePanel({ side, readOnly, onVisibilityToggle, onColorChange }: SidePanelProps) {
+const CATEGORY_ORDER: Record<string, number> = { unique: 0, secondary: 1, general: 2 };
+
+export function SidePanel({ side, gameSlug, readOnly, onVisibilityToggle, onColorChange }: SidePanelProps) {
   const operatorSlots = useStratStore(s => s.operatorSlots);
   const slots = useMemo(
     () => operatorSlots.filter(s => s.side === side).sort((a, b) => a.slotNumber - b.slotNumber),
@@ -43,21 +48,120 @@ export function SidePanel({ side, readOnly, onVisibilityToggle, onColorChange }:
   const activeTool = useCanvasStore(s => s.tool);
   const setTool = useCanvasStore(s => s.setTool);
   const setColor = useCanvasStore(s => s.setColor);
+  const selectedIcon = useCanvasStore(s => s.selectedIcon);
+  const setSelectedIcon = useCanvasStore(s => s.setSelectedIcon);
 
   const accentColor = side === 'attacker' ? '#1a8fe3' : '#e33a3a';
 
-  const handleToolCellClick = (slotId: string, tool: Tool) => {
+  // Fetch operators (with gadgets) for this game
+  const { data: operatorsData } = useQuery({
+    queryKey: ['operators', gameSlug],
+    queryFn: () => apiGet<{ data: Operator[] }>(`/games/${gameSlug}/operators`),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!gameSlug,
+  });
+
+  // Fetch all gadgets to get general-category ones
+  const { data: gadgetsData } = useQuery({
+    queryKey: ['gadgets', gameSlug],
+    queryFn: () => apiGet<{ data: Gadget[] }>(`/games/${gameSlug}/gadgets`),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!gameSlug,
+  });
+
+  // Build operator lookup: operatorId → Operator (with gadgets)
+  const operatorMap = useMemo(() => {
+    const all = operatorsData?.data || [];
+    const map: Record<string, Operator> = {};
+    for (const op of all) map[op.id] = op;
+    return map;
+  }, [operatorsData]);
+
+  // General gadgets (shown for all slots regardless of operator)
+  const generalGadgets = useMemo(() => {
+    const all = gadgetsData?.data || [];
+    return all.filter(g => g.category === 'general');
+  }, [gadgetsData]);
+
+  // Compute unified gadget rows and per-slot availability
+  const { gadgetRows, slotGadgetIds } = useMemo(() => {
+    const seen = new Set<string>();
+    const rows: Gadget[] = [];
+
+    // Collect gadgets from assigned operators
+    for (const slot of slots) {
+      if (!slot.operatorId) continue;
+      const op = operatorMap[slot.operatorId];
+      if (!op?.gadgets) continue;
+      for (const g of op.gadgets) {
+        if (!seen.has(g.id)) {
+          seen.add(g.id);
+          rows.push(g);
+        }
+      }
+    }
+
+    // Add general gadgets
+    for (const g of generalGadgets) {
+      if (!seen.has(g.id)) {
+        seen.add(g.id);
+        rows.push(g);
+      }
+    }
+
+    // Sort: unique → secondary → general, then by name
+    rows.sort((a, b) => {
+      const catDiff = (CATEGORY_ORDER[a.category] ?? 9) - (CATEGORY_ORDER[b.category] ?? 9);
+      if (catDiff !== 0) return catDiff;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Build per-slot gadget ID sets
+    const generalIds = new Set(generalGadgets.map(g => g.id));
+    const sgi = new Map<string, Set<string>>();
+    for (const slot of slots) {
+      const ids = new Set(generalIds);
+      if (slot.operatorId) {
+        const op = operatorMap[slot.operatorId];
+        if (op?.gadgets) {
+          for (const g of op.gadgets) ids.add(g.id);
+        }
+      }
+      sgi.set(slot.id, ids);
+    }
+
+    return { gadgetRows: rows, slotGadgetIds: sgi };
+  }, [slots, operatorMap, generalGadgets]);
+
+  const handleToolCellClick = useCallback((slotId: string, tool: Tool) => {
     const slot = slots.find(s => s.id === slotId);
     if (!slot) return;
     setActiveSlotId(slotId);
     setTool(tool);
     setColor(slot.color);
-  };
+    if (tool !== Tool.Icon) setSelectedIcon(null);
+  }, [slots, setActiveSlotId, setTool, setColor, setSelectedIcon]);
+
+  const handleGadgetCellClick = useCallback((slotId: string, gadget: Gadget) => {
+    const slot = slots.find(s => s.id === slotId);
+    if (!slot) return;
+    setActiveSlotId(slotId);
+    setTool(Tool.Icon);
+    setColor(slot.color);
+    setSelectedIcon({
+      type: 'gadget',
+      id: gadget.id,
+      url: gadget.icon || '',
+      name: gadget.name,
+      color: slot.color,
+    });
+  }, [slots, setActiveSlotId, setTool, setColor, setSelectedIcon]);
 
   const handleLandscapeTool = (tool: Tool) => {
     setActiveSlotId(null);
     setTool(tool);
     setColor(landscapeColor);
+    setSelectedIcon(null);
   };
 
   const handleVisibilityChange = (slot: StratOperatorSlot, visible: boolean) => {
@@ -148,12 +252,16 @@ export function SidePanel({ side, readOnly, onVisibilityToggle, onColorChange }:
         )}
       </div>
 
-      {/* Tool grid */}
+      {/* Tool grid + gadget rows */}
       <SidePanelToolGrid
         slots={slots}
         activeTool={activeTool}
         activeSlotId={activeSlotId}
         onCellClick={handleToolCellClick}
+        gadgetRows={gadgetRows}
+        slotGadgetIds={slotGadgetIds}
+        onGadgetClick={handleGadgetCellClick}
+        activeGadgetId={activeTool === Tool.Icon ? selectedIcon?.id ?? null : null}
         readOnly={readOnly}
       />
 

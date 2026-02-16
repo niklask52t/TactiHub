@@ -100,6 +100,7 @@ export function EditorShell({
       {/* Row 3 col 1: ATK Side Panel */}
       <SidePanel
         side="attacker"
+        gameSlug={gameSlug}
         readOnly={readOnly}
         onVisibilityToggle={onVisibilityToggle}
         onColorChange={onColorChange}
@@ -113,6 +114,7 @@ export function EditorShell({
       {/* Row 3 col 3: DEF Side Panel */}
       <SidePanel
         side="defender"
+        gameSlug={gameSlug}
         readOnly={readOnly}
         onVisibilityToggle={onVisibilityToggle}
         onColorChange={onColorChange}

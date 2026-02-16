@@ -44,7 +44,7 @@ export default function BattleplanViewer() {
   const currentFloor = sortedFloors[currentFloorIndex];
 
   // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('blueprint');
+  const [viewMode, setViewMode] = useState<ViewMode>('realview');
   const svgAvailable = !!mapSlug && hasSvgMap(mapSlug);
 
   const availableModes = useMemo<ViewMode[]>(() => {

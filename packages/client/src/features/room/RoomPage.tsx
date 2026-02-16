@@ -66,7 +66,7 @@ export default function RoomPage() {
   const currentFloor = sortedFloors[currentFloorIndex];
 
   // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('blueprint');
+  const [viewMode, setViewMode] = useState<ViewMode>('realview');
   const svgAvailable = !!planData?.map?.slug && hasSvgMap(planData.map.slug);
   const mapSlug = planData?.map?.slug;
 
