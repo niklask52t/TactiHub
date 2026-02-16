@@ -33,7 +33,8 @@ export function OperatorPickerPopover({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const bannedNames = useStratStore((s) => s.getBannedOperatorNames());
+  const bans = useStratStore((s) => s.bans);
+  const bannedNames = useMemo(() => new Set(bans.map(b => b.operatorName)), [bans]);
   const slots = useStratStore((s) => s.operatorSlots);
   const assignedIds = useMemo(
     () => new Set(slots.filter(s => s.side === side && s.operatorId && s.id !== slotId).map(s => s.operatorId!)),

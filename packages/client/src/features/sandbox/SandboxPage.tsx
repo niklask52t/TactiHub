@@ -280,7 +280,8 @@ export default function SandboxPage() {
   );
 
   const activePhaseId = useStratStore((s) => s.activePhaseId);
-  const visibleSlotIds = useStratStore((s) => s.getVisibleSlotIds());
+  const operatorSlots = useStratStore((s) => s.operatorSlots);
+  const visibleSlotIds = useMemo(() => new Set(operatorSlots.filter(s => s.visible).map(s => s.id)), [operatorSlots]);
   const landscapeVisible = useStratStore((s) => s.landscapeVisible);
 
   // --- Selection UI ---
