@@ -24,7 +24,7 @@ interface OperatorPickerPopoverProps {
   slotId: string;
   gameSlug: string;
   trigger: React.ReactNode;
-  onSelect: (slotId: string, operatorId: string | null) => void;
+  onSelect: (slotId: string, operatorId: string | null, operatorName?: string) => void;
 }
 
 export function OperatorPickerPopover({
@@ -55,8 +55,8 @@ export function OperatorPickerPopover({
     return filtered.filter(op => op.name.toLowerCase().includes(lower));
   }, [data, side, search]);
 
-  const handlePick = (operatorId: string) => {
-    onSelect(slotId, operatorId);
+  const handlePick = (op: Operator) => {
+    onSelect(slotId, op.id, op.name);
     setOpen(false);
     setSearch('');
   };
@@ -86,7 +86,7 @@ export function OperatorPickerPopover({
                 className={`flex flex-col items-center gap-0.5 p-1 rounded transition-colors ${
                   dimmed ? 'opacity-30 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'
                 }`}
-                onClick={() => !dimmed && handlePick(op.id)}
+                onClick={() => !dimmed && handlePick(op)}
                 disabled={dimmed}
                 title={`${op.name}${isBanned ? ' (banned)' : isAssigned ? ' (assigned)' : ''}`}
               >

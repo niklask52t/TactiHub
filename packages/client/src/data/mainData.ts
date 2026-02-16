@@ -55,7 +55,7 @@ export const mapLayers: MapLayerDef[] = [
   { short: 'fe', full: 'Fire extinguisher', default: true },
   { short: 'gp', full: 'Gas pipe', default: true },
   { short: 'ip', full: 'Insertion point', default: true },
-  { short: 'txt', full: 'Label', default: true },
+  { short: 'txt', full: 'Calls', default: true },
   { short: 'cmp', full: 'Compass', default: true },
   { short: 'lg', full: 'Legend', default: true },
 ];

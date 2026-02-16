@@ -244,8 +244,8 @@ export default function SandboxPage() {
   }, [stratStore]);
 
   // Operator assign (local)
-  const handleOperatorAssign = useCallback((slotId: string, operatorId: string | null) => {
-    stratStore.getState().updateOperatorSlot(slotId, { operatorId, operatorName: null });
+  const handleOperatorAssign = useCallback((slotId: string, operatorId: string | null, operatorName?: string) => {
+    stratStore.getState().updateOperatorSlot(slotId, { operatorId, operatorName: operatorName ?? null });
   }, [stratStore]);
 
   // Visibility / color (local)
@@ -301,18 +301,17 @@ export default function SandboxPage() {
 
         <div className="flex gap-4">
           {/* Game selection */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Game</span>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-3">
+            <span className="text-sm font-medium text-muted-foreground">Game</span>
+            <div className="flex flex-wrap gap-3">
               {gameList.map((g: any) => (
                 <Button
                   key={g.id || g.slug}
                   variant={selectedGameSlug === g.slug ? 'default' : 'outline'}
-                  size="sm"
-                  className="gap-2"
+                  className="gap-2 h-10 px-4 text-sm"
                   onClick={() => { setSelectedGameSlug(g.slug); setSelectedMapSlug(null); }}
                 >
-                  {g.icon && <img src={`/uploads${g.icon}`} alt="" className="h-5 w-5" />}
+                  {g.icon && <img src={`/uploads${g.icon}`} alt="" className="h-6 w-6" />}
                   {g.name}
                 </Button>
               ))}
@@ -322,26 +321,24 @@ export default function SandboxPage() {
 
         {/* Map grid */}
         {selectedGameSlug && mapList.length > 0 && (
-          <div className="flex flex-col gap-2 max-w-3xl">
-            <span className="text-xs font-medium text-muted-foreground">Map</span>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+          <div className="flex flex-col gap-3 max-w-4xl">
+            <span className="text-sm font-medium text-muted-foreground">Map</span>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {mapList.map((m: any) => (
-                <Button
+                <button
                   key={m.id || m.slug}
-                  variant="outline"
-                  size="sm"
-                  className="h-auto py-2 flex flex-col gap-1"
+                  className="flex flex-col gap-1.5 p-2 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-card/80 transition-colors cursor-pointer"
                   onClick={() => setSelectedMapSlug(m.slug)}
                 >
                   {m.thumbnail && (
                     <img
                       src={`/uploads${m.thumbnail}`}
                       alt={m.name}
-                      className="w-full h-16 object-cover rounded-sm"
+                      className="w-full h-24 object-cover rounded-md"
                     />
                   )}
-                  <span className="text-xs">{m.name}</span>
-                </Button>
+                  <span className="text-sm font-medium text-center">{m.name}</span>
+                </button>
               ))}
             </div>
           </div>
