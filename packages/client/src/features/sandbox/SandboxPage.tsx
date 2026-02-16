@@ -243,6 +243,11 @@ export default function SandboxPage() {
     stratStore.getState().setStratConfig(config);
   }, [stratStore]);
 
+  // Operator assign (local)
+  const handleOperatorAssign = useCallback((slotId: string, operatorId: string | null) => {
+    stratStore.getState().updateOperatorSlot(slotId, { operatorId, operatorName: null });
+  }, [stratStore]);
+
   // Visibility / color (local)
   const handleVisibilityToggle = useCallback((slotId: string, visible: boolean) => {
     stratStore.getState().updateOperatorSlot(slotId, { visible });
@@ -354,7 +359,7 @@ export default function SandboxPage() {
     <div className="h-screen flex flex-col">
       <EditorShell
         mapName={mapData?.name || selectedMapSlug}
-        gameSlug={selectedGameSlug || 'r6-siege'}
+        gameSlug={selectedGameSlug || 'r6'}
         floors={floorInfo}
         currentFloorIndex={currentFloorIndex}
         onFloorChange={setCurrentFloorIndex}
@@ -365,6 +370,7 @@ export default function SandboxPage() {
         onRedo={handleRedo}
         onExportPng={handleExportPng}
         onExportPdf={handleExportPdf}
+        onOperatorAssign={handleOperatorAssign}
         onVisibilityToggle={handleVisibilityToggle}
         onColorChange={handleColorChange}
         onPhaseCreate={handlePhaseCreate}
