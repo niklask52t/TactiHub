@@ -9,12 +9,14 @@ interface Release {
   version: string;
   date: string;
   tag?: string;
+  subtitle?: string;
   changes: Change[];
 }
 
 const releases: Release[] = [
   {
     version: '2.0.0',
+    subtitle: 'Canvas Rewrite & Side Panel Editor',
     date: '2026-02-16',
     tag: 'Latest',
     changes: [
@@ -34,6 +36,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.6',
+    subtitle: 'Account Settings & Token Stability',
     date: '2026-02-14',
     changes: [
       { type: 'feature', text: 'Email address change \u2014 all users (including admin) can change their email via Account Settings with password confirmation and new-email verification' },
@@ -49,6 +52,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.5',
+    subtitle: 'Production Fixes & Plan Settings',
     date: '2026-02-14',
     changes: [
       { type: 'feature', text: 'Plan settings dialog in room view \u2014 edit name, description, notes, tags, and public toggle with manual save' },
@@ -67,6 +71,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.4',
+    subtitle: 'Map Names & Laser Fixes',
     date: '2026-02-14',
     changes: [
       { type: 'feature', text: 'Map name displayed in room and sandbox header bar' },
@@ -83,6 +88,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.3',
+    subtitle: 'Move/Resize Undo & Sandbox Fixes',
     date: '2026-02-14',
     changes: [
       { type: 'feature', text: 'Undo/redo now covers move and resize operations' },
@@ -97,6 +103,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.2',
+    subtitle: 'R6 Siege Focus',
     date: '2026-02-14',
     changes: [
       { type: 'improvement', text: 'Updated all documentation to reflect R6 Siege-only focus' },
@@ -105,6 +112,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.1',
+    subtitle: 'Visual Lineup Picker & Optimistic Draws',
     date: '2026-02-13',
     changes: [
       { type: 'feature', text: 'Visual operator lineup picker \u2014 clickable image grid replaces dropdown selectors' },
@@ -119,6 +127,7 @@ const releases: Release[] = [
   },
   {
     version: '1.8.0',
+    subtitle: 'Operator Lineup System',
     date: '2026-02-13',
     changes: [
       { type: 'feature', text: 'Operator Lineup System \u2014 select 5 defenders per battleplan to filter the icon sidebar' },
@@ -134,6 +143,7 @@ const releases: Release[] = [
   },
   {
     version: '1.7.0',
+    subtitle: 'Resize, Rotate & Full Operator Roster',
     date: '2026-02-13',
     changes: [
       { type: 'feature', text: 'Resize & Rotate for selected drawings \u2014 8 resize handles (corners + edges) and a rotate handle above the bounding box' },
@@ -148,6 +158,7 @@ const releases: Release[] = [
   },
   {
     version: '1.6.0',
+    subtitle: 'Chat, Tags & Select Tool',
     date: '2026-02-13',
     changes: [
       { type: 'feature', text: 'In-room text chat \u2014 ephemeral messaging between room participants with unread badge' },
@@ -164,6 +175,7 @@ const releases: Release[] = [
   },
   {
     version: '1.5.2',
+    subtitle: 'Magic Link & Guest Drawing',
     date: '2026-02-12',
     changes: [
       { type: 'feature', text: 'Magic Link (passwordless) login via email \u2014 enter email or username, receive a login link, click to log in' },
@@ -176,6 +188,7 @@ const releases: Release[] = [
   },
   {
     version: '1.5.1',
+    subtitle: 'Account Deletion & reCAPTCHA',
     date: '2026-02-12',
     changes: [
       { type: 'feature', text: 'Account self-deletion with double confirmation, email verification, and 30-day grace period' },
@@ -191,6 +204,7 @@ const releases: Release[] = [
   },
   {
     version: '1.5.0',
+    subtitle: 'Laser Pointer & Icon Placement',
     date: '2026-02-12',
     changes: [
       { type: 'feature', text: 'Laser Pointer tools: Laser Dot (pulsating point) and Laser Line (fading trail, 3s)' },
@@ -206,6 +220,7 @@ const releases: Release[] = [
   },
   {
     version: '1.4.0',
+    subtitle: 'Floor Image Variants',
     date: '2026-02-12',
     changes: [
       { type: 'feature', text: 'Floor image variants: Blueprint, Darkprint, and Whiteprint per floor' },
@@ -220,6 +235,7 @@ const releases: Release[] = [
   },
   {
     version: '1.3.0',
+    subtitle: 'Admin Verification & Gaming Design',
     date: '2026-02-12',
     changes: [
       { type: 'feature', text: 'Admin manual user verification (with confirmation dialog and notification email)' },
@@ -236,6 +252,7 @@ const releases: Release[] = [
   },
   {
     version: '1.2.2',
+    subtitle: 'First Login & Token Registration',
     date: '2026-02-12',
     changes: [
       { type: 'feature', text: 'Forced credential change on first login with default admin account' },
@@ -250,6 +267,7 @@ const releases: Release[] = [
   },
   {
     version: '1.2.1',
+    subtitle: 'Zoom, Pan & Core Tools',
     date: '2026-02-11',
     changes: [
       { type: 'feature', text: 'Zoom + Pan (mouse wheel, pan tool, middle-click, zoom limits 25%-400%)' },
@@ -264,6 +282,7 @@ const releases: Release[] = [
   },
   {
     version: '1.1.0',
+    subtitle: 'Branding & Documentation',
     date: '2026-02-11',
     changes: [
       { type: 'feature', text: 'Branding update (TactiHub logo, orange/red color scheme)' },
@@ -273,6 +292,7 @@ const releases: Release[] = [
   },
   {
     version: '1.0.0',
+    subtitle: 'Initial Release',
     date: '2026-02-11',
     changes: [
       { type: 'feature', text: 'Initial release' },
@@ -341,6 +361,9 @@ export default function ChangelogPage() {
                         </span>
                       )}
                       <span className="text-sm text-muted-foreground">{release.date}</span>
+                      {release.subtitle && (
+                        <span className="text-sm text-muted-foreground font-normal">— {release.subtitle}</span>
+                      )}
                       <svg
                         className="w-4 h-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24"

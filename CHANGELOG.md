@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0 — 2026-02-16
+## v2.0.0 — 2026-02-16 — Canvas Rewrite & Side Panel Editor
 
 - [feature] Complete canvas system rewrite — replaced 1197-line monolithic CanvasLayer with modular architecture (MapCanvas, BackgroundLayer, DrawLayer, ActiveLayer, tool hooks)
 - [feature] New editor layout — CSS grid with TopNavBar, OperatorStrip, and left/right SidePanels (ATK/DEF)
@@ -22,7 +22,7 @@
 - [fix] Map cover images now use correct API field name (thumbnail)
 - [fix] Game icon (R6 logo) now renders correctly in Sandbox map selection
 
-## v1.8.6 — 2026-02-14
+## v1.8.6 — 2026-02-14 — Account Settings & Token Stability
 
 - [feature] Email address change — all users (including admin) can change their email via Account Settings with password confirmation and new-email verification
 - [feature] Password change — all users can change their password via Account Settings (current password + new password with confirmation)
@@ -34,7 +34,7 @@
 - [improvement] Removed unused Redis dependency from socket module
 - [fix] Random logouts fixed — concurrent token refresh requests no longer cause race condition (client-side deduplication)
 
-## v1.8.5 — 2026-02-14
+## v1.8.5 — 2026-02-14 — Production Fixes & Plan Settings
 
 - [feature] Plan settings dialog in room view — edit name, description, notes, tags, and public toggle with manual save
 - [feature] Resend verification email option on login page when email is not yet verified
@@ -49,7 +49,7 @@
 - [fix] Admin manual user verification works in production (changed from PUT to POST)
 - [fix] Draw operations (move, resize, erase) work in production (PUT/DELETE replaced with POST)
 
-## v1.8.4 — 2026-02-14
+## v1.8.4 — 2026-02-14 — Map Names & Laser Fixes
 
 - [feature] Map name displayed in room and sandbox header bar
 - [improvement] Map name included in battleplan API response
@@ -62,7 +62,7 @@
 - [fix] Laser line flickering when drawing new line while old one is fading
 - [fix] Removed redundant version badge from Changelog page header
 
-## v1.8.3 — 2026-02-14
+## v1.8.3 — 2026-02-14 — Move/Resize Undo & Sandbox Fixes
 
 - [feature] Undo/redo now covers move and resize operations
 - [feature] Rainbow Six Siege game logo added
@@ -73,12 +73,12 @@
 - [fix] Move/resize ghost eliminated — original draw hidden during drag
 - [fix] Laser line no longer jumps when restarting during fade
 
-## v1.8.2 — 2026-02-14
+## v1.8.2 — 2026-02-14 — R6 Siege Focus
 
 - [improvement] Updated all documentation to reflect R6 Siege-only focus
 - [removed] Valorant game data removed from seed — TactiHub now focuses exclusively on Rainbow Six Siege
 
-## v1.8.1 — 2026-02-13
+## v1.8.1 — 2026-02-13 — Visual Lineup Picker & Optimistic Draws
 
 - [feature] Visual operator lineup picker — clickable image grid replaces dropdown selectors
 - [improvement] Sandbox mode matches room layout — full-screen canvas with icon sidebar and toolbar
@@ -89,7 +89,7 @@
 - [fix] Select/Move tool works immediately — draws are selectable and movable right after creation
 - [fix] Draws persist on floor switch — optimistic draws stay visible while awaiting server confirmation
 
-## v1.8.0 — 2026-02-13
+## v1.8.0 — 2026-02-13 — Operator Lineup System
 
 - [feature] Operator Lineup System — select 5 defenders per battleplan to filter the icon sidebar to only lineup operators and their gadgets
 - [feature] Optional Attacker Lineup — add a second set of 5 attacker slots on demand, remove when not needed
@@ -101,7 +101,7 @@
 - [improvement] Gadget filtering uses operator-gadget relationships — only gadgets belonging to lineup operators are shown
 - [improvement] Duplicate prevention — already-assigned operators are hidden from lineup dropdowns
 
-## v1.7.0 — 2026-02-13
+## v1.7.0 — 2026-02-13 — Resize, Rotate & Full Operator Roster
 
 - [feature] Resize & Rotate for selected drawings — 8 resize handles (corners + edges) and a rotate handle above the bounding box
 - [feature] All R6 Siege operators added (~78 total) — complete roster through Year 10 including Skopos, Denari, Striker, Rauora
@@ -112,7 +112,7 @@
 - [fix] Fixed z-index overlaps — chat panel no longer hidden behind compass, icon sidebar toggle, or operator icons
 - [fix] Added missing draw:updated socket listener — peer draw updates now sync correctly across room participants
 
-## v1.6.0 — 2026-02-13
+## v1.6.0 — 2026-02-13 — Chat, Tags & Select Tool
 
 - [feature] In-room text chat — ephemeral messaging between room participants with unread badge
 - [feature] Select & Drag tool — click to select your own drawings, drag to reposition them
@@ -125,7 +125,7 @@
 - [improvement] Server-side ownership checks on draw update and delete endpoints
 - [improvement] Replaced dev-reset.sh with interactive update.sh (dev/prod mode selector)
 
-## v1.5.2 — 2026-02-12
+## v1.5.2 — 2026-02-12 — Magic Link & Guest Drawing
 
 - [feature] Magic Link (passwordless) login via email — enter email or username, receive a login link, click to log in
 - [feature] Guests can now draw locally in rooms (full toolbar, icons, undo/redo — drawings not persisted or shared)
@@ -134,7 +134,7 @@
 - [improvement] Icon image cache to prevent flicker on re-renders
 - [fix] Improved map centering with ResizeObserver (fixes top-flush/bottom-gap issue)
 
-## v1.5.1 — 2026-02-12
+## v1.5.1 — 2026-02-12 — Account Deletion & reCAPTCHA
 
 - [feature] Account self-deletion with double confirmation, email verification, and 30-day grace period
 - [feature] Google reCAPTCHA v2 on registration (optional, works without configuration)
@@ -146,7 +146,7 @@
 - [improvement] User menu moved to far right in navbar
 - [fix] Fixed DELETE request Content-Type bug (Fastify empty body error)
 
-## v1.5.0 — 2026-02-12
+## v1.5.0 — 2026-02-12 — Laser Pointer & Icon Placement
 
 - [feature] Laser Pointer tools: Laser Dot (pulsating point) and Laser Line (fading trail, 3s)
 - [feature] Operator and gadget icon placement on canvas via Icon tool
@@ -158,7 +158,7 @@
 - [fix] Fixed infinite horizontal scroll bug
 - [fix] Fixed black canvas on initial plan load
 
-## v1.4.0 — 2026-02-12
+## v1.4.0 — 2026-02-12 — Floor Image Variants
 
 - [feature] Floor image variants: Blueprint, Darkprint, and Whiteprint per floor
 - [feature] View mode switcher on canvas (top-left, only visible when floor has multiple variants)
@@ -169,7 +169,7 @@
 - [fix] Correct floor names and counts per map (was generic 4-floor placeholder)
 - [removed] Removed Bartlett map (no image data available)
 
-## v1.3.0 — 2026-02-12
+## v1.3.0 — 2026-02-12 — Admin Verification & Gaming Design
 
 - [feature] Admin manual user verification (with confirmation dialog and notification email)
 - [feature] Floor layout management UI (upload, reorder, rename, delete per map)
@@ -182,7 +182,7 @@
 - [fix] Fixed gadget category dropdown visibility in dark mode
 - [fix] Fixed Radix Switch form values not correctly sent as "true"/"false"
 
-## v1.2.2 — 2026-02-12
+## v1.2.2 — 2026-02-12 — First Login & Token Registration
 
 - [feature] Forced credential change on first login with default admin account
 - [feature] Login accepts username or email
@@ -193,7 +193,7 @@
 - [improvement] Back to Homepage links on auth pages
 - [improvement] Larger logo throughout the app
 
-## v1.2.1 — 2026-02-11
+## v1.2.1 — 2026-02-11 — Zoom, Pan & Core Tools
 
 - [feature] Zoom + Pan (mouse wheel, pan tool, middle-click, zoom limits 25%-400%)
 - [feature] Eraser tool (click to delete drawings)
@@ -204,13 +204,13 @@
 - [feature] Help page, FAQ page, and versioned Impressum
 - [improvement] Improved room creation with game/map selection flow
 
-## v1.1.0 — 2026-02-11
+## v1.1.0 — 2026-02-11 — Branding & Documentation
 
 - [feature] Branding update (TactiHub logo, orange/red color scheme)
 - [feature] Impressum page with credits to original projects
 - [feature] README and CLAUDE.md documentation
 
-## v1.0.0 — 2026-02-11
+## v1.0.0 — 2026-02-11 — Initial Release
 
 - [feature] Initial release
 - [feature] Multi-game support (R6 Siege, Valorant)
