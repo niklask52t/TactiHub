@@ -1,10 +1,9 @@
 /**
  * Top navigation bar for the editor.
- * Map name + floor tabs + view mode + undo/redo/export/zoom.
+ * Map name + floor tabs + layer toggle + undo/redo/export/zoom.
  */
 
 import { Tool, ZOOM_STEP } from '@tactihub/shared';
-import type { ViewMode } from '@tactihub/shared';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -16,21 +15,11 @@ import { PhaseDropdown } from './PhaseDropdown';
 import { StratConfigPopover } from './StratConfigPopover';
 import { LayerTogglePopover } from './LayerTogglePopover';
 
-const VIEW_MODE_LABELS: Record<ViewMode, string> = {
-  blueprint: 'BP',
-  dark: 'Dark',
-  white: 'White',
-  realview: 'Real',
-};
-
 interface TopNavBarProps {
   mapName?: string;
   floors: Array<{ name: string; floorNumber: number }>;
   currentFloorIndex: number;
   onFloorChange: (index: number) => void;
-  viewMode: ViewMode;
-  availableModes: ViewMode[];
-  onViewModeChange: (mode: ViewMode) => void;
   onUndo?: () => void;
   onRedo?: () => void;
   onExportPng?: () => void;
@@ -46,7 +35,6 @@ interface TopNavBarProps {
 
 export function TopNavBar({
   mapName, floors, currentFloorIndex, onFloorChange,
-  viewMode, availableModes, onViewModeChange,
   onUndo, onRedo, onExportPng, onExportPdf,
   onPhaseCreate, onPhaseUpdate, onPhaseDelete, onPhaseSwitch,
   onConfigChange, headerRight, readOnly,
@@ -93,26 +81,6 @@ export function TopNavBar({
         ))}
       </div>
 
-      {/* View mode */}
-      {availableModes.length > 1 && (
-        <>
-          <div className="h-4 w-px bg-border mx-1" />
-          <div className="flex items-center gap-px">
-            {availableModes.map(mode => (
-              <Button
-                key={mode}
-                variant={viewMode === mode ? 'default' : 'ghost'}
-                size="sm"
-                className="h-6 text-[11px] px-1.5"
-                onClick={() => onViewModeChange(mode)}
-              >
-                {VIEW_MODE_LABELS[mode]}
-              </Button>
-            ))}
-          </div>
-        </>
-      )}
-
       {/* Spacer */}
       <div className="flex-1" />
 
@@ -130,8 +98,8 @@ export function TopNavBar({
         </>
       )}
 
-      {/* Layer toggle (only in realview) */}
-      {viewMode === 'realview' && <LayerTogglePopover />}
+      {/* Layer toggle */}
+      <LayerTogglePopover />
 
       <div className="h-4 w-px bg-border mx-1" />
 

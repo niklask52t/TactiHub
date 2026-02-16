@@ -1,5 +1,3 @@
-export type { ViewMode } from '@tactihub/shared';
-
 export interface MapFloor {
   id: string;
   name: string;

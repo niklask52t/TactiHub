@@ -10,8 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { useStratStore } from '@/stores/strat.store';
-import type { ViewMode, StratOperatorSlot } from '@tactihub/shared';
-import { hasSvgMap } from '@/data/svgMapIndex';
+import type { StratOperatorSlot } from '@tactihub/shared';
 import { EditorShell } from '@/features/editor/EditorShell';
 import MapCanvas from '@/features/canvas/MapCanvas';
 import { exportFloorAsPng, exportAllFloorsAsPdf } from '@/features/canvas/utils/exportCanvas';
@@ -55,9 +54,9 @@ export default function SandboxPage() {
   const [selectedMapSlug, setSelectedMapSlug] = useState<string | null>(null);
 
   // Fetch games (server wraps in { data: ... })
-  const { data: games } = useQuery({
+  const { data: gamesResp } = useQuery({
     queryKey: ['games'],
-    queryFn: () => apiGet<any>('/games').then(r => r.data),
+    queryFn: () => apiGet<{ data: any[] }>('/games'),
   });
 
   // Fetch maps for selected game
@@ -99,20 +98,6 @@ export default function SandboxPage() {
 
   // Reset floor index when map changes
   useEffect(() => { setCurrentFloorIndex(0); }, [selectedMapSlug]);
-
-  // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('realview');
-  const svgAvailable = !!selectedMapSlug && hasSvgMap(selectedMapSlug);
-
-  const availableModes = useMemo<ViewMode[]>(() => {
-    const mf = currentFloor?.mapFloor;
-    if (!mf) return svgAvailable ? ['realview'] : ['blueprint'];
-    const modes: ViewMode[] = ['blueprint'];
-    if (mf.darkImagePath) modes.push('dark');
-    if (mf.whiteImagePath) modes.push('white');
-    if (svgAvailable) modes.push('realview');
-    return modes;
-  }, [currentFloor?.mapFloor, svgAvailable]);
 
   // Initialize strat store with sandbox slots
   useEffect(() => {
@@ -260,12 +245,8 @@ export default function SandboxPage() {
   // Export
   const handleExportPng = useCallback(() => {
     if (!currentFloor) return;
-    const mf = currentFloor.mapFloor;
-    const imgPath = viewMode === 'dark' && mf?.darkImagePath ? mf.darkImagePath
-      : viewMode === 'white' && mf?.whiteImagePath ? mf.whiteImagePath
-      : mf?.imagePath;
-    exportFloorAsPng(currentFloor, localDraws[currentFloor.id] || [], imgPath);
-  }, [currentFloor, localDraws, viewMode]);
+    exportFloorAsPng(currentFloor, localDraws[currentFloor.id] || [], currentFloor.mapFloor?.imagePath);
+  }, [currentFloor, localDraws]);
 
   const handleExportPdf = useCallback(() => {
     exportAllFloorsAsPdf(
@@ -291,7 +272,7 @@ export default function SandboxPage() {
 
   // --- Selection UI ---
   if (!selectedMapSlug || sortedFloors.length === 0) {
-    const gameList = Array.isArray(games) ? games : [];
+    const gameList = gamesResp?.data ?? [];
     const mapList = gameData?.maps || [];
 
     return (
@@ -360,9 +341,6 @@ export default function SandboxPage() {
         floors={floorInfo}
         currentFloorIndex={currentFloorIndex}
         onFloorChange={setCurrentFloorIndex}
-        viewMode={viewMode}
-        availableModes={availableModes}
-        onViewModeChange={setViewMode}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onExportPng={handleExportPng}
@@ -389,7 +367,6 @@ export default function SandboxPage() {
       >
         <MapCanvas
           floor={currentFloor!}
-          viewMode={viewMode}
           floorIndex={currentFloorIndex}
           readOnly={false}
           onDrawCreate={handleDrawCreate}

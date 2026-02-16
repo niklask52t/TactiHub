@@ -10,8 +10,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { useStratStore } from '@/stores/strat.store';
-import type { ViewMode } from '@tactihub/shared';
-import { hasSvgMap } from '@/data/svgMapIndex';
 import { EditorShell } from '@/features/editor/EditorShell';
 import MapCanvas from '@/features/canvas/MapCanvas';
 import { exportFloorAsPng, exportAllFloorsAsPdf } from '@/features/canvas/utils/exportCanvas';
@@ -42,20 +40,6 @@ export default function BattleplanViewer() {
 
   const [currentFloorIndex, setCurrentFloorIndex] = useState(0);
   const currentFloor = sortedFloors[currentFloorIndex];
-
-  // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('realview');
-  const svgAvailable = !!mapSlug && hasSvgMap(mapSlug);
-
-  const availableModes = useMemo<ViewMode[]>(() => {
-    const mf = currentFloor?.mapFloor;
-    if (!mf) return svgAvailable ? ['realview'] : ['blueprint'];
-    const modes: ViewMode[] = ['blueprint'];
-    if (mf.darkImagePath) modes.push('dark');
-    if (mf.whiteImagePath) modes.push('white');
-    if (svgAvailable) modes.push('realview');
-    return modes;
-  }, [currentFloor?.mapFloor, svgAvailable]);
 
   // Initialize strat store from plan data
   useEffect(() => {
@@ -129,12 +113,8 @@ export default function BattleplanViewer() {
   // Export
   const handleExportPng = useCallback(() => {
     if (!currentFloor) return;
-    const mf = currentFloor.mapFloor;
-    const imgPath = viewMode === 'dark' && mf?.darkImagePath ? mf.darkImagePath
-      : viewMode === 'white' && mf?.whiteImagePath ? mf.whiteImagePath
-      : mf?.imagePath;
-    exportFloorAsPng(currentFloor, [], imgPath);
-  }, [currentFloor, viewMode]);
+    exportFloorAsPng(currentFloor, [], currentFloor.mapFloor?.imagePath);
+  }, [currentFloor]);
 
   const handleExportPdf = useCallback(() => {
     exportAllFloorsAsPdf(
@@ -301,9 +281,6 @@ export default function BattleplanViewer() {
             floors={floorInfo}
             currentFloorIndex={currentFloorIndex}
             onFloorChange={setCurrentFloorIndex}
-            viewMode={viewMode}
-            availableModes={availableModes}
-            onViewModeChange={setViewMode}
             onExportPng={handleExportPng}
             onExportPdf={handleExportPdf}
             onPhaseSwitch={handlePhaseSwitch}
@@ -311,7 +288,6 @@ export default function BattleplanViewer() {
           >
             <MapCanvas
               floor={currentFloor}
-              viewMode={viewMode}
               floorIndex={currentFloorIndex}
               readOnly
               currentUserId={user?.id ?? null}

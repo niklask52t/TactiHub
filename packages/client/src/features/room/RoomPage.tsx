@@ -13,8 +13,6 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useCanvasStore } from '@/stores/canvas.store';
 import { useStratStore } from '@/stores/strat.store';
 import { useRoomStore } from '@/stores/room.store';
-import type { ViewMode } from '@tactihub/shared';
-import { hasSvgMap } from '@/data/svgMapIndex';
 import { EditorShell } from '@/features/editor/EditorShell';
 import { ChatDrawer } from '@/features/editor/ChatDrawer';
 import MapCanvas from '@/features/canvas/MapCanvas';
@@ -65,20 +63,7 @@ export default function RoomPage() {
   const [currentFloorIndex, setCurrentFloorIndex] = useState(0);
   const currentFloor = sortedFloors[currentFloorIndex];
 
-  // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('realview');
-  const svgAvailable = !!planData?.map?.slug && hasSvgMap(planData.map.slug);
   const mapSlug = planData?.map?.slug;
-
-  const availableModes = useMemo<ViewMode[]>(() => {
-    const mf = currentFloor?.mapFloor;
-    if (!mf) return svgAvailable ? ['realview'] : ['blueprint'];
-    const modes: ViewMode[] = ['blueprint'];
-    if (mf.darkImagePath) modes.push('dark');
-    if (mf.whiteImagePath) modes.push('white');
-    if (svgAvailable) modes.push('realview');
-    return modes;
-  }, [currentFloor?.mapFloor, svgAvailable]);
 
   // Local draws (optimistic + guest)
   const [localDraws, setLocalDraws] = useState<Record<string, any[]>>({});
@@ -392,12 +377,8 @@ export default function RoomPage() {
   // Export
   const handleExportPng = useCallback(() => {
     if (!currentFloor) return;
-    const mf = currentFloor.mapFloor;
-    const imgPath = viewMode === 'dark' && mf?.darkImagePath ? mf.darkImagePath
-      : viewMode === 'white' && mf?.whiteImagePath ? mf.whiteImagePath
-      : mf?.imagePath;
-    exportFloorAsPng(currentFloor, localDraws[currentFloor.id] || [], imgPath);
-  }, [currentFloor, localDraws, viewMode]);
+    exportFloorAsPng(currentFloor, localDraws[currentFloor.id] || [], currentFloor.mapFloor?.imagePath);
+  }, [currentFloor, localDraws]);
 
   const handleExportPdf = useCallback(() => {
     exportAllFloorsAsPdf(
@@ -449,9 +430,6 @@ export default function RoomPage() {
         floors={floorInfo}
         currentFloorIndex={currentFloorIndex}
         onFloorChange={setCurrentFloorIndex}
-        viewMode={viewMode}
-        availableModes={availableModes}
-        onViewModeChange={setViewMode}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onExportPng={handleExportPng}
@@ -475,7 +453,6 @@ export default function RoomPage() {
       >
         <MapCanvas
           floor={currentFloor}
-          viewMode={viewMode}
           floorIndex={currentFloorIndex}
           readOnly={false}
           onDrawCreate={handleDrawCreate}

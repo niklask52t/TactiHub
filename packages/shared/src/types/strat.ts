@@ -62,8 +62,6 @@ export interface SvgLayerDef {
   defaultVisible: boolean;
 }
 
-// ViewMode is defined in constants/index.ts (extended with 'realview')
-
 // --- Extended Operator Slot (with strat fields) ---
 
 export interface StratOperatorSlot {

@@ -65,7 +65,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="flex flex-wrap justify-center gap-6">
-            {data?.data.map((game) => (
+            {data?.data?.map((game) => (
               <Link key={game.id} to={`/${game.slug}`} className="w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
                 <div className="gaming-card">
                   <div className="gaming-card-corners">

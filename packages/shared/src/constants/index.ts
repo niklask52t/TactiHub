@@ -33,9 +33,6 @@ export const GADGET_CATEGORIES = ['unique', 'secondary', 'general'] as const;
 
 export const USER_ROLES = ['admin', 'user'] as const;
 
-export const VIEW_MODES = ['blueprint', 'dark', 'white', 'realview'] as const;
-export type ViewMode = (typeof VIEW_MODES)[number];
-
 export const ZOOM_MIN = 0.25;
 export const ZOOM_MAX = 4;
 export const ZOOM_STEP = 0.1;

@@ -1,13 +1,11 @@
 /**
  * MapCanvas — simplified canvas container.
- * Receives a single floor + viewMode from parent.
- * Renders 3-layer stack: BackgroundLayer, DrawLayer, ActiveLayer.
+ * Receives a single floor from parent.
+ * Renders 3-layer stack: BackgroundLayer (SVG), DrawLayer, ActiveLayer.
  */
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useCanvasStore } from '@/stores/canvas.store';
-import type { ViewMode } from '@tactihub/shared';
-import { hasSvgMap } from '@/data/svgMapIndex';
 import { BackgroundLayer } from './layers/BackgroundLayer';
 import { DrawLayer } from './layers/DrawLayer';
 import { ActiveLayer } from './layers/ActiveLayer';
@@ -17,7 +15,6 @@ import type { Floor, LaserLineData, CursorData } from './types';
 
 interface MapCanvasProps {
   floor: Floor;
-  viewMode: ViewMode;
   floorIndex: number;
   readOnly?: boolean;
   onDrawCreate?: (floorId: string, draws: any[]) => void;
@@ -36,7 +33,7 @@ interface MapCanvasProps {
 }
 
 export default function MapCanvas({
-  floor, viewMode, floorIndex, readOnly = false,
+  floor, floorIndex, readOnly = false,
   onDrawCreate, onDrawDelete, onDrawUpdate,
   onLaserLine, onCursorMove,
   peerLaserLines, cursors,
@@ -50,17 +47,6 @@ export default function MapCanvas({
   const offsetY = useCanvasStore(s => s.offsetY);
   const scale = useCanvasStore(s => s.scale);
   const selectedDrawId = useCanvasStore(s => s.selectedDrawId);
-
-  const svgAvailable = !!mapSlug && hasSvgMap(mapSlug);
-  const isRealView = viewMode === 'realview' && svgAvailable;
-
-  const activeImagePath = useMemo(() => {
-    const mf = floor.mapFloor;
-    if (!mf) return undefined;
-    if (viewMode === 'dark' && mf.darkImagePath) return mf.darkImagePath;
-    if (viewMode === 'white' && mf.whiteImagePath) return mf.whiteImagePath;
-    return mf.imagePath;
-  }, [floor.mapFloor, viewMode]);
 
   const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 });
 
@@ -116,8 +102,6 @@ export default function MapCanvas({
         }}
       >
         <BackgroundLayer
-          imagePath={activeImagePath}
-          isRealView={isRealView}
           mapSlug={mapSlug}
           floorNumber={floor.mapFloor?.floorNumber}
           onImageLoaded={handleImageLoaded}

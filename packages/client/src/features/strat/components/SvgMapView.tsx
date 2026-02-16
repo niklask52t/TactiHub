@@ -6,12 +6,13 @@ import { mapLayers } from '@/data/mainData';
 interface SvgMapViewProps {
   mapSlug: string;
   floorNumber: number;
+  onSizeKnown?: (width: number, height: number) => void;
 }
 
 // In-memory cache for fetched SVG strings
 const svgCache = new Map<string, string>();
 
-export default function SvgMapView({ mapSlug, floorNumber }: SvgMapViewProps) {
+export default function SvgMapView({ mapSlug, floorNumber, onSizeKnown }: SvgMapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,14 @@ export default function SvgMapView({ mapSlug, floorNumber }: SvgMapViewProps) {
           // Remove width/height attributes so SVG scales to container
           const svg = containerRef.current.querySelector('svg');
           if (svg) {
+            // Report natural SVG dimensions via viewBox
+            const vb = svg.getAttribute('viewBox');
+            if (vb && onSizeKnown) {
+              const parts = vb.split(/[\s,]+/).map(Number);
+              if (parts.length === 4 && parts[2]! > 0 && parts[3]! > 0) {
+                onSizeKnown(parts[2]!, parts[3]!);
+              }
+            }
             svg.removeAttribute('width');
             svg.removeAttribute('height');
             svg.style.width = '100%';

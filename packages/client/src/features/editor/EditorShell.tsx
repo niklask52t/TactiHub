@@ -1,6 +1,5 @@
 /**
  * EditorShell — master CSS grid layout for the strat editor.
- * Replaces StratLayout + MapCanvas wrapper.
  *
  * Grid:
  *   Row 1: TopNavBar (full width)
@@ -9,7 +8,6 @@
  */
 
 import type { ReactNode } from 'react';
-import type { ViewMode } from '@tactihub/shared';
 import { TopNavBar } from './TopNavBar';
 import { OperatorStrip } from './OperatorStrip';
 import { SidePanel } from './SidePanel';
@@ -24,11 +22,6 @@ interface EditorShellProps {
   floors: Array<{ name: string; floorNumber: number }>;
   currentFloorIndex: number;
   onFloorChange: (index: number) => void;
-
-  // View mode
-  viewMode: ViewMode;
-  availableModes: ViewMode[];
-  onViewModeChange: (mode: ViewMode) => void;
 
   // Actions
   onUndo?: () => void;
@@ -53,7 +46,6 @@ interface EditorShellProps {
 export function EditorShell({
   children, readOnly,
   mapName, gameSlug, floors, currentFloorIndex, onFloorChange,
-  viewMode, availableModes, onViewModeChange,
   onUndo, onRedo, onExportPng, onExportPdf,
   onOperatorAssign, onVisibilityToggle, onColorChange,
   onPhaseCreate, onPhaseUpdate, onPhaseDelete, onPhaseSwitch, onConfigChange,
@@ -71,9 +63,6 @@ export function EditorShell({
           floors={floors}
           currentFloorIndex={currentFloorIndex}
           onFloorChange={onFloorChange}
-          viewMode={viewMode}
-          availableModes={availableModes}
-          onViewModeChange={onViewModeChange}
           onUndo={onUndo}
           onRedo={onRedo}
           onExportPng={onExportPng}

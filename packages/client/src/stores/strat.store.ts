@@ -3,7 +3,7 @@ import type {
   StratConfig, StratSide, StratMode, StratSite,
   BattleplanPhase, OperatorBan, StratOperatorSlot,
 } from '@tactihub/shared';
-import type { ViewMode } from '@tactihub/shared';
+
 import { mapLayers } from '@/data/mainData';
 
 interface StratStoreState {
@@ -37,9 +37,6 @@ interface StratStoreState {
   svgLayerVisibility: Record<string, boolean>;
   setSvgLayerVisibility: (code: string, visible: boolean) => void;
   resetSvgLayerVisibility: () => void;
-
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
 
   getActiveColor: () => string;
   getAttackerSlots: () => StratOperatorSlot[];
@@ -109,9 +106,6 @@ export const useStratStore = create<StratStoreState>((set, get) => ({
   })),
   resetSvgLayerVisibility: () => set({ svgLayerVisibility: buildDefaultLayerVisibility() }),
 
-  viewMode: 'blueprint' as ViewMode,
-  setViewMode: (mode) => set({ viewMode: mode }),
-
   getActiveColor: () => {
     const { activeOperatorSlotId, operatorSlots, landscapeColor } = get();
     if (!activeOperatorSlotId) return landscapeColor;
@@ -149,6 +143,5 @@ export const useStratStore = create<StratStoreState>((set, get) => ({
     landscapeColor: '#00FF00',
     landscapeVisible: true,
     svgLayerVisibility: buildDefaultLayerVisibility(),
-    viewMode: 'blueprint',
   }),
 }));
