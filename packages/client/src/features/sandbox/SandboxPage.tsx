@@ -54,10 +54,18 @@ export default function SandboxPage() {
   const [selectedMapSlug, setSelectedMapSlug] = useState<string | null>(null);
 
   // Fetch games (server wraps in { data: ... })
-  const { data: gamesResp } = useQuery({
+  const { data: gamesResp, isLoading: gamesLoading } = useQuery({
     queryKey: ['games'],
     queryFn: () => apiGet<{ data: any[] }>('/games'),
   });
+
+  // Auto-select first game if there's only one
+  useEffect(() => {
+    const games = gamesResp?.data;
+    if (games?.length && !selectedGameSlug) {
+      setSelectedGameSlug(games[0].slug);
+    }
+  }, [gamesResp, selectedGameSlug]);
 
   // Fetch maps for selected game
   const { data: gameData } = useQuery({
@@ -278,6 +286,10 @@ export default function SandboxPage() {
         <h1 className="text-2xl font-bold">Sandbox Mode</h1>
         <p className="text-muted-foreground text-sm">Select a game and map to start drawing</p>
 
+        {gamesLoading && (
+          <div className="text-sm text-muted-foreground animate-pulse">Loading games...</div>
+        )}
+
         <div className="flex gap-4">
           {/* Game selection */}
           <div className="flex flex-col gap-3">
@@ -335,7 +347,7 @@ export default function SandboxPage() {
     <div className="h-screen flex flex-col">
       <EditorShell
         mapName={mapData?.name || selectedMapSlug}
-        gameSlug={selectedGameSlug || 'r6'}
+        gameSlug={selectedGameSlug!}
         floors={floorInfo}
         currentFloorIndex={currentFloorIndex}
         onFloorChange={setCurrentFloorIndex}

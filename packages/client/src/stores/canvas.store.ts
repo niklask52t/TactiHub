@@ -14,12 +14,12 @@ interface CanvasStoreState {
   color: string;
   lineWidth: number;
   fontSize: number;
-  selectedIcon: { type: 'operator' | 'gadget'; id: string; url: string; name?: string; color?: string } | null;
+  selectedIcon: { type: 'operator' | 'gadget'; id: string; url: string; name?: string; color?: string; operatorIcon?: string } | null;
   setTool: (tool: Tool) => void;
   setColor: (color: string) => void;
   setLineWidth: (width: number) => void;
   setFontSize: (size: number) => void;
-  setSelectedIcon: (icon: { type: 'operator' | 'gadget'; id: string; url: string; name?: string; color?: string } | null) => void;
+  setSelectedIcon: (icon: { type: 'operator' | 'gadget'; id: string; url: string; name?: string; color?: string; operatorIcon?: string } | null) => void;
 
   offsetX: number;
   offsetY: number;

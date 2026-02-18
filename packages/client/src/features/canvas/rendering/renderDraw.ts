@@ -126,7 +126,7 @@ function drawIcon(
   d: any,
   onIconLoad?: { current: () => void },
 ): void {
-  const size = d.size ?? 32;
+  const size = d.size ?? 20;
   const halfSize = size / 2;
 
   if (d.iconUrl) {
@@ -138,11 +138,8 @@ function drawIcon(
       // Schedule a re-render when the image finishes loading
       img.addEventListener('load', () => onIconLoad.current(), { once: true });
     }
-    return;
-  }
-
-  // Fallback: colored circle with abbreviation text
-  if (d.fallbackText) {
+  } else if (d.fallbackText) {
+    // Fallback: colored circle with abbreviation text
     ctx.beginPath();
     ctx.fillStyle = d.fallbackColor ?? '#888888';
     ctx.arc(draw.originX, draw.originY, halfSize, 0, Math.PI * 2);
@@ -153,5 +150,32 @@ function drawIcon(
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(d.fallbackText, draw.originX, draw.originY);
+  }
+
+  // Operator badge in bottom-right corner
+  if (d.operatorIconUrl) {
+    const badgeSize = Math.max(8, Math.round(size * 0.45));
+    const badgeHalf = badgeSize / 2;
+    const badgeX = draw.originX + halfSize - badgeHalf * 0.3;
+    const badgeY = draw.originY + halfSize - badgeHalf * 0.3;
+
+    const badgeImg = loadIcon(d.operatorIconUrl);
+    if (badgeImg.complete && badgeImg.naturalWidth > 0) {
+      // White circle background
+      ctx.beginPath();
+      ctx.fillStyle = '#ffffff';
+      ctx.arc(badgeX, badgeY, badgeHalf + 1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clip to circle and draw operator icon
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY, badgeHalf, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(badgeImg, badgeX - badgeHalf, badgeY - badgeHalf, badgeSize, badgeSize);
+      ctx.restore();
+    } else if (onIconLoad) {
+      badgeImg.addEventListener('load', () => onIconLoad.current(), { once: true });
+    }
   }
 }

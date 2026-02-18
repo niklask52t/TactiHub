@@ -148,14 +148,16 @@ export function SidePanel({ side, gameSlug, readOnly, onVisibilityToggle, onColo
     setActiveSlotId(slotId);
     setTool(Tool.Icon);
     setColor(slot.color);
+    const op = slot.operatorId ? operatorMap[slot.operatorId] : null;
     setSelectedIcon({
       type: 'gadget',
       id: gadget.id,
       url: gadget.icon || '',
       name: gadget.name,
       color: slot.color,
+      operatorIcon: op?.icon || undefined,
     });
-  }, [slots, setActiveSlotId, setTool, setColor, setSelectedIcon]);
+  }, [slots, operatorMap, setActiveSlotId, setTool, setColor, setSelectedIcon]);
 
   const handleLandscapeTool = (tool: Tool) => {
     setActiveSlotId(null);
@@ -276,7 +278,15 @@ export function SidePanel({ side, gameSlug, readOnly, onVisibilityToggle, onColo
                 }`}
                 style={{ backgroundColor: slot.operatorId ? slot.color : '#555' }}
               >
-                {slot.operatorName?.[0] || '?'}
+                {slot.operatorId && operatorMap[slot.operatorId]?.icon ? (
+                  <img
+                    src={`/uploads${operatorMap[slot.operatorId]!.icon}`}
+                    alt={slot.operatorName || ''}
+                    className="h-full w-full object-cover rounded-full"
+                  />
+                ) : (
+                  slot.operatorName?.[0] || '?'
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent className="text-xs">{slot.operatorName || `Slot ${slot.slotNumber}`}</TooltipContent>

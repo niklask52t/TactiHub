@@ -4,11 +4,13 @@
  */
 
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiGet } from '@/lib/api';
 import { useStratStore } from '@/stores/strat.store';
 import { OperatorPickerPopover } from './OperatorPickerPopover';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Swords } from 'lucide-react';
-import type { StratOperatorSlot } from '@tactihub/shared';
+import type { StratOperatorSlot, Operator } from '@tactihub/shared';
 
 interface OperatorStripProps {
   gameSlug: string;
@@ -29,6 +31,22 @@ export function OperatorStrip({ gameSlug, readOnly, onOperatorAssign }: Operator
   const activeSlotId = useStratStore((s) => s.activeOperatorSlotId);
   const setActiveSlotId = useStratStore((s) => s.setActiveOperatorSlotId);
 
+  // Fetch operators to get icon URLs (shared cache key with SidePanel/OperatorPickerPopover)
+  const { data: operatorsData } = useQuery({
+    queryKey: ['operators', gameSlug],
+    queryFn: () => apiGet<{ data: Operator[] }>(`/games/${gameSlug}/operators`),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!gameSlug,
+  });
+
+  const operatorIconMap = useMemo(() => {
+    const map: Record<string, string | null> = {};
+    for (const op of operatorsData?.data || []) {
+      map[op.id] = op.icon ?? null;
+    }
+    return map;
+  }, [operatorsData]);
+
   const renderSlot = (slot: StratOperatorSlot, borderColor: string) => {
     const isActive = activeSlotId === slot.id;
     const inner = (
@@ -41,13 +59,20 @@ export function OperatorStrip({ gameSlug, readOnly, onOperatorAssign }: Operator
       >
         {slot.operatorId ? (
           <div className="h-full w-full rounded-full overflow-hidden">
-            {/* Try operator icon first, fall back to color circle */}
-            <div
-              className="h-full w-full rounded-full flex items-center justify-center text-xs font-bold text-white"
-              style={{ backgroundColor: slot.color }}
-            >
-              {slot.operatorName?.[0] || '?'}
-            </div>
+            {operatorIconMap[slot.operatorId] ? (
+              <img
+                src={`/uploads${operatorIconMap[slot.operatorId]}`}
+                alt={slot.operatorName || ''}
+                className="h-full w-full object-cover rounded-full"
+              />
+            ) : (
+              <div
+                className="h-full w-full rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ backgroundColor: slot.color }}
+              >
+                {slot.operatorName?.[0] || '?'}
+              </div>
+            )}
           </div>
         ) : (
           <span className="text-sm font-bold text-muted-foreground">?</span>

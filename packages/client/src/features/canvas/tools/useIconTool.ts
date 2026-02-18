@@ -25,17 +25,19 @@ export function useIconTool({ containerRef, floorId, onDrawCreate }: UseIconTool
     const { offsetX, offsetY, scale } = useCanvasStore.getState();
     const pos = screenToCanvas(e.clientX, e.clientY, rect, offsetX, offsetY, scale);
 
+    const opIconUrl = selectedIcon.operatorIcon ? `/uploads${selectedIcon.operatorIcon}` : undefined;
     const draw: any = {
       type: 'icon',
       originX: pos.x,
       originY: pos.y,
       data: selectedIcon.url
-        ? { iconUrl: `/uploads${selectedIcon.url}`, size: 40 }
+        ? { iconUrl: `/uploads${selectedIcon.url}`, size: 20, operatorIconUrl: opIconUrl }
         : {
             iconUrl: '',
-            size: 40,
+            size: 20,
             fallbackText: selectedIcon.name?.[0] ?? '?',
             fallbackColor: selectedIcon.color ?? '#888888',
+            operatorIconUrl: opIconUrl,
           },
     };
 

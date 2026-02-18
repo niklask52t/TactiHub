@@ -13,7 +13,7 @@ export const COLORS_ARRAY = [
 
 export const DEFAULT_LINE_WIDTH = 3;
 export const DEFAULT_FONT_SIZE = 16;
-export const DEFAULT_ICON_SIZE = 32;
+export const DEFAULT_ICON_SIZE = 20;
 export const DEFAULT_COLOR = '#FF0000';
 
 export const MAX_OPERATOR_SLOTS = 5;
